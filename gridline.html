@@ -19,6 +19,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-family:var(--mono);overflow:hidden;-webkit-tap-highlight-color:transparent}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;
@@ -28,6 +29,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .score{margin-top:8px;font-family:var(--display);font-weight:800;font-size:clamp(20px,4.4vw,30px);color:var(--orange);letter-spacing:.06em;
   text-shadow:0 0 12px rgba(255,122,26,.55);font-variant-numeric:tabular-nums}
 .score span{display:block;margin-top:4px;font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--white);text-shadow:none}
+.over{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.over .card{pointer-events:auto;text-align:center;background:var(--panel);border:1px solid rgba(255,122,26,.6);box-shadow:0 0 30px rgba(255,122,26,.25);
+  padding:24px 28px;max-width:320px;width:100%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.over h2{margin:0 0 6px;font-family:var(--display);font-weight:800;letter-spacing:.2em;color:var(--orange);font-size:22px}
+.over p{margin:4px 0;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.over p b{color:var(--white);font-weight:400;font-size:20px;font-family:var(--display);letter-spacing:.06em}
+.over button{margin-top:14px;border-color:var(--orange);color:var(--orange)}
 .meters{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.7;font-variant-numeric:tabular-nums}
 .meters b{color:var(--white);font-weight:400}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid rgba(41,243,255,.35);box-shadow:0 -1px 18px rgba(41,243,255,.18);
@@ -67,11 +76,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <canvas id="cv" aria-label="Sound-reactive visualization"></canvas>
 
 <div class="hud">
-  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox"><b id="sc">0</b><span id="cb">Ride over a ramp to score</span></div></div>
+  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div></div>
   <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer</span>
     <div class="vu" aria-hidden="true"><i><em id="vB"></em></i><i><em id="vM"></em></i><i><em id="vH"></em></i></div></div>
 </div>
-<div class="intro" id="intro">Tap <strong>Mic</strong> to react to the room<br>or load a track / play the demo beat.</div>
+<div class="intro" id="intro">Tap <strong>Mic</strong> to react to the room<br>or play the demo beat.</div>
+<div class="over" id="over" hidden><div class="card"><h2>RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><button id="again" type="button">Ride again</button></div></div>
 
 <div class="steer" id="steer">
   <button id="sl" type="button" aria-label="Steer left">◀</button>
@@ -82,24 +92,18 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <div class="grp">
     <button id="mic" class="go" type="button">● Mic</button>
     <button id="demo" type="button">▶ Demo</button>
-    <label class="file" for="file">♪ Track<input id="file" type="file" accept="audio/*"></label>
-    <label class="file" for="face">☺ Face<input id="face" type="file" accept="image/*"></label>
   </div>
   <div class="grp" role="group" aria-label="Mode">
     <span class="lbl">Mode</span>
-    <button type="button" data-mode="grid" aria-pressed="true">Grid</button>
-    <button type="button" data-mode="core" aria-pressed="false">Core</button>
-    <button type="button" data-mode="cycles" aria-pressed="false">Cycles</button>
+    <button type="button" data-game="auto" aria-pressed="true">Auto</button>
+    <button type="button" data-game="compete" aria-pressed="false">Compete</button>
   </div>
   <div class="grp">
-    <label class="lbl" for="gain">Gain</label>
-    <input id="gain" type="range" min="0.3" max="3" step="0.05" value="1">
     <button id="fs" type="button" title="Fullscreen">⛶</button>
   </div>
   <span class="status" id="status">Idle · tap the screen to hide controls</span>
 </div>
 
-<audio id="player" loop></audio>
 
 <script>
 (() => {
@@ -110,9 +114,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let ac, analyser, master, monitor, freq = new Uint8Array(1024), wave = new Uint8Array(2048);
-  let source = 'idle', micStream = null, micNode = null, mediaNode = null, fileUrl = null;
-  let mode = 'grid', gainK = 1, gainUser = 1, agcPeak = .3, demoTimer = null, wakeLock = null;
-  const player = $('player');
+  let source = 'idle', micStream = null, micNode = null;
+  let gainK = 1, agcPeak = .3, demoTimer = null, wakeLock = null;
   const setStatus = s => $('status').textContent = s;
 
   function ensureAudio(){
@@ -127,7 +130,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
   function stopAll(){
     clearInterval(demoTimer); demoTimer = null;
-    player.pause();
     if (micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
     if (micNode){ micNode.disconnect(); micNode = null; }
     ['mic','demo'].forEach(id => $(id).classList.remove('on'));
@@ -149,17 +151,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     } catch(e){
       setStatus(e.name === 'NotAllowedError' ? 'Mic permission was blocked. Allow it in your browser settings and tap Mic again.' : 'Could not open the mic: ' + e.message);
     }
-  });
-
-  /* ---------- Track from device ---------- */
-  $('file').addEventListener('change', e => {
-    const f = e.target.files[0]; if (!f) return;
-    ensureAudio(); ac.resume(); stopAll();
-    if (!mediaNode){ mediaNode = ac.createMediaElementSource(player); mediaNode.connect(master); }
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
-    fileUrl = URL.createObjectURL(f); player.src = fileUrl;
-    player.play().then(() => { source = 'file'; $('intro').hidden = true; setStatus('Playing ' + f.name); keepAwake(); })
-      .catch(() => setStatus("Couldn't play that file. Try MP3, M4A or WAV."));
   });
 
   /* ---------- Demo beat (synth, 124 BPM) ---------- */
@@ -195,11 +186,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   });
 
   /* ---------- Controls ---------- */
-  document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
-    mode = b.dataset.mode; document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b));
-    if (mode === 'cycles') resetCycles();
-  }));
-  $('gain').addEventListener('input', e => gainUser = +e.target.value);
+  document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => setGame(b.dataset.game)));
+  $('again').addEventListener('click', () => startRun());
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
   let barPx = 0;
@@ -207,25 +195,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const toggleBar = () => { $('bar').classList.toggle('hide'); syncBar(); };
   addEventListener('resize', syncBar); syncBar();
   cv.addEventListener('click', toggleBar);
-  const syncSteer = () => $('steer').hidden = mode !== 'grid';
-  document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', syncSteer));
-
-  /* Rider face: any photo, centre-cropped to a square and remembered in this browser */
-  let faceImg = null;
-  const loadFace = src => { const im = new Image(); im.onload = () => faceImg = im; im.src = src; };
-  try { const saved = localStorage.getItem('gridline-face'); if (saved) loadFace(saved); } catch(_){}
-  $('face').addEventListener('change', e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = () => { const im = new Image(); im.onload = () => {
-      const c = document.createElement('canvas'); c.width = c.height = 256; const sz = Math.min(im.width, im.height);
-      c.getContext('2d').drawImage(im, (im.width-sz)/2, (im.height-sz)/2*.6, sz, sz, 0, 0, 256, 256);
-      const url = c.toDataURL('image/jpeg', .85); loadFace(url);
-      try { localStorage.setItem('gridline-face', url); } catch(_){}
-      setStatus('Rider face set');
-    }; im.src = r.result; };
-    r.readAsDataURL(f);
-  });
 
   /* Steering: arrow keys / A-D on desktop, hold the on-screen arrows on touch screens */
   let keyL = false, keyR = false, steerBtn = 0;
@@ -246,7 +215,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (e.key === 'ArrowLeft' || e.key === 'a'){ keyL = true; e.preventDefault(); }
     if (e.key === 'ArrowRight' || e.key === 'd'){ keyR = true; e.preventDefault(); }
     if (e.key === 'h') toggleBar();
-    if (e.key === '1' || e.key === '2' || e.key === '3') document.querySelectorAll('[data-mode]')[+e.key-1].click();
+    if (e.key === '1') setGame('auto');
+    if (e.key === '2') setGame('compete');
+    if (e.key === 'Enter' && over) startRun();
   });
 
   /* ---------- Analysis ---------- */
@@ -264,7 +235,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // automatic gain: quiet mic input is lifted toward the same range as a loud track
     const lvl = band(1,240);
     agcPeak = Math.max(lvl, agcPeak*Math.exp(-adt*.35), .025);
-    gainK = gainUser * Math.max(1, Math.min(10, .32/agcPeak));
+    gainK = Math.max(1, Math.min(10, .32/agcPeak));
     const comp = x => 1 - Math.exp(-x*1.8), rb = band(1,6);
     const b = comp(band(1,9)*gainK), m = comp(band(9,90)*gainK*1.3), h = comp(band(90,420)*gainK*2.2);
     sm.b += (b-sm.b)*.4; sm.m += (m-sm.m)*.25; sm.h += (h-sm.h)*.25;
@@ -288,21 +259,42 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   /* ---------- Canvas ---------- */
   let W, H, dpr;
   function resize(){ dpr = Math.min(devicePixelRatio||1, 1.5); W = innerWidth; H = innerHeight; cv.width = W*dpr; cv.height = H*dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle = '#02040a'; ctx.fillRect(0,0,W,H); if (mode==='cycles') resetCycles(); }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle = '#02040a'; ctx.fillRect(0,0,W,H); }
   addEventListener('resize', resize); resize();
 
   function glowLine(c, a, w){ ctx.strokeStyle = rgba(c,a); ctx.lineWidth = w; ctx.shadowBlur = 0; }
   function gstroke(){ const w = ctx.lineWidth, ga = ctx.globalAlpha; ctx.globalAlpha = ga*.18; ctx.lineWidth = w*4.5; ctx.stroke(); ctx.globalAlpha = ga; ctx.lineWidth = w; ctx.stroke(); }
 
-  /* Mode 1: GRID — the ground rolls steadily; the sky answers the music.
+  /* The ride — the ground rolls steadily; the sky answers the music.
      Sky values rise fast on hits and fall slowly, so beats read clearly without flicker. */
-  let skyT = 0, travel = 0, cycX = 1.5, cycV = 0, laneTarget = 1.5, laneT = 5, manualT = 0, trail = [], lean = 0, ripples = [];
+  let skyT = 0, sunSpin = 0, travel = 0, cycX = 1.5, cycV = 0, laneTarget = 1.5, laneT = 5, manualT = 0, trail = [], lean = 0, ripples = [];
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
-  let score = 0, combo = 0, boost = 0, airT = 0, playing = false;
+  let score = 0, combo = 0, boost = 0, airT = 0;
+  // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
+  let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0;
+  try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
+  const RD = [255,64,96];
+  function setGame(g){
+    game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
+    $('scoreBox').hidden = g !== 'compete';
+    if (g === 'compete') startRun(); else { over = false; $('over').hidden = true; }
+  }
+  function startRun(){
+    game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false;
+    score = 0; combo = 0; boost = 0; lives = 3; invuln = 1; flash = 0;
+    ramps = ramps.filter(r => r.z - travel < 10); nextRamp = Math.max(nextRamp, travel + 18);   // a clear stretch to start
+    showScore(); pop('GO', CY);
+  }
+  function gameOver(){
+    over = true; best = Math.max(best, score);
+    try { localStorage.setItem('gridline-best', best); } catch(_){}
+    $('oScore').textContent = score.toLocaleString(); $('oBest').textContent = best.toLocaleString(); $('over').hidden = false;
+  }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('cb').textContent = (combo > 1 ? 'x' + combo + ' combo' : combo === 1 ? 'combo started' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
-  const RL = 1.2, RH = .45, RW = .65;
+    $('cb').textContent = '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+  const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
+  const laneW = () => Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
   const sky = { b:0, m:0, h:0, bands: new Float32Array(48) };
   const ease = (cur, v, dt) => cur + (v - cur)*Math.min(1, dt*(v > cur ? 14 : 1.8));
   let stars = [], ridge = [];
@@ -353,12 +345,35 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     });
     ctx.globalCompositeOperation = 'source-over';
 
-    // sun: fixed size, its halo pumps with the bass
-    const r = Math.min(W,H)*.11, hr = r*(1.8 + sky.b*1.8 + hit*.5);
+    // sun: a striped disc wearing a spectrum crown; lows at the top, highs down toward the horizon
+    const r = Math.min(W,H)*.12, hr = r*(1.8 + sky.b*1.6 + hit*.5);
     const sg = ctx.createRadialGradient(vp,hz,r*.5,vp,hz,hr);
     sg.addColorStop(0, rgba(OR, .12 + sky.b*.3 + hit*.25)); sg.addColorStop(1, rgba(OR,0));
     ctx.fillStyle = sg; ctx.fillRect(vp-hr, hz-hr, hr*2, hr);
-    glowLine(OR,.9,2+hit*2); ctx.beginPath(); ctx.arc(vp,hz,r,Math.PI,0); gstroke();
+    ctx.save(); ctx.beginPath(); ctx.arc(vp,hz,r,Math.PI,0); ctx.closePath(); ctx.clip();
+    const dg = ctx.createLinearGradient(0, hz - r, 0, hz);
+    dg.addColorStop(0, rgba(OR, .5 + sky.b*.3 + hit*.2)); dg.addColorStop(1, rgba(RD, .45 + sky.b*.2));
+    ctx.fillStyle = dg; ctx.fillRect(vp - r, hz - r, r*2, r);
+    ctx.fillStyle = '#05060f';
+    for (let k=0;k<5;k++){ const y = hz - r*(.1 + k*.14) - ((skyT*.3) % 1)*r*.14; ctx.fillRect(vp - r, y, r*2, r*(.035 + (4-k)*.012)); }
+    ctx.restore();
+    glowLine(OR,.95,2+hit*2); ctx.beginPath(); ctx.arc(vp,hz,r,Math.PI,0); gstroke();
+    sunSpin += dt*(.15 + sky.m*.9)*(reduce ? .3 : 1);
+    const NB = 36, r0 = r*1.12, bw = Math.max(2, r*.05);
+    const bars = c => { ctx.beginPath();
+      for (const side of [-1, 1]) for (let i=0;i<NB;i++){
+        if ((i % 6 === 0) !== (c === CY)) continue;
+        const a = -Math.PI/2 + side*(i + .5)/NB*(Math.PI/2), v = sky.bands[Math.min(47, Math.floor(i/NB*48))];
+        const len = r*(.05 + v*v*1.1 + hit*.08), ca = Math.cos(a), sa = Math.sin(a);
+        ctx.moveTo(vp + ca*r0, hz + sa*r0); ctx.lineTo(vp + ca*(r0 + len), hz + sa*(r0 + len)); }
+      glowLine(c, .95, bw); ctx.lineCap = 'round'; gstroke(); ctx.lineCap = 'butt'; };
+    bars(OR); bars(CY);
+    // a segmented ring that spins with the mids, and a bass ring that swells and flashes on beats
+    glowLine(WH, .55, 1.4); ctx.beginPath();
+    for (let k=0;k<16;k++){ const a0 = Math.PI + ((sunSpin + k/16*Math.PI*2) % (Math.PI*2)); if (a0 > Math.PI*2 - .05) continue;
+      ctx.moveTo(vp + Math.cos(a0)*r*1.05, hz + Math.sin(a0)*r*1.05); ctx.arc(vp, hz, r*1.05, a0, Math.min(Math.PI*2, a0 + Math.PI*2/16*.6)); }
+    gstroke();
+    glowLine(CY, .2 + hit*.7, 1 + hit*2.5); ctx.beginPath(); ctx.arc(vp, hz, r*(1.25 + sky.b*.35 + hit*.15), Math.PI, 0); gstroke();
 
     // static mountain silhouette
     ctx.fillStyle = '#02040a'; ctx.beginPath(); ctx.moveTo(0,hz);
@@ -368,9 +383,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // ground in true perspective; steady speed
     ctx.fillStyle = '#02040a'; ctx.fillRect(0,hz,W,H-hz);
     // floor fills the space above the control bar; lanes scale with the taller side on phones
-    const K = Math.max(80, H - barPx - hz), LX = Math.max(W, H*.9)*.14;
+    // one scale for width and height so the bike keeps its proportions on any screen
+    const LX = laneW(), K = LX*1.45, Zmin = K / Math.max(40, H - hz);
     const P = (X,Z,h=0) => [vp + X*LX/Z, hz + K*(1-h)/Z];
-    boost = Math.max(0, boost - dt*.04);
+    boost = Math.max(0, boost - dt*(game === 'compete' && !over ? .04 : .25));
     const spd = (reduce ? .3 : 1.2 + sky.b*.9) + boost;   // louder music and landed jumps both speed you up
     travel += dt*spd;
     const CZ = 2.5;
@@ -379,7 +395,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     for (let n=0;n<44;n++){ const Z = n + 1 - frac, y = hz + K/Z; if (y > H+2) continue;
       ctx.strokeStyle = rgba(CY, Math.min(.9, .9/Z*(1 + sky.b*.9 + hit*1.4))); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
     ctx.strokeStyle = rgba(CY, Math.min(.8, .3*(1 + sky.b*.8 + hit*1.2))); ctx.beginPath();
-    for (let i=-14;i<=14;i++){ const a = P(i,44), b = P(i,1); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); } ctx.stroke();
+    for (let i=-14;i<=14;i++){ const a = P(i,44), b = P(i,Zmin); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); } ctx.stroke();
     glowLine(WH,.6+hit*.4,1.5+hit); ctx.beginPath(); ctx.moveTo(0,hz); ctx.lineTo(W,hz); gstroke();
 
     // beat shockwaves: a ring rolls out across the floor from under the cycle on every beat
@@ -395,12 +411,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // the cycle holds a fixed distance ahead of the camera, so it rides toward the sun forever
     const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn));
     let want;
-    if (st && !playing){ playing = true; score = 0; combo = 0; boost = 0; showScore(); pop('YOUR RUN', CY); }
+    const autoDrive = game === 'auto' || over;
     if (st){ manualT = 6; laneTarget = cycX; want = st*2.4; }
-    else if ((manualT -= dt) > 0){ laneTarget = cycX; want = 0; }
+    else if (!autoDrive || (manualT -= dt) > 0){ laneTarget = cycX; want = 0; }
     else {
       // autopilot lines up with the next ramp when one is coming
-      const cz0 = travel + CZ + 1, nr = !playing && ramps.find(r => r.z > cz0 && r.z - cz0 < 10);
+      const cz0 = travel + CZ + 1, nr = ramps.find(r => r.kind !== 'block' && r.z > cz0 && r.z - cz0 < 10);
       if (nr) laneTarget = nr.x;
       laneT -= dt;
       if (!nr && laneT <= 0){ laneTarget = Math.max(-2.2, Math.min(2.2, cycX + (Math.random() < .5 ? -.6 : .6))); laneT = 4 + Math.random()*3; }
@@ -414,14 +430,27 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // ramps launch you; tunnels drop you below the grid and pop you out the far end
     while (nextRamp < travel + 44){
       const x = (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
-      if (Math.random() < .3){ ramps.push({ kind:'tunnel', z: nextRamp, x, len: TL }); nextRamp += TL + 6 + Math.random()*5; }
+      const roll = Math.random(), blocks = game === 'compete' && !over;
+      if (roll < .28){ ramps.push({ kind:'tunnel', z: nextRamp, x, len: TL }); nextRamp += TL + 6 + Math.random()*5; }
+      else if (blocks && roll < .6){
+        ramps.push({ kind:'block', z: nextRamp, x, len: BL });
+        if (Math.random() < .4) ramps.push({ kind:'block', z: nextRamp, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });   // sometimes a pair
+        nextRamp += 5 + Math.random()*5;
+      }
       else { ramps.push({ kind:'ramp', z: nextRamp, x, len: RL }); nextRamp += 7 + Math.random()*6; }
     }
-    const cz = travel + CZ + 1.0;
+    const cz = travel + CZ + 1.0, scoring = game === 'compete' && !over;
+    invuln = Math.max(0, invuln - dt);
+    for (const r of ramps){
+      if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
+      if (cz - .8 < r.z + BL && cz + .8 > r.z && Math.abs(cycX - r.x) < BW + .18 && alt < BH){
+        r.hit = true; lives--; invuln = 1.8; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore();
+        if (lives <= 0) gameOver();
+      }
+    }
     for (const r of ramps) if (r.kind === 'ramp' && !r.used && !r.missed && cz - r.z > RL){
       r.missed = true;
-      if (combo > 0) pop('COMBO LOST', CY);
-      combo = 0; boost *= .5; showScore();
+      if (scoring){ if (combo > 0) pop('COMBO LOST', CY); combo = 0; boost *= .5; showScore(); }
     }
     ramps = ramps.filter(r => r.z + r.len - travel > .5);
     // inside a tunnel the walls keep you in your lane
@@ -442,7 +471,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
         airborne = true; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0;
-        if (tun){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -450,10 +479,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       vy -= 5*dt; alt += vy*dt; airT += dt;
       if (alt <= 0){ alt = 0; vy = 0; airborne = false; jumps++; if (ripples.length < 4) ripples.push(0);
         // score: base + airtime, multiplied by the combo; every landing adds speed
-        combo++;
-        const pts = Math.round((100 + airT*200) * combo / 10) * 10;
-        score += pts; boost = Math.min(2.4, boost + .3);
-        pop('+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore(); }
+        boost = Math.min(2.4, boost + .3);
+        if (scoring){
+          combo++;
+          const pts = Math.round((100 + airT*200) * combo / 10) * 10;
+          score += pts; pop('+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+        } }
     }
     pitch += (Math.atan2(vy, spd*2.2) - pitch)*Math.min(1, dt*8);
 
@@ -461,13 +492,14 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const under = alt < -.02;
     sorted.forEach(r => {
       if (r.kind === 'tunnel'){ drawTunnelBelow(r, P, hit); if (!(under && r === inTunnel)) drawTunnelRoof(r, P, hit); }
+      else if (r.kind === 'block'){ if (r.z - travel + BL > CZ + .3) drawBlock(r, P, hit); }
       else if (r.z - travel + RL > CZ + .3) drawRamp(r, P, hit);
     });
     if (alt > -.01) drawCycle(P, CZ, hit, true);    // reflection in the glossy floor
     drawCycle(P, CZ, hit, false);
     // light wall: its height traces the loudness of the last second or so
     trail.push({ x: cycX, d: travel, b: alt, h: .07 + Math.min(1, sm.b*.6 + sm.m*.3 + sm.h*.1 + hit*.3)*.6 });
-    while (trail.length > 2 && CZ - (travel - trail[0].d) < .5) trail.shift();
+    while (trail.length > 2 && CZ - (travel - trail[0].d) < Math.min(.5, Zmin)) trail.shift();
     if (trail.length > 1){
       const zs = trail.map(p => CZ - (travel - p.d));
       ctx.beginPath();
@@ -479,7 +511,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     }
     // the glass roof of the tunnel you're in goes over the bike, so it reads as being below the grid
     if (under && inTunnel) drawTunnelRoof(inTunnel, P, hit);
-    sorted.forEach(r => { if (r.kind === 'ramp' && r.z - travel + RL <= CZ + .3) drawRamp(r, P, hit); });
+    sorted.forEach(r => {
+      if (r.kind === 'ramp' && r.z - travel + RL <= CZ + .3) drawRamp(r, P, hit);
+      if (r.kind === 'block' && r.z - travel + BL <= CZ + .3) drawBlock(r, P, hit);
+    });
+    if (flash > 0){ ctx.fillStyle = rgba(RD, flash*.32); ctx.fillRect(0, 0, W, H); flash = Math.max(0, flash - dt*2.2); }
     if (popT > 0){
       popT -= dt; const [px,py] = P(cycX, CZ + 1, Math.max(alt, 0) + 1.3);
       ctx.font = `800 ${Math.round(Math.max(16, W*.022))}px Orbitron, sans-serif`; ctx.textAlign = 'center';
@@ -543,6 +579,22 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (zb > za){ glowLine(CY, .95, 1.8 + hit*1.5); line([P(xl,za), P(xl,zb), P(xr,zb), P(xr,za), P(xl,za)]); gstroke(); }
   }
 
+  function drawBlock(r, P, hit){
+    const z0 = r.z - travel, z1 = z0 + BL;
+    if (z0 < .5) return;
+    const xl = r.x - BW, xr = r.x + BW, hh = BH*(1 + hit*.08), col = r.hit ? [90,40,50] : RD;
+    const fA = P(xl,z0,0), fB = P(xr,z0,0), fC = P(xr,z0,hh), fD = P(xl,z0,hh);
+    const tC = P(xr,z1,hh), tD = P(xl,z1,hh), sb = r.x > 0 ? P(xl,z1,0) : P(xr,z1,0);
+    const sv = r.x > 0 ? [fA, fD, tD, sb] : [fB, fC, tC, sb];
+    poly(sv, '#14060b');
+    poly([fD, fC, tC, tD], '#2a0c16');
+    const fg = ctx.createLinearGradient(0, fD[1], 0, fA[1]); fg.addColorStop(0, '#3a0f1d'); fg.addColorStop(1, '#12040a');
+    poly([fA, fB, fC, fD], fg);
+    glowLine(col, .95, 1.8 + hit*1.5); line([fA, fB, fC, fD, fA]); gstroke(); line([fD, tD, tC, fC]); gstroke(); line([sv[2], sv[3]]); gstroke();
+    // warning stripe across the face
+    glowLine(col, .8, 1.2); line([P(xl + .08, z0, hh*.5), P(xr - .08, z0, hh*.5)]); ctx.stroke();
+  }
+
   function drawRamp(r, P, hit){
     const z0 = r.z - travel, z1 = z0 + RL;
     if (z0 < .5) return;
@@ -574,12 +626,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       const dz = z - zc, z2 = zc + dz*cp - y*sp, y2 = dz*sp + y*cp;      // pitch the nose up on ramps and in the air
       return P(cycX + x*cl - y2*sl, CZ + z2, m*(alt + x*sl + y2*cl)); };
     if (mirror) ctx.globalAlpha = .2;
+    else if (invuln > 0 && Math.floor(invuln*12) % 2 === 0) ctx.globalAlpha = .3;
     const path = pts => { ctx.beginPath(); pts.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); };
     const near = cycX > 0 ? -HALF : HALF, far = -near;   // the side facing the centre of the screen is visible
 
     // floor glow
     if (!mirror){
-      const [gx, gy] = P(cycX, CZ + 1, Math.min(alt, 0)), gr = Math.max(W, H*.9)*.14*S*1.1/CZ / (1 + Math.max(alt, 0)*1.5);
+      const [gx, gy] = P(cycX, CZ + 1, Math.min(alt, 0)), gr = laneW()*S*1.1/CZ / (1 + Math.max(alt, 0)*1.5);
       const fg = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
       fg.addColorStop(0, rgba(OR,(.3 + hit*.2)/(1 + Math.max(alt, 0)*2))); fg.addColorStop(1, rgba(OR,0));
       ctx.fillStyle = fg; ctx.fillRect(gx-gr, gy-gr, gr*2, gr*2);
@@ -618,86 +671,22 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // rider: hunched torso and helmet, low over the cowl
     path([Q(-.09,.52,.32), Q(.09,.52,.32), Q(.07,.72,.86), Q(-.07,.72,.86)]); ctx.closePath();
     ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.6,1); gstroke();
-    const [hx,hy] = Q(0,.76,.92), hrad = Math.max(W, H*.9)*.14*S*.11/(CZ+.6);
-    if (faceImg){
-      const fr = hrad*2.3;
-      ctx.save(); ctx.beginPath(); ctx.arc(hx,hy-fr*.4,fr,0,Math.PI*2); ctx.clip();
-      ctx.drawImage(faceImg, hx-fr, hy-fr*1.4, fr*2, fr*2); ctx.restore();
-      ctx.beginPath(); ctx.arc(hx,hy-fr*.4,fr,0,Math.PI*2); glowLine(CY,.95,1.8); gstroke();
-    } else {
-      ctx.beginPath(); ctx.arc(hx,hy,hrad,0,Math.PI*2); ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.8,1.2); gstroke();
-    }
+    const [hx,hy] = Q(0,.76,.92), hrad = laneW()*S*.11/(CZ+.6);
+    ctx.beginPath(); ctx.arc(hx,hy,hrad,0,Math.PI*2); ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.8,1.2); gstroke();
     // tail light bar flashes on beats
     const t1 = Q(-HALF*.8,.4,-.01), t2 = Q(HALF*.8,.4,-.01);
     glowLine(hit > .3 ? WH : OR, 1, 2.5 + hit*2.5); ctx.beginPath(); ctx.moveTo(t1[0],t1[1]); ctx.lineTo(t2[0],t2[1]); gstroke();
+    ctx.globalAlpha = 1;
   }
 
-  /* Mode 2: CORE — concentric neon rings, segmented like a disc, spun by mids and punched by bass */
-  let spin = 0;
-  function drawCore(dt){
-    ctx.fillStyle = 'rgba(2,4,10,.32)'; ctx.fillRect(0,0,W,H);
-    const cx = W/2, cy = H/2, R = Math.min(W,H)*.17*(1+pulse*.1);
-    spin += dt*(.2 + sm.m*1.4)*(reduce?.3:1);
-    // segmented outer spectrum ring
-    const N = 96;
-    for (let i=0;i<N;i++){ const bin = Math.floor(Math.pow(i/N,1.7)*460)+2; const v = Math.min(1,freq[bin]/255*gainK);
-      const a0 = spin + i/N*Math.PI*2, a1 = a0 + Math.PI*2/N*.62; const rr = R*1.35 + v*v*Math.min(W,H)*.22;
-      glowLine(i%12===0?OR:CY, .35+v*.65, 3, 12); ctx.beginPath(); ctx.arc(cx,cy,rr,a0,a1); gstroke(); }
-    // disc rings
-    [[1,CY,3],[.82,WH,1.2],[.64,OR,2]].forEach(([k,c,w],j) => {
-      glowLine(c,.9,w,16); ctx.beginPath();
-      const segs = 6 + j*2;
-      for (let s=0;s<segs;s++){ const a = (j%2?-spin:spin)*(1+j*.4) + s/segs*Math.PI*2; ctx.moveTo(cx+Math.cos(a)*R*k, cy+Math.sin(a)*R*k); ctx.arc(cx,cy,R*k,a,a+Math.PI*2/segs*.78); }
-      gstroke(); });
-    // waveform through the center
-    glowLine(WH,.9,1.6,14); ctx.beginPath();
-    for (let i=0;i<=200;i++){ const v = (wave[i*10]-128)/128; const x = cx - R*.6 + i/200*R*1.2; const y = cy + v*R*.5*gainK; i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }
-    gstroke(); ctx.shadowBlur = 0;
-  }
-
-  /* Mode 3: CYCLES — light-trail riders on a grid; speed = band energy, they turn 90° on beats */
-  let riders = [];
-  function resetCycles(){
-    ctx.fillStyle = '#02040a'; ctx.fillRect(0,0,W,H);
-    const cell = Math.max(18, Math.round(Math.min(W,H)/26));
-    riders = [0,1,2,3].map(i => ({ x: Math.round(W*(.25+.5*(i%2))/cell)*cell, y: Math.round(H*(.3+.4*(i>>1))/cell)*cell,
-      dir: i, c: i%2 ? OR : CY, band: i, cell, dist: 0 }));
-  }
-  const DX = [1,0,-1,0], DY = [0,1,0,-1];
-  function onBeat(){ if (mode === 'grid' && ripples.length < 4) ripples.push(0); if (mode !== 'cycles') return; riders.forEach(r => { if (Math.random() < .55) r.turn = Math.random()<.5 ? 1 : 3; }); }
-  function drawCycles(dt){
-    if (!riders.length) resetCycles();
-    ctx.fillStyle = 'rgba(2,4,10,.035)'; ctx.fillRect(0,0,W,H);
-    // faint grid
-    const cell = riders[0].cell; ctx.shadowBlur = 0; ctx.strokeStyle = rgba(CY,.05); ctx.lineWidth = 1; ctx.beginPath();
-    for (let x=0;x<W;x+=cell){ ctx.moveTo(x,0); ctx.lineTo(x,H); } for (let y=0;y<H;y+=cell){ ctx.moveTo(0,y); ctx.lineTo(W,y); } gstroke();
-    const en = [sm.b, sm.m, sm.h, (sm.b+sm.h)/2];
-    riders.forEach(r => {
-      const speed = (60 + en[r.band]*520) * (reduce?.4:1);
-      let travel = speed*dt;
-      glowLine(r.c, .95, 3, 16); ctx.beginPath(); ctx.moveTo(r.x, r.y);
-      while (travel > 0){
-        const toNode = r.cell - (r.dist % r.cell); const mv = Math.min(travel, toNode);
-        r.x += DX[r.dir]*mv; r.y += DY[r.dir]*mv; r.dist += mv; travel -= mv; ctx.lineTo(r.x, r.y);
-        if (r.dist % r.cell < .001){ // at an intersection
-          if (r.turn){ r.dir = (r.dir + r.turn) % 4; r.turn = 0; }
-          const nx = r.x + DX[r.dir]*r.cell, ny = r.y + DY[r.dir]*r.cell;
-          if (nx < cell || nx > W-cell || ny < cell*2 || ny > H-cell*3) r.dir = (r.dir + (Math.random()<.5?1:3)) % 4;
-        }
-      }
-      gstroke();
-      ctx.fillStyle = rgba(WH,1); ctx.fillRect(r.x-2.5, r.y-2.5, 5, 5);
-    });
-    ctx.shadowBlur = 0;
-    if (pulse > .9){ ctx.fillStyle = rgba(CY,.04); ctx.fillRect(0,0,W,H); }
-  }
+  function onBeat(){ if (ripples.length < 4) ripples.push(0); }
 
   let last = 0;
   function frame(ts){
     const t = ts/1000, dt = Math.min(.05, t-last || .016); last = t;
     analyse(t);
     ctx.globalCompositeOperation = 'source-over';
-    if (mode === 'grid') drawGrid(dt); else if (mode === 'core') drawCore(dt); else drawCycles(dt);
+    drawGrid(dt);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
