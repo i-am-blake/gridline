@@ -222,6 +222,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
   /* ---------- Analysis ---------- */
   const sm = { b:0, m:0, h:0 }; let pulse = 0, prevB = 0, avgB = 0, beats = [], bpm = 0;
+  let snare = 0, hatHit = 0, avgM = 0, avgH = 0, prevM = 0, prevH = 0, lastSn = 0, lastHt = 0;
   const band = (lo,hi) => { let s=0; for (let i=lo;i<hi;i++) s+=freq[i]; return s/((hi-lo)*255); };
   function idleData(t){
     for (let i=0;i<1024;i++){ const fall = Math.max(0,1-i/380); freq[i] = 255*fall*(.3+.22*Math.sin(t*1.4+i*.08)+.12*Math.sin(t*.6+i*.29))*.2; }
@@ -248,6 +249,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       onBeat();
     }
     prevB = rb; pulse *= .88;
+    // snare-ish hits in the mids and hi-hats in the highs drive their own accents
+    const rm = band(18,70), rh = band(150,420);
+    avgM += (rm - avgM)*.05; avgH += (rh - avgH)*.08;
+    if (rm > avgM*1.35 + .004 && rm > prevM && t - lastSn > .15){ snare = 1; lastSn = t; }
+    if (rh > avgH*1.4 + .003 && rh > prevH && t - lastHt > .08){ hatHit = 1; lastHt = t; }
+    prevM = rm; prevH = rh; snare *= .86; hatHit *= .8;
     let pk = 0, pi = 0; for (let i=2;i<600;i++) if (freq[i] > pk){ pk = freq[i]; pi = i; }
     if (t - hudT > .12){ hudT = t;
     $('vB').style.width = (sm.b*100).toFixed(0)+'%'; $('vM').style.width = (sm.m*100).toFixed(0)+'%'; $('vH').style.width = (sm.h*100).toFixed(0)+'%';
@@ -271,7 +278,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
-  let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0;
+  let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
   const RD = [255,64,96];
   function setGame(g){
@@ -281,7 +288,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   function startRun(){
     game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false;
-    score = 0; combo = 0; boost = 0; lives = 3; invuln = 1; flash = 0;
+    score = 0; combo = 0; boost = 0; lives = 3; invuln = 1; flash = 0; runT = 0; diff = 0;
     ramps = ramps.filter(r => r.z - travel < 10); nextRamp = Math.max(nextRamp, travel + 18);   // a clear stretch to start
     showScore(); pop('GO', CY);
   }
@@ -292,7 +299,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('cb').textContent = '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+    $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
   const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
   const laneW = () => Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
   const sky = { b:0, m:0, h:0, bands: new Float32Array(48) };
@@ -326,7 +333,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     ctx.fillStyle = g; ctx.fillRect(0,0,W,hz);
 
     // stars sparkle with the highs
-    for (const s of stars){ const tw = (.5+.5*Math.sin(skyT*4 + s.ph)) * (.15 + sky.h*2.2);
+    for (const s of stars){ const tw = (.5+.5*Math.sin(skyT*4 + s.ph)) * (.15 + sky.h*1.8 + hatHit*1.2);
       ctx.fillStyle = rgba(WH, Math.min(.95, .12 + tw*.6)); ctx.fillRect(s.x*W, s.y*hz*.85, s.s, s.s); }
 
     // aurora ribbons trace the spectrum: lows in the middle, highs at the edges
@@ -340,7 +347,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       ctx.closePath();
       const e = j===1 ? sky.m : sky.b*.6 + sky.h*.4;
       const rg = ctx.createLinearGradient(0, base - hz*.36, 0, base + hz*.1);
-      rg.addColorStop(0, rgba(c,0)); rg.addColorStop(.6, rgba(c, .03 + e*.26 + hit*.1)); rg.addColorStop(1, rgba(c,0));
+      rg.addColorStop(0, rgba(c,0)); rg.addColorStop(.6, rgba(c, .03 + e*.26 + hit*.1 + (j === 1 ? snare*.14 : 0))); rg.addColorStop(1, rgba(c,0));
       ctx.fillStyle = rg; ctx.fill();
     });
     ctx.globalCompositeOperation = 'source-over';
@@ -369,7 +376,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       glowLine(c, .95, bw); ctx.lineCap = 'round'; gstroke(); ctx.lineCap = 'butt'; };
     bars(OR); bars(CY);
     // a segmented ring that spins with the mids, and a bass ring that swells and flashes on beats
-    glowLine(WH, .55, 1.4); ctx.beginPath();
+    glowLine(WH, .45 + snare*.55, 1.4 + snare*2); ctx.beginPath();
     for (let k=0;k<16;k++){ const a0 = Math.PI + ((sunSpin + k/16*Math.PI*2) % (Math.PI*2)); if (a0 > Math.PI*2 - .05) continue;
       ctx.moveTo(vp + Math.cos(a0)*r*1.05, hz + Math.sin(a0)*r*1.05); ctx.arc(vp, hz, r*1.05, a0, Math.min(Math.PI*2, a0 + Math.PI*2/16*.6)); }
     gstroke();
@@ -386,8 +393,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // one scale for width and height so the bike keeps its proportions on any screen
     const LX = laneW(), K = LX*1.45, Zmin = K / Math.max(40, H - hz);
     const P = (X,Z,h=0) => [vp + X*LX/Z, hz + K*(1-h)/Z];
-    boost = Math.max(0, boost - dt*(game === 'compete' && !over ? .04 : .25));
-    const spd = (reduce ? .3 : 1.2 + sky.b*.9) + boost;   // louder music and landed jumps both speed you up
+    const competing = game === 'compete' && !over;
+    if (competing){
+      runT += dt; const nd = Math.min(1, runT/100);
+      if (Math.floor(nd*5) > Math.floor(diff*5)){ pop('LEVEL ' + (1 + Math.floor(runT/20)), CY); showScore(); }
+      diff = nd;
+    }
+    boost = Math.max(0, boost - dt*.04);
+    // one grid line passes per beat, so the floor moves in time with the song
+    const beatSpd = bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
+    const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.75) + boost : beatSpd;
     travel += dt*spd;
     const CZ = 2.5;
     const frac = travel % 1;
@@ -396,7 +411,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       ctx.strokeStyle = rgba(CY, Math.min(.9, .9/Z*(1 + sky.b*.9 + hit*1.4))); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
     ctx.strokeStyle = rgba(CY, Math.min(.8, .3*(1 + sky.b*.8 + hit*1.2))); ctx.beginPath();
     for (let i=-14;i<=14;i++){ const a = P(i,44), b = P(i,Zmin); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); } ctx.stroke();
-    glowLine(WH,.6+hit*.4,1.5+hit); ctx.beginPath(); ctx.moveTo(0,hz); ctx.lineTo(W,hz); gstroke();
+    glowLine(WH, Math.min(1, .5 + hit*.3 + snare*.5), 1.5 + hit + snare*2); ctx.beginPath(); ctx.moveTo(0,hz); ctx.lineTo(W,hz); gstroke();
 
     // beat shockwaves: a ring rolls out across the floor from under the cycle on every beat
     for (let i=ripples.length-1;i>=0;i--){
@@ -412,7 +427,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn));
     let want;
     const autoDrive = game === 'auto' || over;
-    if (st){ manualT = 6; laneTarget = cycX; want = st*2.4; }
+    if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5, 2.4*Math.max(1, spd/1.8)); }
     else if (!autoDrive || (manualT -= dt) > 0){ laneTarget = cycX; want = 0; }
     else {
       // autopilot lines up with the next ramp when one is coming
@@ -428,23 +443,20 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     // obstacles spawn far ahead, off the centre line so the bike stays in three-quarter view:
     // ramps launch you; tunnels drop you below the grid and pop you out the far end
-    while (nextRamp < travel + 44){
-      const x = (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
-      const roll = Math.random(), blocks = game === 'compete' && !over;
-      if (roll < .28){ ramps.push({ kind:'tunnel', z: nextRamp, x, len: TL }); nextRamp += TL + 6 + Math.random()*5; }
-      else if (blocks && roll < .6){
-        ramps.push({ kind:'block', z: nextRamp, x, len: BL });
-        if (Math.random() < .4) ramps.push({ kind:'block', z: nextRamp, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });   // sometimes a pair
-        nextRamp += 5 + Math.random()*5;
-      }
-      else { ramps.push({ kind:'ramp', z: nextRamp, x, len: RL }); nextRamp += 7 + Math.random()*6; }
+    // obstacles leave the horizon on the beat (every other beat; every beat at higher levels),
+    // so busy passages bring more of them and quiet passages fewer
+    if (!seeded){ seeded = true; let z = 9; while (z < travel + 44) z = spawnOne(z); }
+    const horizonZ = travel + 44;
+    if (spawnBeats > 0 || horizonZ - nextRamp > (competing ? 8 : 14)){
+      if (horizonZ >= nextRamp) spawnOne(horizonZ);
+      spawnBeats = 0;
     }
     const cz = travel + CZ + 1.0, scoring = game === 'compete' && !over;
     invuln = Math.max(0, invuln - dt);
     for (const r of ramps){
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
       if (cz - .8 < r.z + BL && cz + .8 > r.z && Math.abs(cycX - r.x) < BW + .18 && alt < BH){
-        r.hit = true; lives--; invuln = 1.8; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore();
+        r.hit = true; lives--; invuln = 1.4; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore();
         if (lives <= 0) gameOver();
       }
     }
@@ -679,7 +691,34 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     ctx.globalAlpha = 1;
   }
 
-  function onBeat(){ if (ripples.length < 4) ripples.push(0); }
+  function onBeat(){
+    if (ripples.length < 4) ripples.push(0);
+    beatN++;
+    const competing = game === 'compete' && !over;
+    if (beatN % (competing && diff > .5 ? 1 : 2) === 0) spawnBeats = 1;
+    // outside a run, pull the floor into phase so a grid line crosses on each beat
+    if (!competing) travel -= (travel - Math.round(travel))*.35;
+  }
+
+  function spawnOne(z){
+    const x = (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
+    const competing = game === 'compete' && !over, roll = Math.random();
+    const pT = .22, pB = competing ? .32 + diff*.3 : 0;
+    if (roll < pT){ ramps.push({ kind:'tunnel', z, x, len: TL }); nextRamp = z + TL + 3; }
+    else if (roll < pT + pB){
+      if (diff > .25 && Math.random() < .2 + diff*.4){
+        // a wall across the road with one gap to thread
+        const xs = [-2.2, -1.1, 0, 1.1, 2.2], gap = Math.floor(Math.random()*xs.length);
+        xs.forEach((bx, k) => { if (k !== gap) ramps.push({ kind:'block', z, x: bx, len: BL }); });
+      } else {
+        ramps.push({ kind:'block', z, x, len: BL });
+        if (Math.random() < .35 + diff*.35) ramps.push({ kind:'block', z, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });
+      }
+      nextRamp = z + 2.4;
+    }
+    else { ramps.push({ kind:'ramp', z, x, len: RL }); nextRamp = z + RL + 3; }
+    return nextRamp;
+  }
 
   let last = 0;
   function frame(ts){
