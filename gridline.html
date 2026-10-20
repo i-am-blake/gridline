@@ -32,7 +32,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .over{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
   padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .over .card{pointer-events:auto;text-align:center;background:var(--panel);border:1px solid rgba(255,122,26,.6);box-shadow:0 0 30px rgba(255,122,26,.25);
-  padding:24px 28px;max-width:320px;width:100%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  padding:24px 24px;max-width:420px;width:100%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .over h2{margin:0 0 6px;font-family:var(--display);font-weight:800;letter-spacing:.2em;color:var(--orange);font-size:22px}
 .over p{margin:4px 0;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
 .over p b{color:var(--white);font-weight:400;font-size:20px;font-family:var(--display);letter-spacing:.06em}
@@ -56,7 +56,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .status{font-size:12px;color:var(--dim);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .steer{position:fixed;left:0;right:0;bottom:calc(var(--barH,0px) + 14px);display:flex;justify-content:space-between;pointer-events:none;transition:bottom .3s;
   padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
-.steer button{pointer-events:auto;width:72px;height:72px;border-radius:50%;justify-content:center;font-size:24px;background:rgba(4,14,22,.55);
+.steer button{pointer-events:auto;width:64px;height:64px;border-radius:50%;justify-content:center;font-size:24px;background:rgba(4,14,22,.55);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 .steer button.held{border-color:var(--orange);color:var(--orange);box-shadow:0 0 14px rgba(255,122,26,.5)}
 @media (hover:hover) and (pointer:fine){.steer{display:none}}
@@ -67,8 +67,21 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .vu em{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--cyan)}
 .vu i:nth-child(2) em{background:var(--orange)}
 .vu i:nth-child(3) em{background:var(--white)}
-.intro{position:fixed;left:0;right:0;top:40%;text-align:center;font-size:13px;line-height:1.8;color:var(--dim);pointer-events:none;padding:0 20px}
-.intro strong{color:var(--orange);font-weight:400}
+.over .card .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.over .card .row button{margin-top:0}
+.over button.ghost{border-color:rgba(41,243,255,.35);color:var(--white)}
+.over button.big{font-size:16px;padding:14px 22px}
+.over .how{color:var(--white);text-transform:none;letter-spacing:.04em;font-size:13px;line-height:1.7;margin:10px 0 2px}
+.over .how kbd{font-family:var(--mono);border:1px solid rgba(41,243,255,.4);padding:1px 6px;border-radius:2px;color:var(--cyan)}
+.over .snd{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap}
+.over .snd button{margin-top:0}
+.touch{display:none}
+@media (hover:none){.touch{display:inline}.desk{display:none}}
+.pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
+  justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
+.steer .g{display:flex;gap:10px}
+.steer .flipb{font-size:22px;opacity:.55}
+.steer.air .flipb{opacity:1;border-color:var(--orange);color:var(--orange)}
 @media (max-width:560px){.status{flex-basis:100%;text-align:left}}
 </style>
 </head>
@@ -77,15 +90,26 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
 <div class="hud">
   <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div></div>
-  <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer</span>
+  <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer · ↑ ↓ flip · P pause</span>
     <div class="vu" aria-hidden="true"><i><em id="vB"></em></i><i><em id="vM"></em></i><i><em id="vH"></em></i></div></div>
 </div>
-<div class="intro" id="intro">Tap <strong>Mic</strong> to react to the room<br>or play the demo beat.</div>
-<div class="over" id="over" hidden><div class="card"><h2>RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><button id="again" type="button">Ride again</button></div></div>
+<div class="over" id="start"><div class="card">
+  <h2>READY TO RIDE</h2>
+  <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>↑</kbd> <kbd>↓</kbd> flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
+  <p class="how">Land jumps and flips for points. Hit a block or land a flip upside down and you lose a life.</p>
+  <div class="snd" role="group" aria-label="Sound"><span class="lbl">Sound</span>
+    <button type="button" class="ghost" data-snd="demo" aria-pressed="true">Demo beat</button>
+    <button type="button" class="ghost" data-snd="mic" aria-pressed="false">Microphone</button></div>
+  <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
+</div></div>
+<div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
+  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit to watch</button></div></div></div>
+<button class="pz" id="pz" type="button" aria-label="Pause" hidden>❚❚</button>
+<div class="over" id="over" hidden><div class="card"><h2>RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><div class="row"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Just watch</button></div></div></div>
 
 <div class="steer" id="steer">
-  <button id="sl" type="button" aria-label="Steer left">◀</button>
-  <button id="sr" type="button" aria-label="Steer right">▶</button>
+  <div class="g"><button id="sl" type="button" aria-label="Steer left">◀</button><button id="sr" type="button" aria-label="Steer right">▶</button></div>
+  <div class="g"><button id="fb" class="flipb" type="button" aria-label="Backflip">⟲</button><button id="ff" class="flipb" type="button" aria-label="Front flip">⟳</button></div>
 </div>
 
 <div class="bar" id="bar">
@@ -99,6 +123,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     <button type="button" data-game="compete" aria-pressed="false">Compete</button>
   </div>
   <div class="grp">
+    <button id="pause" type="button">❚❚ Pause</button>
     <button id="fs" type="button" title="Fullscreen">⛶</button>
   </div>
   <span class="status" id="status">Idle · tap the screen to hide controls</span>
@@ -122,6 +147,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (ac) return;
     ac = new (window.AudioContext || window.webkitAudioContext)();
     analyser = ac.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.75;
+    analyser.minDecibels = -78; analyser.maxDecibels = -18;   // room noise sits below the floor, so silence reads as zero
     master = ac.createGain();            // things we want to HEAR (demo, file)
     monitor = ac.createGain(); monitor.gain.value = 0.85;
     master.connect(analyser); master.connect(monitor); monitor.connect(ac.destination);
@@ -138,8 +164,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
 
   /* ---------- Microphone ---------- */
-  $('mic').addEventListener('click', async () => {
-    if (source === 'mic'){ stopAll(); setStatus('Mic off'); return; }
+  $('mic').addEventListener('click', () => source === 'mic' ? (stopAll(), setStatus('Mic off')) : startMic());
+  async function startMic(){
     ensureAudio(); await ac.resume(); stopAll();
     if (!navigator.mediaDevices?.getUserMedia){ setStatus('This browser has no mic access. Open the file over https or localhost, or in Chrome/Safari.'); return; }
     try {
@@ -147,11 +173,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       micNode = ac.createMediaStreamSource(micStream);
       micNode.connect(analyser);           // analyse only, never play back (no feedback)
       source = 'mic'; $('mic').classList.add('on'); $('mic').textContent = '■ Mic';
-      $('intro').hidden = true; setStatus('Listening to the room'); keepAwake();
+      setStatus('Listening to the room'); keepAwake();
     } catch(e){
       setStatus(e.name === 'NotAllowedError' ? 'Mic permission was blocked. Allow it in your browser settings and tap Mic again.' : 'Could not open the mic: ' + e.message);
     }
-  });
+  }
 
   /* ---------- Demo beat (synth, 124 BPM) ---------- */
   const BPM = 124, step = 60/BPM/4, mtof = m => 440*Math.pow(2,(m-69)/12);
@@ -177,16 +203,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       nextT += step; idx++;
     }
   }
-  $('demo').addEventListener('click', () => {
-    if (source === 'demo'){ stopAll(); setStatus('Demo stopped'); return; }
+  $('demo').addEventListener('click', () => source === 'demo' ? (stopAll(), setStatus('Demo stopped')) : startDemo());
+  function startDemo(){
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
     nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
-    $('intro').hidden = true; setStatus('Demo beat · 124 BPM'); keepAwake();
-  });
+    setStatus('Demo beat · 124 BPM'); keepAwake();
+  }
 
   /* ---------- Controls ---------- */
-  document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => setGame(b.dataset.game)));
+  document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => started ? setGame(b.dataset.game) : begin(b.dataset.game)));
   $('again').addEventListener('click', () => startRun());
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
@@ -197,7 +223,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   cv.addEventListener('click', toggleBar);
 
   /* Steering: arrow keys / A-D on desktop, hold the on-screen arrows on touch screens */
-  let keyL = false, keyR = false, steerBtn = 0;
+  let keyL = false, keyR = false, steerBtn = 0, flipKey = 0, flipBtn = 0;
   const hold = (el, dir) => {
     const on = e => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch(_){} steerBtn = dir; el.classList.add('held'); };
     const off = () => { if (steerBtn === dir) steerBtn = 0; el.classList.remove('held'); };
@@ -206,15 +232,52 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     el.addEventListener('contextmenu', e => e.preventDefault());
   };
   hold($('sl'), -1); hold($('sr'), 1);
+  const holdFlip = (el, dir) => {
+    const on = e => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch(_){} flipBtn = dir; el.classList.add('held'); };
+    const off = () => { if (flipBtn === dir) flipBtn = 0; el.classList.remove('held'); };
+    el.addEventListener('pointerdown', on);
+    ['pointerup','pointercancel','lostpointercapture'].forEach(ev => el.addEventListener(ev, off));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  };
+  holdFlip($('fb'), 1); holdFlip($('ff'), -1);
+
+  /* Start, pause */
+  let started = false, paused = false, sound = 'demo';
+  document.querySelectorAll('[data-snd]').forEach(b => b.addEventListener('click', () => {
+    sound = b.dataset.snd; document.querySelectorAll('[data-snd]').forEach(x => x.setAttribute('aria-pressed', x === b)); }));
+  async function begin(g){
+    started = true; $('start').hidden = true; $('pz').hidden = false;
+    if (source === 'idle'){ if (sound === 'mic') await startMic(); else startDemo(); }
+    setGame(g);
+  }
+  $('goPlay').addEventListener('click', () => begin('compete'));
+  $('goWatch').addEventListener('click', () => begin('auto'));
+  $('againWatch').addEventListener('click', () => setGame('auto'));
+  function setPaused(v){
+    if (v === paused || !started) return;
+    paused = v; $('paused').hidden = !v; $('pause').textContent = v ? '▶ Resume' : '❚❚ Pause'; $('pz').textContent = v ? '▶' : '❚❚';
+    if (ac) (v ? ac.suspend() : ac.resume()).catch(() => {});
+  }
+  $('pause').addEventListener('click', () => setPaused(!paused));
+  $('pz').addEventListener('click', () => setPaused(!paused));
+  $('resume').addEventListener('click', () => setPaused(false));
+  $('quit').addEventListener('click', () => { setPaused(false); setGame('auto'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && game === 'compete' && !over) setPaused(true); });
   document.addEventListener('keyup', e => {
     if (e.key === 'ArrowLeft' || e.key === 'a') keyL = false;
     if (e.key === 'ArrowRight' || e.key === 'd') keyR = false;
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'ArrowDown' || e.key === 's') flipKey = 0;
   });
-  addEventListener('blur', () => { keyL = keyR = false; steerBtn = 0; });
+  addEventListener('blur', () => { keyL = keyR = false; steerBtn = 0; flipKey = 0; flipBtn = 0; });
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft' || e.key === 'a'){ keyL = true; e.preventDefault(); }
     if (e.key === 'ArrowRight' || e.key === 'd'){ keyR = true; e.preventDefault(); }
+    if (e.key === 'ArrowUp' || e.key === 'w'){ flipKey = 1; e.preventDefault(); }
+    if (e.key === 'ArrowDown' || e.key === 's'){ flipKey = -1; e.preventDefault(); }
     if (e.key === 'h') toggleBar();
+    if (!started){ if (e.key === 'Enter') begin('compete'); return; }
+    if (e.key === 'p' || e.key === 'Escape') setPaused(!paused);
+    if (paused) return;
     if (e.key === '1') setGame('auto');
     if (e.key === '2') setGame('compete');
     if (e.key === 'Enter' && over) startRun();
@@ -224,10 +287,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const sm = { b:0, m:0, h:0 }; let pulse = 0, prevB = 0, avgB = 0, beats = [], bpm = 0;
   let snare = 0, hatHit = 0, avgM = 0, avgH = 0, prevM = 0, prevH = 0, lastSn = 0, lastHt = 0;
   const band = (lo,hi) => { let s=0; for (let i=lo;i<hi;i++) s+=freq[i]; return s/((hi-lo)*255); };
-  function idleData(t){
-    for (let i=0;i<1024;i++){ const fall = Math.max(0,1-i/380); freq[i] = 255*fall*(.3+.22*Math.sin(t*1.4+i*.08)+.12*Math.sin(t*.6+i*.29))*.2; }
-    for (let i=0;i<2048;i++) wave[i] = 128 + 12*Math.sin(i*.014+t*2.2)*Math.sin(t*.5+i*.002);
-  }
+  function idleData(){ freq.fill(0); wave.fill(128); }   // no sound source: nothing moves to the music
+  let gate = 0;
   let hudT = 0, lastA = 0;
   function analyse(t){
     const adt = Math.min(.1, t - lastA || .016); lastA = t;
@@ -235,14 +296,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // soft-compress so loud music never pins at 1.0 and the sky keeps some range
     // automatic gain: quiet mic input is lifted toward the same range as a loud track
     const lvl = band(1,240);
-    agcPeak = Math.max(lvl, agcPeak*Math.exp(-adt*.35), .025);
-    gainK = Math.max(1, Math.min(10, .32/agcPeak));
+    agcPeak = Math.max(lvl, agcPeak*Math.exp(-adt*.35), .05);
+    gainK = Math.max(1, Math.min(4, .32/agcPeak));
+    // noise gate: below a whisper everything settles to rest instead of chasing hiss
+    gate += ((lvl > .03 ? 1 : lvl > .012 ? (lvl - .012)/.018 : 0) - gate)*Math.min(1, adt*10);
     const comp = x => 1 - Math.exp(-x*1.8), rb = band(1,6);
-    const b = comp(band(1,9)*gainK), m = comp(band(9,90)*gainK*1.3), h = comp(band(90,420)*gainK*2.2);
+    const b = comp(band(1,9)*gainK)*gate, m = comp(band(9,90)*gainK*1.3)*gate, h = comp(band(90,420)*gainK*2.2)*gate;
     sm.b += (b-sm.b)*.4; sm.m += (m-sm.m)*.25; sm.h += (h-sm.h)*.25;
     // beat = kick energy jumping above its own recent average
     avgB += (rb - avgB)*.03;
-    if (rb > avgB*1.25 + .006 && rb > .02 && rb > prevB && (!beats.length || t - beats[beats.length-1] > .28)){
+    if (gate > .5 && rb > avgB*1.25 + .006 && rb > .02 && rb > prevB && (!beats.length || t - beats[beats.length-1] > .28)){
       pulse = 1; beats.push(t); if (beats.length > 12) beats.shift();
       if (beats.length > 4){ const iv = []; for (let i=1;i<beats.length;i++) iv.push(beats[i]-beats[i-1]); iv.sort((a,b)=>a-b);
         let v = 60/iv[iv.length>>1]; while (v < 80) v *= 2; while (v > 180) v /= 2; bpm = Math.round(v); }
@@ -252,8 +315,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // snare-ish hits in the mids and hi-hats in the highs drive their own accents
     const rm = band(18,70), rh = band(150,420);
     avgM += (rm - avgM)*.05; avgH += (rh - avgH)*.08;
-    if (rm > avgM*1.35 + .004 && rm > prevM && t - lastSn > .15){ snare = 1; lastSn = t; }
-    if (rh > avgH*1.4 + .003 && rh > prevH && t - lastHt > .08){ hatHit = 1; lastHt = t; }
+    if (gate > .5 && rm > avgM*1.35 + .004 && rm > prevM && t - lastSn > .15){ snare = 1; lastSn = t; }
+    if (gate > .5 && rh > avgH*1.4 + .003 && rh > prevH && t - lastHt > .08){ hatHit = 1; lastHt = t; }
     prevM = rm; prevH = rh; snare *= .86; hatHit *= .8;
     let pk = 0, pi = 0; for (let i=2;i<600;i++) if (freq[i] > pk){ pk = freq[i]; pi = i; }
     if (t - hudT > .12){ hudT = t;
@@ -275,7 +338,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   /* The ride — the ground rolls steadily; the sky answers the music.
      Sky values rise fast on hits and fall slowly, so beats read clearly without flicker. */
   let skyT = 0, sunSpin = 0, travel = 0, cycX = 1.5, cycV = 0, laneTarget = 1.5, laneT = 5, manualT = 0, trail = [], lean = 0, ripples = [];
-  let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
+  let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, beatN = 0, spawnBeats = 0, seeded = false;
@@ -300,6 +363,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
     $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+  const FLIP_RATE = 13;   // radians per second while a flip control is held
   const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
   const laneW = () => Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
   const sky = { b:0, m:0, h:0, bands: new Float32Array(48) };
@@ -320,7 +384,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function drawGrid(dt){
     const hz = H*(H > W ? .48 : .58), vp = W/2;
     sky.b = ease(sky.b, sm.b, dt); sky.m = ease(sky.m, sm.m, dt); sky.h = ease(sky.h, sm.h, dt);
-    for (let i=0;i<48;i++){ const bin = Math.floor(Math.pow(i/48,1.6)*420)+2; sky.bands[i] = ease(sky.bands[i], 1 - Math.exp(-freq[bin]/255*gainK*(1+i/24)*1.4), dt); }
+    for (let i=0;i<48;i++){ const bin = Math.floor(Math.pow(i/48,1.6)*420)+2; sky.bands[i] = ease(sky.bands[i], (1 - Math.exp(-freq[bin]/255*gainK*(1+i/24)*1.4))*gate, dt); }
     skyT += dt*(reduce ? .05 : .15 + sky.m*.3);
     const hit = pulse;   // 1 on a detected beat, decays quickly
 
@@ -482,22 +546,43 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
-        airborne = true; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0;
+        airborne = true; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0; flipA = 0; autoFlipDir = 0;
+        // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
+        if (autoDrive && Math.random() < .55){
+          const T = (vy + Math.sqrt(vy*vy + 10*Math.max(alt, 0)))/5, n = Math.min(2, Math.floor((T - .18)*FLIP_RATE/(Math.PI*2)));
+          if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
+        }
         if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
     if (airborne){
       vy -= 5*dt; alt += vy*dt; airT += dt;
-      if (alt <= 0){ alt = 0; vy = 0; airborne = false; jumps++; if (ripples.length < 4) ripples.push(0);
-        // score: base + airtime, multiplied by the combo; every landing adds speed
-        boost = Math.min(2.4, boost + .3);
-        if (scoring){
-          combo++;
-          const pts = Math.round((100 + airT*200) * combo / 10) * 10;
-          score += pts; pop('+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
-        } }
+      // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
+      const fdir = flipKey || flipBtn || autoFlipDir;
+      if (fdir) flipA += fdir*FLIP_RATE*dt;
+      if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; }
+      if (alt <= 0){
+        alt = 0; vy = 0; airborne = false; jumps++; if (ripples.length < 4) ripples.push(0);
+        const turns = Math.round(flipA/(Math.PI*2)), off = Math.abs(flipA - turns*Math.PI*2), n = Math.abs(turns);
+        flipA = 0; autoFlipDir = 0;
+        const trick = n ? (n === 2 ? 'DOUBLE ' : n >= 3 ? 'TRIPLE ' : '') + (turns > 0 ? 'BACKFLIP' : 'FRONT FLIP') : '';
+        if (off > .65){
+          // landed crooked: wipeout
+          flash = 1; pop('WIPEOUT', RD);
+          if (scoring){ lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); if (lives <= 0) gameOver(); }
+        } else {
+          boost = Math.min(2.4, boost + .3);
+          if (scoring){
+            // score: base + airtime, plus 400 per full flip, all multiplied by the combo
+            combo++;
+            const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
+            score += pts; pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+          } else if (trick) pop(trick, OR);
+        }
+      }
     }
+    if (airborne !== wasAir){ wasAir = airborne; $('steer').classList.toggle('air', airborne); }
     pitch += (Math.atan2(vy, spd*2.2) - pitch)*Math.min(1, dt*8);
 
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
@@ -558,7 +643,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     poly(zs.map(Z => P(xl, Z, hAt(Z))).concat(zs.slice().reverse().map(Z => P(xr, Z, hAt(Z)))), '#0b2a36');
     // light strip along the wall and rails along the floor, pulsing with the music
     glowLine(OR, .75 + hit*.25, 1.6 + hit*1.5); line(zs.map(Z => P(xw, Z, hAt(Z)*.5))); gstroke();
-    glowLine(CY, .85, 1.4); line(zs.map(Z => P(xl + .06, Z, hAt(Z)))); gstroke(); line(zs.map(Z => P(xr - .06, Z, hAt(Z)))); gstroke();
+    glowLine(CY, .55 + hatHit*.45, 1.4 + hatHit); line(zs.map(Z => P(xl + .06, Z, hAt(Z)))); gstroke(); line(zs.map(Z => P(xr - .06, Z, hAt(Z)))); gstroke();
+    // light panels along the wall: kick, snare and hi-hat each light their own panels, and the pattern steps along every beat
+    for (let k = Math.ceil(za + travel); k <= zb + travel; k++){
+      const Z = k - travel, h = hAt(Z); if (h > -.3 || Z < .6) continue;
+      const ph = (k + beatN) % 4, on = ph === 0 ? hit : ph === 2 ? snare : hatHit*.7;
+      poly([P(xw, Z, h*.8), P(xw, Z, h*.25), P(xw, Z + .5, h*.25), P(xw, Z + .5, h*.8)], rgba(ph === 0 ? OR : CY, .12 + on*.85));
+    }
     // floor ribs that line up with the grid above
     ctx.lineWidth = 1;
     for (let k = Math.ceil(za + travel); k <= zb + travel; k++){
@@ -573,6 +664,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (rb > ra){
       // glass roof flush with the floor; the grid continues across it
       poly([P(xl,ra), P(xr,ra), P(xr,rb), P(xl,rb)], rgba(CY, .16 + hit*.08));
+      // the roof glows from below while you ride through
+      if (inTunnel === t && alt < -.02) poly([P(xl,ra), P(xr,ra), P(xr,rb), P(xl,rb)], rgba(OR, .08 + hit*.3 + snare*.15));
       ctx.lineWidth = 1.2;
       for (let k = Math.ceil(ra + travel); k <= rb + travel; k++){
         const Z = k - travel; ctx.strokeStyle = rgba(CY, Math.min(.9, .9/Z*(1 + sky.b*.9 + hit*1.4)));
@@ -633,9 +726,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function drawCycle(P, CZ, hit, mirror){
     const cl = Math.cos(lean), sl = Math.sin(lean);
     // local (x lateral, y up, z forward) -> screen, with lean around the contact line
-    const cp = Math.cos(pitch), sp = Math.sin(pitch), zc = .75*S, m = mirror ? -1 : 1;
+    const ang = pitch + flipA, cp = Math.cos(ang), sp = Math.sin(ang), zc = .75*S, yc = .42*S, m = mirror ? -1 : 1;
     const Q = (x,y,z) => { x*=S; y*=S; z*=S;
-      const dz = z - zc, z2 = zc + dz*cp - y*sp, y2 = dz*sp + y*cp;      // pitch the nose up on ramps and in the air
+      const dz = z - zc, dy = y - yc, z2 = zc + dz*cp - dy*sp, y2 = yc + dz*sp + dy*cp;   // pitch and flips turn about the bike's middle
       return P(cycX + x*cl - y2*sl, CZ + z2, m*(alt + x*sl + y2*cl)); };
     if (mirror) ctx.globalAlpha = .2;
     else if (invuln > 0 && Math.floor(invuln*12) % 2 === 0) ctx.globalAlpha = .3;
@@ -723,9 +816,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let last = 0;
   function frame(ts){
     const t = ts/1000, dt = Math.min(.05, t-last || .016); last = t;
-    analyse(t);
-    ctx.globalCompositeOperation = 'source-over';
-    drawGrid(dt);
+    if (!paused){
+      analyse(t);
+      ctx.globalCompositeOperation = 'source-over';
+      drawGrid(dt);
+    }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
