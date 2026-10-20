@@ -75,6 +75,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .over .how kbd{font-family:var(--mono);border:1px solid rgba(41,243,255,.4);padding:1px 6px;border-radius:2px;color:var(--cyan)}
 .over .snd{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap}
 .over .snd button{margin-top:0}
+.over .pick{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin-top:14px;text-align:left}
+.over .chips{display:flex;gap:6px;flex-wrap:wrap}
+.over .chips button{margin-top:0;padding:8px 10px;min-height:36px;font-size:12px;border-color:rgba(41,243,255,.3);color:var(--white)}
+.over .chips button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.4),0 0 10px rgba(41,243,255,.2) inset}
 .touch{display:none}
 @media (hover:none){.touch{display:inline}.desk{display:none}}
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
@@ -97,9 +101,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <h2>READY TO RIDE</h2>
   <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>↑</kbd> <kbd>↓</kbd> flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
   <p class="how">Land jumps and flips for points. Hit a block or land a flip upside down and you lose a life.</p>
-  <div class="snd" role="group" aria-label="Sound"><span class="lbl">Sound</span>
-    <button type="button" class="ghost" data-snd="demo" aria-pressed="true">Demo beat</button>
-    <button type="button" class="ghost" data-snd="mic" aria-pressed="false">Microphone</button></div>
+  <div class="pick">
+    <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike">Light bike</button><button type="button" data-v="sled">Hover sled</button><button type="button" data-v="mono">Monowheel</button></div>
+    <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset">Sunset grid</button><button type="button" data-v="city">Neon city</button><button type="button" data-v="glacier">Glacier</button></div>
+    <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth">Synthwave</button><button type="button" data-v="dnb">Breakbeat</button><button type="button" data-v="trap">Trap</button></div>
+    <span class="lbl">Sound</span><div class="chips" data-group="sound"><button type="button" data-v="demo">Play the beat</button><button type="button" data-v="mic">Microphone</button></div>
+  </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
 </div></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
@@ -124,6 +131,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   </div>
   <div class="grp">
     <button id="pause" type="button">❚❚ Pause</button>
+    <button id="setup" type="button">⚙ Setup</button>
     <button id="fs" type="button" title="Fullscreen">⛶</button>
   </div>
   <span class="status" id="status">Idle · tap the screen to hide controls</span>
@@ -135,6 +143,20 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const $ = id => document.getElementById(id);
   const cv = $('cv'), ctx = cv.getContext('2d');
   const CY = [41,243,255], OR = [255,122,26], WH = [232,253,255];
+  const WORLDS = {
+    sunset:  { grid:[41,243,255], accent:[255,122,26], mid0:[4,10,24],  mid1:[18,50,84],  hor0:[16,30,50],  hor1:[166,100,100], scene:'mountains' },
+    city:    { grid:[255,70,210], accent:[255,214,64], mid0:[14,4,28],  mid1:[60,18,92],  hor0:[34,10,54],  hor1:[210,64,150],  scene:'city' },
+    glacier: { grid:[120,255,205], accent:[168,140,255], mid0:[2,12,20], mid1:[10,58,72], hor0:[10,32,44],  hor1:[96,176,186],  scene:'glacier' }
+  };
+  let WORLD = WORLDS.sunset;
+  const settings = { vehicle:'bike', world:'sunset', beat:'synth', sound:'demo' };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
+  function applyWorld(w){
+    WORLD = WORLDS[w] || WORLDS.sunset;
+    for (let i=0;i<3;i++){ CY[i] = WORLD.grid[i]; OR[i] = WORLD.accent[i]; }
+    const r = document.documentElement.style;
+    r.setProperty('--cyan', `rgb(${CY.join(',')})`); r.setProperty('--orange', `rgb(${OR.join(',')})`);
+  }
   const rgba = (c,a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -180,27 +202,51 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
 
   /* ---------- Demo beat (synth, 124 BPM) ---------- */
-  const BPM = 124, step = 60/BPM/4, mtof = m => 440*Math.pow(2,(m-69)/12);
+  const mtof = m => 440*Math.pow(2,(m-69)/12);
   const bassLine = [36,36,48,36, 39,39,51,39, 34,34,46,34, 41,41,43,46];
   const arp = [72,75,79,84,79,75];
   let nextT = 0, idx = 0, noise;
+  const stp = () => 60/BEATS[settings.beat].bpm/4;
   function mkNoise(){ const b = ac.createBuffer(1, ac.sampleRate*.3, ac.sampleRate), d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
   function env(node, t, peak, dur){ const g = ac.createGain(); g.gain.setValueAtTime(peak,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); node.connect(g); g.connect(master); return g; }
-  function kick(t){ const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+.13); env(o,t,1,.42); o.start(t); o.stop(t+.45); }
-  function hat(t,open){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,open?.16:.1,open?.2:.04); s.start(t); s.stop(t+.25); }
-  function clap(t){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,.4,.22); s.start(t); s.stop(t+.25); }
-  function bass(t,m){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m);
-    f.type='lowpass'; f.Q.value=8; f.frequency.setValueAtTime(1800,t); f.frequency.exponentialRampToValueAtTime(160,t+.16); o.connect(f); env(f,t,.3,step*1.7); o.start(t); o.stop(t+step*2); }
-  function lead(t,m){ const o = ac.createOscillator(); o.type='square'; o.frequency.value = mtof(m); const f = ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3200; o.connect(f); env(f,t,.05,step*1.5); o.start(t); o.stop(t+step*1.6); }
+  function kick(t, pk = 1){ const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+.13); env(o,t,pk,.42); o.start(t); o.stop(t+.45); }
+  function hat(t,open,pk){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,pk || (open?.16:.1),open?.2:.04); s.start(t); s.stop(t+.25); }
+  function clap(t, pk = .4){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,pk,.22); s.start(t); s.stop(t+.25); }
+  function snareHit(t){ clap(t, .5); const o = ac.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(140,t+.08); env(o,t,.3,.12); o.start(t); o.stop(t+.15); }
+  function bass(t,m,len){ const st = stp(), o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m);
+    f.type='lowpass'; f.Q.value=8; f.frequency.setValueAtTime(1800,t); f.frequency.exponentialRampToValueAtTime(160,t+.16); o.connect(f); env(f,t,.3,(len||1.7)*st); o.start(t); o.stop(t+((len||1.7)+.3)*st); }
+  function reese(t,m,dur){ [-9,9].forEach(d => { const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m); o.detune.value = d;
+    f.type='lowpass'; f.frequency.value = 520; o.connect(f); const g = ac.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.16,t+.03); g.gain.setValueAtTime(.16,t+dur*.8); g.gain.linearRampToValueAtTime(0,t+dur);
+    f.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.02); }); }
+  function sub808(t,m,dur){ const o = ac.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(mtof(m+12),t); o.frequency.exponentialRampToValueAtTime(mtof(m),t+.06); env(o,t,.75,dur); o.start(t); o.stop(t+dur+.05); }
+  function lead(t,m){ const st = stp(), o = ac.createOscillator(); o.type='square'; o.frequency.value = mtof(m); const f = ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3200; o.connect(f); env(f,t,.05,st*1.5); o.start(t); o.stop(t+st*1.6); }
+  // three demo beats; each plays one 16th-note step at a time
+  const BEATS = {
+    synth: { name:'Synthwave', bpm:124, play(s, bar, t, i){
+      if (s % 4 === 0) kick(t);
+      if (s === 4 || s === 12) clap(t);
+      if (s % 2 === 1) hat(t, s === 7 || s === 15);
+      bass(t, bassLine[(Math.floor(s/4) + bar*4) % 16] + (s%4===2 ? 12 : 0));
+      if (bar >= 2) lead(t, arp[i % arp.length] + (bar === 3 ? 3 : 0)); } },
+    dnb: { name:'Breakbeat', bpm:172, play(s, bar, t){
+      if (s === 0 || s === 10 || (bar % 2 && s === 7)) kick(t);
+      if (s === 4 || s === 12) snareHit(t);
+      if (bar === 3 && s === 15) snareHit(t);
+      hat(t, s === 14, s % 2 ? .06 : .11);
+      if (s === 0) reese(t, [38,38,41,36][bar], stp()*15); } },
+    trap: { name:'Trap', bpm:140, play(s, bar, t){
+      if (s === 0 || s === 11 || (bar % 2 && s === 6)) { kick(t, .8); sub808(t, [31,31,34,29][bar], stp()*(s === 0 ? 7 : 4)); }
+      if (s === 8) snareHit(t);
+      hat(t, false, s % 4 === 0 ? .1 : .06);
+      if (bar === 3 && s >= 12) hat(t + stp()/2, false, .05);   // a roll to end the phrase
+      if (bar % 2 === 0 && s === 14) lead(t, 79); } }
+  };
   function schedule(){
+    const B = BEATS[settings.beat];
     while (nextT < ac.currentTime + .3){
       const s = idx % 16, bar = Math.floor(idx/16) % 4;
-      if (s % 4 === 0) kick(nextT);
-      if (s === 4 || s === 12) clap(nextT);
-      if (s % 2 === 1) hat(nextT, s === 7 || s === 15);
-      bass(nextT, bassLine[(Math.floor(s/4) + bar*4) % 16] + (s%4===2 ? 12 : 0));
-      if (bar >= 2) lead(nextT, arp[idx % arp.length] + (bar === 3 ? 3 : 0));
-      nextT += step; idx++;
+      B.play(s, bar, nextT, idx);
+      nextT += 60/B.bpm/4; idx++;
     }
   }
   $('demo').addEventListener('click', () => source === 'demo' ? (stopAll(), setStatus('Demo stopped')) : startDemo());
@@ -208,7 +254,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
     nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
-    setStatus('Demo beat · 124 BPM'); keepAwake();
+    setStatus(BEATS[settings.beat].name + ' · ' + BEATS[settings.beat].bpm + ' BPM'); keepAwake();
   }
 
   /* ---------- Controls ---------- */
@@ -242,14 +288,26 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   holdFlip($('fb'), 1); holdFlip($('ff'), -1);
 
   /* Start, pause */
-  let started = false, paused = false, sound = 'demo';
-  document.querySelectorAll('[data-snd]').forEach(b => b.addEventListener('click', () => {
-    sound = b.dataset.snd; document.querySelectorAll('[data-snd]').forEach(x => x.setAttribute('aria-pressed', x === b)); }));
+  let started = false, paused = false;
+  // setup choices: vehicle, world, beat and sound; world and vehicle preview straight away behind the card
+  const syncChips = () => document.querySelectorAll('.chips').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', settings[g.dataset.group] === b.dataset.v)));
+  document.querySelectorAll('.chips').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    settings[g.dataset.group] = b.dataset.v; syncChips();
+    try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){}
+    if (g.dataset.group === 'world') applyWorld(settings.world);
+    if (g.dataset.group === 'beat'){ if (source === 'demo'){ idx = 0; nextT = ac.currentTime + .05; setStatus(BEATS[settings.beat].name + ' · ' + BEATS[settings.beat].bpm + ' BPM'); } bpm = 0; beats = []; }
+  })));
+  applyWorld(settings.world); syncChips();
   async function begin(g){
     started = true; $('start').hidden = true; $('pz').hidden = false;
-    if (source === 'idle'){ if (sound === 'mic') await startMic(); else startDemo(); }
+    if (settings.sound === 'mic' && source !== 'mic') await startMic();
+    if (settings.sound === 'demo' && source !== 'demo') startDemo();
     setGame(g);
   }
+  $('setup').addEventListener('click', () => {
+    setPaused(false); if (game === 'compete' && !over) setGame('auto');
+    started = false; $('start').hidden = false; $('pz').hidden = true; $('over').hidden = true;
+  });
   $('goPlay').addEventListener('click', () => begin('compete'));
   $('goWatch').addEventListener('click', () => begin('auto'));
   $('againWatch').addEventListener('click', () => setGame('auto'));
@@ -376,10 +434,50 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       ridge.push(.02 + d*d*(.06 + .05*Math.sin(i*.9) + .03*Math.sin(i*2.7+1))); }
   }
   buildScene();
+  // Neon city skyline: buildings with windows that light up with the part of the spectrum under them
+  const city = [];
+  { let seed = 11; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+    for (let x = 0; x < 1; ){ const w = .025 + rnd()*.04, d = Math.abs(x + w/2 - .5)*2;
+      const h = (.03 + rnd()*.07)*(.45 + d*1.1), wins = [];
+      for (let r = 0; r < 12; r++) for (let c = 0; c < 4; c++) wins.push(rnd());
+      city.push({ x, w, h, wins }); x += w + .004; } }
+  function drawScenery(hz, hit){
+    if (WORLD.scene === 'mountains'){
+      ctx.fillStyle = '#02040a'; ctx.beginPath(); ctx.moveTo(0,hz);
+      ridge.forEach((h,i) => ctx.lineTo(i/80*W, hz - h*H)); ctx.lineTo(W,hz); ctx.closePath(); ctx.fill();
+      glowLine(CY,.75,1.5); ctx.beginPath(); ridge.forEach((h,i) => i ? ctx.lineTo(i/80*W, hz - h*H) : ctx.moveTo(0, hz - h*H)); gstroke();
+    } else if (WORLD.scene === 'city'){
+      for (const b of city){
+        const x0 = b.x*W, bw = b.w*W, bh = b.h*H, y0 = hz - bh;
+        ctx.fillStyle = '#07030d'; ctx.fillRect(x0, y0, bw, bh);
+        const band = sky.bands[Math.min(47, Math.floor(Math.abs(b.x + b.w/2 - .5)*2*47))];
+        const cols = 4, rows = Math.max(2, Math.floor(bh/9)), ww = bw/(cols*2), wh = Math.min(4, bh/(rows*2));
+        for (let r = 0; r < Math.min(rows, 12); r++) for (let c = 0; c < cols; c++){
+          if (b.wins[r*4 + c] > .18 + band*.75) continue;
+          ctx.fillStyle = rgba(r % 3 ? OR : WH, .35 + band*.6); ctx.fillRect(x0 + ww*(c*2 + .5), y0 + 5 + r*wh*2, ww, wh);
+        }
+        glowLine(CY, .6 + hit*.3, 1.2); ctx.beginPath(); ctx.moveTo(x0, hz); ctx.lineTo(x0, y0); ctx.lineTo(x0 + bw, y0); ctx.lineTo(x0 + bw, hz); ctx.stroke();
+      }
+    } else {
+      // glacier: a ringed planet low in the sky and smooth ice dunes
+      const pr = Math.min(W,H)*.09, px = W*.2, py = hz - H*.2;
+      ctx.fillStyle = rgba(OR, .12 + sky.m*.15); ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI*2); ctx.fill();
+      glowLine(OR, .6, 1.4); gstroke();
+      glowLine(WH, .35 + hit*.5, 1.2 + hit); ctx.beginPath(); ctx.ellipse(px, py, pr*1.9, pr*.45, -.3, 0, Math.PI*2); gstroke();
+      for (const [amp, ph, a] of [[.07, 0, .45], [.045, 2, .85]]){
+        ctx.fillStyle = '#020a10'; ctx.beginPath(); ctx.moveTo(0, hz);
+        const pts = []; for (let i=0;i<=60;i++){ const u = i/60, d = Math.abs(u-.5)*2; pts.push([u*W, hz - H*amp*d*(.6 + .4*Math.sin(u*9 + ph))]); }
+        pts.forEach(([x,y]) => ctx.lineTo(x,y)); ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
+        glowLine(CY, a, 1.4); ctx.beginPath(); pts.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); gstroke();
+      }
+    }
+  }
 
   /* Light cycle model, side profile (z forward from the rear, y up), in lane units before scaling */
   const HULL = [[0,.3],[0,.46],[.16,.6],[.5,.53],[.78,.5],[1.04,.64],[1.32,.58],[1.5,.36],[1.5,.3]];
   const WHEELS = [[.3,.28],[1.2,.28]], WR = .27, HALF = .14, S = 1.35;
+  // Hover sled: a low wedge that floats on two thruster pads
+  const SLED = [[0,.22],[0,.4],[.3,.5],[.9,.44],[1.4,.36],[1.75,.26],[1.7,.22]];
 
   function drawGrid(dt){
     const hz = H*(H > W ? .48 : .58), vp = W/2;
@@ -392,8 +490,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const lift = Math.min(1, sky.b*.55 + hit*.3);
     const g = ctx.createLinearGradient(0,0,0,hz);
     g.addColorStop(0, '#02040a');
-    g.addColorStop(.5, `rgb(${4+lift*14|0},${10+lift*40|0},${24+lift*60|0})`);
-    g.addColorStop(1, `rgb(${16+lift*150|0},${30+lift*70|0},${50+lift*50|0})`);
+    const mix = (a, b) => `rgb(${a.map((v,k) => v + (b[k]-v)*lift | 0).join(',')})`;
+    g.addColorStop(.5, mix(WORLD.mid0, WORLD.mid1));
+    g.addColorStop(1, mix(WORLD.hor0, WORLD.hor1));
     ctx.fillStyle = g; ctx.fillRect(0,0,W,hz);
 
     // stars sparkle with the highs
@@ -446,10 +545,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     gstroke();
     glowLine(CY, .2 + hit*.7, 1 + hit*2.5); ctx.beginPath(); ctx.arc(vp, hz, r*(1.25 + sky.b*.35 + hit*.15), Math.PI, 0); gstroke();
 
-    // static mountain silhouette
-    ctx.fillStyle = '#02040a'; ctx.beginPath(); ctx.moveTo(0,hz);
-    ridge.forEach((h,i) => ctx.lineTo(i/80*W, hz - h*H)); ctx.lineTo(W,hz); ctx.closePath(); ctx.fill();
-    glowLine(CY,.75,1.5); ctx.beginPath(); ridge.forEach((h,i) => i ? ctx.lineTo(i/80*W, hz - h*H) : ctx.moveTo(0, hz - h*H)); gstroke();
+    drawScenery(hz, hit);
 
     // ground in true perspective; steady speed
     ctx.fillStyle = '#02040a'; ctx.fillRect(0,hz,W,H-hz);
@@ -684,6 +780,30 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (zb > za){ glowLine(CY, .95, 1.8 + hit*1.5); line([P(xl,za), P(xl,zb), P(xr,zb), P(xr,za), P(xl,za)]); gstroke(); }
   }
 
+  function drawMono(Q, path, mirror, hit, near){
+    // Monowheel: the rider sits inside one big ring; spokes spin with the distance travelled
+    const C = [.75, .46], R = .44;
+    const ring = (x, rr) => { const pts = []; for (let k=0;k<=36;k++){ const a = k/36*Math.PI*2; pts.push(Q(x, C[1] + Math.sin(a)*rr, C[0] + Math.cos(a)*rr)); } return pts; };
+    path(ring(-near*.6, R)); ctx.closePath(); ctx.fillStyle = 'rgba(4,7,12,.75)'; ctx.fill(); glowLine(CY, .5, 2); gstroke();
+    const spin = travel*2.4;
+    glowLine(CY, .55, 1.2); ctx.beginPath();
+    for (let k=0;k<6;k++){ const a = spin + k/6*Math.PI*2, p1 = Q(0, C[1] + Math.sin(a)*R*.62, C[0] + Math.cos(a)*R*.62), p2 = Q(0, C[1] + Math.sin(a)*R*.95, C[0] + Math.cos(a)*R*.95);
+      ctx.moveTo(p1[0],p1[1]); ctx.lineTo(p2[0],p2[1]); }
+    ctx.stroke();
+    if (!mirror){
+      // rider and seat inside the ring
+      path([Q(-.1,.3,.55), Q(.1,.3,.55), Q(.1,.36,.95), Q(-.1,.36,.95)]); ctx.closePath(); ctx.fillStyle = '#0d1820'; ctx.fill(); glowLine(OR,.9,1.4); gstroke();
+      path([Q(-.09,.38,.6), Q(.09,.38,.6), Q(.07,.62,.88), Q(-.07,.62,.88)]); ctx.closePath(); ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.6,1); gstroke();
+      const [hx,hy] = Q(0,.68,.95), hrad = laneW()*S*.11/(2.5+.6);
+      ctx.beginPath(); ctx.arc(hx,hy,hrad,0,Math.PI*2); ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.8,1.2); gstroke();
+    }
+    // near rim: thick, bright, with a tread that flashes on beats
+    path(ring(near*.6, R)); glowLine(CY, 1, 3.4 + hit*1.5); gstroke();
+    path(ring(near*.6, R*.86)); glowLine(OR, .6 + hit*.4, 1.2); ctx.stroke();
+    if (!mirror){ const t1 = Q(-.08, C[1] - R*.2, C[0] - R - .01), t2 = Q(.08, C[1] - R*.2, C[0] - R - .01);
+      glowLine(hit > .3 ? WH : OR, 1, 2.5 + hit*2.5); ctx.beginPath(); ctx.moveTo(t1[0],t1[1]); ctx.lineTo(t2[0],t2[1]); gstroke(); }
+  }
+
   function drawBlock(r, P, hit){
     const z0 = r.z - travel, z1 = z0 + BL;
     if (z0 < .5) return;
@@ -727,7 +847,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const cl = Math.cos(lean), sl = Math.sin(lean);
     // local (x lateral, y up, z forward) -> screen, with lean around the contact line
     const ang = pitch + flipA, cp = Math.cos(ang), sp = Math.sin(ang), zc = .75*S, yc = .42*S, m = mirror ? -1 : 1;
-    const Q = (x,y,z) => { x*=S; y*=S; z*=S;
+    const veh = settings.vehicle, hull = veh === 'sled' ? SLED : HULL, bob = veh === 'sled' ? Math.sin(skyT*9)*.02 + sky.b*.03 : 0;
+    const Q = (x,y,z) => { y += bob; x*=S; y*=S; z*=S;
       const dz = z - zc, dy = y - yc, z2 = zc + dz*cp - dy*sp, y2 = yc + dz*sp + dy*cp;   // pitch and flips turn about the bike's middle
       return P(cycX + x*cl - y2*sl, CZ + z2, m*(alt + x*sl + y2*cl)); };
     if (mirror) ctx.globalAlpha = .2;
@@ -743,12 +864,22 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       ctx.fillStyle = fg; ctx.fillRect(gx-gr, gy-gr, gr*2, gr*2);
     }
 
-    const side = x => HULL.map(([z,y]) => Q(x,y,z));
+    if (veh === 'mono'){ drawMono(Q, path, mirror, hit, near); ctx.globalAlpha = 1; return; }
+    const side = x => hull.map(([z,y]) => Q(x,y,z));
     const wheel = (x,[cz,cy]) => { const pts = []; for (let k=0;k<=28;k++){ const a = k/28*Math.PI*2; pts.push(Q(x, cy + Math.sin(a)*WR, cz + Math.cos(a)*WR)); } return pts; };
 
     // far side, wheels, then top surface and near side so the outline reads as one solid body
     path(side(far)); ctx.closePath(); ctx.fillStyle = '#060a10'; ctx.fill();
-    WHEELS.forEach(w => {
+    if (veh === 'sled'){
+      // thruster pads: glowing slabs under the hull that pulse with the bass
+      for (const [z0, z1] of [[.15,.55],[1.05,1.45]]){
+        const g = .45 + sky.b*.5 + hit*.3;
+        path([Q(-HALF*.8,.06,z0), Q(HALF*.8,.06,z0), Q(HALF*.8,.06,z1), Q(-HALF*.8,.06,z1)]); ctx.closePath(); ctx.fillStyle = rgba(CY, g*.6); ctx.fill();
+        path([Q(-HALF*.8,.06,z0), Q(-HALF*.8,.22,z0), Q(HALF*.8,.22,z0), Q(HALF*.8,.06,z0)]); ctx.closePath(); ctx.fillStyle = rgba(CY, g*.35); ctx.fill();
+        glowLine(CY, g, 1.6); path([Q(near,.06,z0), Q(near,.06,z1)]); gstroke();
+      }
+    }
+    else WHEELS.forEach(w => {
       path(wheel(0, w)); ctx.closePath(); ctx.fillStyle = '#04070c'; ctx.fill();
       glowLine(CY,1,3.2); gstroke();
       path(wheel(0, [w[0], w[1]]).map(([x,y],i,a) => [x + (a[0][0]-x)*0, y])); // keep path for inner ring below
@@ -756,10 +887,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       path(inner); glowLine(CY,.45,1.2); ctx.stroke();
     });
     // top surface strips between the two side profiles
-    for (let i=0;i<HULL.length-2;i++){ const [z1,y1] = HULL[i+1], [z2,y2] = HULL[i+2];
+    for (let i=0;i<hull.length-2;i++){ const [z1,y1] = hull[i+1], [z2,y2] = hull[i+2];
       path([Q(-HALF,y1,z1), Q(HALF,y1,z1), Q(HALF,y2,z2), Q(-HALF,y2,z2)]); ctx.closePath(); ctx.fillStyle = i % 2 ? '#13212b' : '#182a35'; ctx.fill(); }
     // rear face with the tail light
-    path([Q(-HALF,.3,0), Q(HALF,.3,0), Q(HALF,.46,0), Q(-HALF,.46,0)]); ctx.closePath(); ctx.fillStyle = '#0a1118'; ctx.fill();
+    const ry0 = hull[0][1], ry1 = hull[1][1];
+    path([Q(-HALF,ry0,0), Q(HALF,ry0,0), Q(HALF,ry1,0), Q(-HALF,ry1,0)]); ctx.closePath(); ctx.fillStyle = '#0a1118'; ctx.fill();
     // near side panel
     const st1 = Q(near,.62,.8), st2 = Q(near,.3,.8);
     const sg2 = ctx.createLinearGradient(st1[0], st1[1], st2[0], st2[1]);
@@ -767,11 +899,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     path(side(near)); ctx.closePath(); ctx.fillStyle = sg2; ctx.fill();
     glowLine(OR,1,2); gstroke();
     // specular highlight along the upper edge of the near panel
-    glowLine(WH,.35,1); path(HULL.slice(2,-2).map(([z,y]) => Q(near,y-.03,z))); ctx.stroke();
+    glowLine(WH,.35,1); path(hull.slice(2,-2).map(([z,y]) => Q(near,y-.03,z))); ctx.stroke();
     // racing stripe along the near side
     glowLine(OR,.8,1.2); path([[.12,.4],[.5,.43],[.9,.44],[1.3,.44]].map(([z,y]) => Q(near*1.02,y,z))); gstroke();
     // spine along the top centre
-    glowLine(OR,.7,1.2); path(HULL.slice(1,-1).map(([z,y]) => Q(0,y+.005,z))); gstroke();
+    glowLine(OR,.7,1.2); path(hull.slice(1,-1).map(([z,y]) => Q(0,y+.005,z))); gstroke();
     if (mirror){ ctx.globalAlpha = 1; return; }
     // rider: hunched torso and helmet, low over the cowl
     path([Q(-.09,.52,.32), Q(.09,.52,.32), Q(.07,.72,.86), Q(-.07,.72,.86)]); ctx.closePath();
@@ -779,7 +911,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const [hx,hy] = Q(0,.76,.92), hrad = laneW()*S*.11/(CZ+.6);
     ctx.beginPath(); ctx.arc(hx,hy,hrad,0,Math.PI*2); ctx.fillStyle = '#0b121a'; ctx.fill(); glowLine(CY,.8,1.2); gstroke();
     // tail light bar flashes on beats
-    const t1 = Q(-HALF*.8,.4,-.01), t2 = Q(HALF*.8,.4,-.01);
+    const ty = (ry0 + ry1)/2, t1 = Q(-HALF*.8,ty,-.01), t2 = Q(HALF*.8,ty,-.01);
     glowLine(hit > .3 ? WH : OR, 1, 2.5 + hit*2.5); ctx.beginPath(); ctx.moveTo(t1[0],t1[1]); ctx.lineTo(t2[0],t2[1]); gstroke();
     ctx.globalAlpha = 1;
   }
