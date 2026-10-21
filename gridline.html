@@ -106,8 +106,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aether</span></button></div>
-    <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="dnb"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 2l3 5M16 2l-3 5"/></svg><span>Breakbeat</span></button><button type="button" data-v="metal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>Metal</span></button></div>
-    <span class="lbl">Sound</span><div class="chips" data-group="sound"><button type="button" data-v="demo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><span>Play the beat</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
+    <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="dnb"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 2l3 5M16 2l-3 5"/></svg><span>Breakbeat</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
 </div></div>
@@ -123,8 +122,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
 <div class="bar hide" id="bar">
   <div class="grp">
-    <button id="mic" class="go" type="button">● Mic</button>
-    <button id="demo" type="button">▶ Demo</button>
+    <button id="mic" class="go" type="button" hidden>● Mic</button>
+    <button id="demo" type="button" hidden>▶ Demo</button>
   </div>
   <div class="grp" role="group" aria-label="Mode">
     <span class="lbl">Mode</span>
@@ -151,10 +150,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     aether:  { grid:[120,255,205], accent:[168,140,255], mid0:[4,6,22],  mid1:[24,30,80], hor0:[6,8,26],    hor1:[40,46,110],   scene:'aether' }
   };
   let WORLD = WORLDS.sunset;
-  const settings = { vehicle:'bike', world:'sunset', beat:'synth', sound:'demo' };
+  const settings = { vehicle:'bike', world:'sunset', beat:'synth' };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
-  if (!['synth','dnb','metal'].includes(settings.beat)) settings.beat = 'synth';
+  if (!['synth','dnb','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
+  delete settings.sound;
   if (!['sunset','city','aether'].includes(settings.world)) settings.world = 'aether';
   const VHW = () => ({ bike:.18, board:.2, buggy:.42 })[settings.vehicle];   // half-width for collisions
   function applyWorld(w){
@@ -218,7 +218,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function kick(t, pk = 1, dur = .42){ const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+Math.min(.13, dur*.6)); env(o,t,pk,dur); o.start(t); o.stop(t+dur+.03); }
   function hat(t,open,pk){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,pk || (open?.16:.1),open?.2:.04); s.start(t); s.stop(t+.25); }
   function clap(t, pk = .4){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,pk,.22); s.start(t); s.stop(t+.25); }
-  function snareHit(t){ clap(t, .5); const o = ac.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(140,t+.08); env(o,t,.3,.12); o.start(t); o.stop(t+.15); }
+  function snareHit(t, v = 1){ clap(t, .5*v); const o = ac.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(140,t+.08); env(o,t,.3*v,.12); o.start(t); o.stop(t+.15); }
   function bass(t,m,len){ const st = stp(), o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m);
     f.type='lowpass'; f.Q.value=8; f.frequency.setValueAtTime(1800,t); f.frequency.exponentialRampToValueAtTime(160,t+.16); o.connect(f); env(f,t,.3,(len||1.7)*st); o.start(t); o.stop(t+((len||1.7)+.3)*st); }
   function reese(t,m,dur){ [-9,9].forEach(d => { const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m); o.detune.value = d;
@@ -238,38 +238,79 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const g = ac.createGain(); g.gain.setValueAtTime(.5,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g); g.connect(d); o.start(t); o.stop(t+dur+.02); }); }
   function crash(t){ const s = ac.createBufferSource(); s.buffer = noise; s.loop = true; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 5000; s.connect(f); env(f,t,.2,1.1); s.start(t); s.stop(t+1.2); }
   function lead(t,m){ const st = stp(), o = ac.createOscillator(); o.type='square'; o.frequency.value = mtof(m); const f = ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3200; o.connect(f); env(f,t,.05,st*1.5); o.start(t); o.stop(t+st*1.6); }
-  // three demo beats; each plays one 16th-note step at a time
+  // ---------- song engine: each beat plays a 32-bar arrangement (intro, groove, build, drop, breakdown, build),
+  // and every pass moves to a new key and rewrites its melody, so the music keeps growing
+  const MINOR = [0,2,3,5,7,8,10];
+  const section = bar => { const b = bar % 32; return b < 4 ? 'intro' : b < 12 ? 'groove' : b < 16 ? 'build' : b < 24 ? 'drop' : b < 28 ? 'break' : 'build2'; };
+  const hash3 = (a, b, c) => { const x = Math.sin(a*127.1 + b*311.7 + c*74.7)*43758.5453; return x - Math.floor(x); };
+  function pad(t, root, dur, cut, lvl = .028){
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cut; const g = ac.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + Math.min(.4, dur*.3)); g.gain.setValueAtTime(lvl, t + dur*.8); g.gain.linearRampToValueAtTime(0, t + dur);
+    f.connect(g); g.connect(master);
+    [0,3,7,12].forEach(iv => [-7,7].forEach(d => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(root + iv); o.detune.value = d; o.connect(f); o.start(t); o.stop(t + dur + .05); }));
+  }
+  function riser(t, dur){
+    const s = ac.createBufferSource(); s.buffer = noise; s.loop = true;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 4; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(7000, t + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(.18, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + .05);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + .1);
+  }
+  function pluck(t, m, lvl = .06){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = mtof(m);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(4000, t); f.frequency.exponentialRampToValueAtTime(400, t + .25); o.connect(f); env(f, t, lvl, .3); o.start(t); o.stop(t + .35); }
+  // a melody that stays the same within a pass and changes on the next one
+  function tune(pass, bar, s, root){
+    if (hash3(pass, bar % 4, s) > .42) return null;
+    return root + 24 + MINOR[Math.floor(hash3(pass + 9, bar % 2, s)*7)] + (hash3(pass, s, 3) > .8 ? 12 : 0);
+  }
   const BEATS = {
-    synth: { name:'Synthwave', bpm:124, play(s, bar, t, i){
-      if (s % 4 === 0) kick(t);
-      if (s === 4 || s === 12) clap(t);
-      if (s % 2 === 1) hat(t, s === 7 || s === 15);
-      bass(t, bassLine[(Math.floor(s/4) + bar*4) % 16] + (s%4===2 ? 12 : 0));
-      if (bar >= 2) lead(t, arp[i % arp.length] + (bar === 3 ? 3 : 0)); } },
-    dnb: { name:'Breakbeat', bpm:172, play(s, bar, t){
-      if (s === 0 || s === 10 || (bar % 2 && s === 7)) kick(t);
-      if (s === 4 || s === 12) snareHit(t);
-      if (bar === 3 && s === 15) snareHit(t);
-      hat(t, s === 14, s % 2 ? .06 : .11);
-      if (s === 0) reese(t, [38,38,41,36][bar], stp()*15); } },
-    metal: { name:'Metal', bpm:150, play(s, bar, t){
-      const gallop = bar % 2 === 1;
-      if (gallop ? s % 4 !== 1 : s % 2 === 0) kick(t, s % 4 === 0 ? 1 : .55, s % 4 === 0 ? .2 : .1);   // tight double-kick so each hit stands out   // double kick, galloping every other bar
-      if (s === 4 || s === 12) snareHit(t);
-      if (s === 0 && bar % 2 === 0) crash(t); else if (s % 2 === 0) hat(t, false, .07);
-      const riff = [40,40,0,40, 40,0,43,0, 40,40,0,40, 46,0,45,43], n = riff[s];
-      if (n) power(t, n + (bar === 3 ? 5 : 0), n === 40 ? stp()*.8 : stp()*1.8); } }
+    synth: { name:'Synthwave', bpm:124, prog:[45,41,48,43], play(s, bar, t){
+      const sec = section(bar), pass = Math.floor(bar/32), b32 = bar % 32, st = stp();
+      const root = this.prog[bar % 4] + [0,3,5,7][pass % 4] - 12, full = sec === 'drop', last = b32 === 15 || b32 === 31;
+      if (s === 0 && (b32 === 4 || b32 === 16)) crash(t);
+      if (sec !== 'break' && (sec !== 'intro' || s === 0) && s % 4 === 0) kick(t);
+      if (sec === 'break' && s === 0 && bar % 2 === 0) kick(t, .6);
+      if (last && s >= 8) clap(t, .2 + (s - 8)*.04);                       // snare roll into the next section
+      else if (sec !== 'intro' && sec !== 'break' && (s === 4 || s === 12)) clap(t);
+      if (sec === 'intro' ? s % 4 === 2 : full ? true : s % 2 === 1) hat(t, s === 7 || s === 15, full ? (s % 2 ? .1 : .06) : undefined);
+      if (sec !== 'intro' && sec !== 'break' && s % 2 === 0) bass(t, root - 12 + (full && s % 4 === 2 ? 12 : 0));
+      if (sec === 'break' && s === 0) sub808(t, root - 12, st*15);
+      if (s === 0 && sec !== 'groove') pad(t, root + 12, st*16, sec === 'intro' ? 600 + b32*300 : full ? 2600 : 1400);
+      if (full || sec === 'build2') lead(t, root + 24 + [0,3,7,12,7,3][(s + pass) % 6]);
+      if (sec === 'groove' && b32 >= 8){ const n = tune(pass, bar, s, root); if (n) pluck(t, n); }
+      if (full && s % 2 === 0){ const n = tune(pass + 1, bar, s, root); if (n) pluck(t, n + 12, .05); }
+      if (s === 0 && (b32 === 12 || b32 === 28)) riser(t, st*64);
+    } },
+    dnb: { name:'Breakbeat', bpm:172, prog:[38,34,41,36], play(s, bar, t){
+      const sec = section(bar), pass = Math.floor(bar/32), b32 = bar % 32, st = stp();
+      const root = this.prog[Math.floor(bar/2) % 4] + [0,2,5,3][pass % 4], full = sec === 'drop', last = b32 === 15 || b32 === 31;
+      if (s === 0 && (b32 === 4 || b32 === 16)) crash(t);
+      if (sec === 'break'){ if (s === 0) kick(t, .7); if (s === 8) snareHit(t, .7); }
+      else if (sec !== 'intro'){
+        if ((full ? (bar % 2 ? [0,10,11] : [0,2,10]) : [0,10]).includes(s)) kick(t, .9, .25);
+        if (s === 4 || s === 12) snareHit(t);
+        if (full && (s === 7 || s === 9 || s === 14)) snareHit(t, .35);   // ghost notes
+      }
+      if (last && s >= 8) snareHit(t, .3 + (s - 8)*.08);
+      if (sec !== 'break') hat(t, s === 14, full ? (s % 2 ? .07 : .12) : (s % 2 ? .04 : .08));
+      if ((sec === 'groove' || full) && s === 0 && bar % 2 === 0) reese(t, root - 12, st*31);
+      if (sec === 'break' && s === 0 && bar % 2 === 0) sub808(t, root - 12, st*30);
+      if (s === 0 && bar % 2 === 0 && sec !== 'groove') pad(t, root + 12, st*32, full ? 2200 : 900, .022);
+      if ((full || (sec === 'groove' && b32 >= 8)) && s % 2 === 0){ const n = tune(pass + 3, bar, s, root); if (n) pluck(t, n, full ? .06 : .04); }
+      if (s === 0 && (b32 === 12 || b32 === 28)) riser(t, st*64);
+    } }
   };
   function schedule(){
-    const B = BEATS[settings.beat];
+    const B = BEATS[settings.beat]; if (!B) return;
     while (nextT < ac.currentTime + .3){
-      const s = idx % 16, bar = Math.floor(idx/16) % 4;
-      B.play(s, bar, nextT, idx);
+      const bar = Math.floor(idx/16);
+      B.play(idx % 16, bar, nextT);
+      if (idx % 16 === 0) setStatus(B.name + ' · ' + B.bpm + ' BPM · ' + { intro:'intro', groove:'groove', build:'build-up', drop:'drop', break:'breakdown', build2:'build-up' }[section(bar)] + (bar >= 32 ? ' · pass ' + (Math.floor(bar/32) + 1) : ''));
       nextT += 60/B.bpm/4; idx++;
     }
   }
   $('demo').addEventListener('click', () => source === 'demo' ? (stopAll(), setStatus('Demo stopped')) : startDemo());
   function startDemo(){
+    if (!BEATS[settings.beat]) return;
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
     nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
@@ -322,14 +363,19 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     settings[g.dataset.group] = b.dataset.v; syncChips();
     try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){}
     if (g.dataset.group === 'world') applyWorld(settings.world);
-    if (g.dataset.group === 'beat'){ if (source === 'demo'){ idx = 0; nextT = ac.currentTime + .05; setStatus(BEATS[settings.beat].name + ' · ' + BEATS[settings.beat].bpm + ' BPM'); } bpm = 0; beats = []; }
+    if (g.dataset.group === 'beat'){
+      bpm = 0; beats = [];
+      if (settings.beat === 'mic'){ if (started || source !== 'idle') startMic(); }
+      else if (source === 'demo'){ idx = 0; nextT = ac.currentTime + .05; }
+      else if (started || source === 'mic') startDemo();
+    }
   })));
   applyWorld(settings.world); syncChips();
   async function begin(g){
     document.activeElement?.blur?.();
     started = true; $('start').hidden = true; $('pz').hidden = false; $('steer').hidden = false; $('bar').classList.remove('hide'); syncBar();
-    if (settings.sound === 'mic' && source !== 'mic') await startMic();
-    if (settings.sound === 'demo' && source !== 'demo') startDemo();
+    if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
+    else if (source !== 'demo') startDemo();
     setGame(g);
   }
   function toStart(){
@@ -428,6 +474,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   /* The ride — the ground rolls steadily; the sky answers the music.
      Sky values rise fast on hits and fall slowly, so beats read clearly without flicker. */
   let skyT = 0, sunSpin = 0, travel = 0, cycX = 1.5, cycV = 0, laneTarget = 1.5, laneT = 5, manualT = 0, trail = [], lean = 0, ripples = [];
+  let deco = [], nextDeco = 14;
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
@@ -547,8 +594,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // one scale for width and height so the vehicle keeps its proportions on any screen
     const LX = laneW(), K = LX*1.45, Zmin = K / Math.max(40, H - hz);
     // Aether: the road through space curves, rises and falls, and the camera banks into the turns
-    const aeth = WORLD.scene === 'aether', bendOn = aeth && !reduce ? 1 : 0;
-    const cv1 = bendOn*(Math.sin(travel*.045)*1.0 + Math.sin(travel*.017 + 2)*.6), cv2 = bendOn*Math.sin(travel*.031 + 1)*.55;
+    const aeth = WORLD.scene === 'aether', hwy = WORLD.scene === 'city', bendOn = (aeth || hwy) && !reduce ? 1 : 0;
+    // Neon City rolls over gentle hills with soft curves; Aether swings harder and banks
+    const cv1 = bendOn*(aeth ? Math.sin(travel*.045)*1.0 + Math.sin(travel*.017 + 2)*.6 : Math.sin(travel*.03)*.45 + Math.sin(travel*.011 + 1)*.25);
+    const cv2 = bendOn*(aeth ? Math.sin(travel*.031 + 1)*.55 : Math.sin(travel*.07 + .5)*.45);
     const bX = cv1*LX*1.8, bY = cv2*K*.7, roll = -cv1*.09;
     const sx = vp + bX, sy = hz + bY;   // where the road meets the sky
     ctx.save();
@@ -620,7 +669,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     drawScenery(hz, hit, dt, bX, bY);
 
     // ground in true perspective; in Aether only the floating track is drawn
-    if (!aeth){ ctx.fillStyle = '#02040a'; ctx.fillRect(0,hz,W,H-hz); }
+    if (!aeth){ ctx.fillStyle = hwy ? '#05030a' : '#02040a'; ctx.fillRect(0,hz,W,H-hz); }
     const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0; return [vp + X*LX/Z + bX*f, hz + K*(1-h)/Z + bY*f]; };
     const competing = game === 'compete' && !over;
     if (competing){
@@ -648,6 +697,44 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       for (let i=-3;i<=3;i++) zs.forEach((Z,k) => { const [x,y] = P(i, Z); k ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
       ctx.stroke();
       glowLine(OR, .95, 2.4 + hit*2); for (const e of [-TWD, TWD]){ ctx.beginPath(); zs.forEach((Z,k) => { const [x,y] = P(e, Z); k ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }); gstroke(); }
+    } else if (hwy){
+      // asphalt, dashed lane lines that flash on the beat, glowing edge lines and street lights along both sides
+      const TWD = 3.2, zs = []; for (let k=0;k<=40;k++) zs.push(Zmin*.6 + (44 - Zmin*.6)*Math.pow(k/40, 2));
+      const edge = x => zs.map(Z => P(x, Z));
+      for (const [x0, x1, c] of [[-7, -TWD, '#0a0612'], [TWD, 7, '#0a0612'], [-TWD, TWD, '#120c1e']]){
+        ctx.beginPath(); edge(x0).forEach(([x,y],k) => k ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); edge(x1).reverse().forEach(([x,y]) => ctx.lineTo(x,y)); ctx.closePath();
+        ctx.fillStyle = c; ctx.fill();
+      }
+      for (const lx of [-1.07, 1.07]) for (let n=0;n<44;n++){
+        if ((Math.floor(travel) + n) % 2) continue;
+        const Z = n + 1 - frac; if (Z < Zmin*.6) continue;
+        const a = P(lx, Z), b = P(lx, Z + .55);
+        ctx.strokeStyle = rgba(WH, Math.min(.9, 1.3/Z)*(.45 + hit*.55)); ctx.lineWidth = Math.max(1, 5/Z); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+      }
+      glowLine(CY, .95, 2 + sky.b*2); for (const e of [-TWD, TWD]){ ctx.beginPath(); edge(e).forEach(([x,y],k) => k ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); gstroke(); }
+      glowLine(OR, .5, 1); for (const e of [-TWD - .35, TWD + .35]){ ctx.beginPath(); edge(e).forEach(([x,y],k) => k ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.stroke(); }
+      glowLine(WH, Math.min(1, .5 + hit*.3 + snare*.5), 1.5 + hit + snare*2); ctx.beginPath(); ctx.moveTo(0,hz); ctx.lineTo(W,hz); gstroke();
+      // street lights every four units; their lamps take turns flashing on kick and hi-hat
+      for (let n=0;n<46;n++){
+        const k = Math.floor(travel) + n; if (k % 4) continue;
+        const Z = n + 1 - frac; if (Z < .8) continue;
+        for (const sd of [-1, 1]){
+          const base = P(sd*3.9, Z, 0), top = P(sd*3.9, Z, 1.3), arm = P(sd*3.3, Z, 1.3);
+          ctx.strokeStyle = rgba(CY, Math.min(.85, 1.6/Z)); ctx.lineWidth = Math.max(1, 5/Z);
+          ctx.beginPath(); ctx.moveTo(base[0],base[1]); ctx.lineTo(top[0],top[1]); ctx.lineTo(arm[0],arm[1]); ctx.stroke();
+          const on = ((k/4 + beatN) % 2) ? hatHit : hit, lr = Math.max(1.5, LX*.08/Z);
+          ctx.fillStyle = rgba(OR, Math.min(1, .45 + on*.55)); ctx.beginPath(); ctx.arc(arm[0], arm[1] + lr*.5, lr, 0, Math.PI*2); ctx.fill();
+          const pool = P(sd*2.7, Z, 0), pr = LX*.9/Z, pg = ctx.createRadialGradient(pool[0], pool[1], 0, pool[0], pool[1], pr);
+          pg.addColorStop(0, rgba(OR, .08 + on*.12)); pg.addColorStop(1, rgba(OR, 0)); ctx.fillStyle = pg; ctx.fillRect(pool[0]-pr, pool[1]-pr*.4, pr*2, pr*.8);
+        }
+      }
+      // overpasses and billboards come and go
+      while (nextDeco < travel + 46){
+        deco.push(Math.random() < .45 ? { kind:'over', z: nextDeco } : { kind:'sign', z: nextDeco, side: Math.random() < .5 ? -1 : 1 });
+        nextDeco += 9 + Math.random()*10;
+      }
+      deco = deco.filter(d => d.z - travel > .3);
+      deco.slice().sort((a,b) => b.z - a.z).forEach(d => { if (d.kind === 'sign') drawSign(d, P, hit); else if (d.z - travel > CZ + 1) drawOver(d, P, hit); });
     } else {
       for (let n=0;n<44;n++){ const Z = n + 1 - frac, y = hz + K/Z; if (y > H+2) continue;
         ctx.strokeStyle = rgba(CY, Math.min(.9, .9/Z*(1 + sky.b*.9 + hit*1.4))); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
@@ -793,6 +880,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       glowLine(OR,1,2+hit*2.5); ctx.beginPath();
       trail.forEach((p,i) => { const [x,y] = P(p.x, zs[i], p.b + p.h); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }); gstroke();
     }
+    if (hwy) deco.forEach(d => { if (d.kind === 'over' && d.z - travel <= CZ + 1) drawOver(d, P, hit); });
     // the glass roof of the tunnel you're in goes over the bike, so it reads as being below the grid
     if (under && inTunnel) drawTunnelRoof(inTunnel, P, hit);
     sorted.forEach(r => {
@@ -929,6 +1017,35 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     path(sideP(near*1.6)); ctx.closePath(); ctx.fillStyle = sg; ctx.fill(); glowLine(OR,1,2); gstroke();
     WH4.forEach(([cz,r]) => wheel(xw, cz, r, 1));
     if (!mirror){ tailLight(Q(-.21,.36,.03), Q(-.12,.36,.03), hit); tailLight(Q(.12,.36,.03), Q(.21,.36,.03), hit); }
+  }
+
+  function drawOver(o, P, hit){
+    // a highway overpass: deck on two pillars, with an equaliser sign on its face
+    const Z = o.z - travel; if (Z < .35) return;
+    const D = 1, h0 = 1.45, h1 = 1.78, xw = 8;
+    for (const px of [-4.4, 4.4]){
+      poly([P(px - .2, Z + .5, 0), P(px + .2, Z + .5, 0), P(px + .2, Z + .5, h0), P(px - .2, Z + .5, h0)], '#0b0716');
+      glowLine(CY, .5, 1); line([P(px - .2, Z + .5, 0), P(px - .2, Z + .5, h0)]); ctx.stroke();
+    }
+    poly([P(-xw, Z, h0), P(xw, Z, h0), P(xw, Z + D, h0), P(-xw, Z + D, h0)], '#07040e');
+    poly([P(-xw, Z, h0), P(xw, Z, h0), P(xw, Z, h1), P(-xw, Z, h1)], '#140b24');
+    glowLine(CY, .95, 2 + hit*2); line([P(-xw, Z, h0), P(xw, Z, h0)]); gstroke();
+    glowLine(OR, .8, 1.4); line([P(-xw, Z, h1), P(xw, Z, h1)]); gstroke();
+    const sw = 2.6, n = 14;
+    poly([P(-sw/2, Z, h0 + .04), P(sw/2, Z, h0 + .04), P(sw/2, Z, h1 - .04), P(-sw/2, Z, h1 - .04)], '#05020a');
+    for (let i=0;i<n;i++){ const v = sky.bands[Math.floor(i/n*44)], x0 = -sw/2 + .1 + i*(sw - .2)/n, x1 = x0 + (sw - .2)/n*.7;
+      poly([P(x0, Z, h0 + .07), P(x1, Z, h0 + .07), P(x1, Z, h0 + .07 + v*.22), P(x0, Z, h0 + .07 + v*.22)], rgba(i % 3 ? CY : OR, .9)); }
+  }
+  function drawSign(b, P, hit){
+    // a roadside billboard showing the spectrum
+    const Z = b.z - travel; if (Z < .7) return;
+    const x0 = b.side*4.4, x1 = b.side*6.9, h0 = 1.05, h1 = 1.95, mx = (x0 + x1)/2;
+    ctx.strokeStyle = rgba(CY, Math.min(.8, 1.5/Z)); ctx.lineWidth = Math.max(1, 6/Z); line([P(mx, Z, 0), P(mx, Z, h0)]); ctx.stroke();
+    poly([P(x0, Z, h0), P(x1, Z, h0), P(x1, Z, h1), P(x0, Z, h1)], '#0b0616');
+    glowLine(OR, .9, 1.6 + hit*1.5); line([P(x0, Z, h0), P(x1, Z, h0), P(x1, Z, h1), P(x0, Z, h1), P(x0, Z, h0)]); gstroke();
+    const n = 10, lo = Math.min(x0, x1) + .15, wd = Math.abs(x1 - x0) - .3;
+    for (let i=0;i<n;i++){ const v = sky.bands[Math.floor(i/n*44)], a = lo + i*wd/n, c = a + wd/n*.7, top = h0 + .08 + v*(h1 - h0 - .16);
+      poly([P(a, Z, h0 + .08), P(c, Z, h0 + .08), P(c, Z, top), P(a, Z, top)], rgba(i % 2 ? CY : OR, .85)); }
   }
 
   function drawBlock(r, P, hit){
