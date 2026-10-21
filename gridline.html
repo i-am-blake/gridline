@@ -82,6 +82,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .over .pick{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin-top:14px;text-align:left}
 .over .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .over .chips button{margin-top:0;padding:8px 6px;min-height:58px;font-size:11px;flex-direction:column;justify-content:center;gap:5px;line-height:1.15;border-color:rgba(41,243,255,.3);color:var(--white)}
+.vstats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px 8px;margin:2px 0 4px;text-align:center}
+.vstats .st{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.vstats .pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
+.vstats .pips i{width:10px;height:5px;background:rgba(41,243,255,.15)}
+.vstats .pips i.on{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.vstats .perk{grid-column:1/-1;font-size:12px;color:var(--white);letter-spacing:.03em;margin-top:4px}
 .over .pv{display:block;width:100%;height:120px;margin:4px 0 2px}
 .over .chips svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .over .card{max-height:calc(100% - 24px);overflow-y:auto}
@@ -115,6 +121,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <div class="over" id="start"><div class="card">
   <h2>READY TO RIDE</h2>
   <canvas id="pv" class="pv" aria-label="Preview of the selected vehicle"></canvas>
+  <div class="vstats" id="vstats"></div>
   <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↑</kbd> <kbd>↓</kbd> flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
   <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
@@ -166,6 +173,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   delete settings.sound;
   if (!['sunset','city','aether'].includes(settings.world)) settings.world = 'aether';
   const VHW = () => ({ bike:.18, board:.2, buggy:.42 })[settings.vehicle];   // half-width for collisions
+  // each vehicle trades strengths: the bike is fastest, the board jumps and flips best, the buggy steers sharpest and takes more hits
+  const VSTATS = {
+    bike:  { speed:1.12, boostMul:1.35, jump:3.0,  flip:7.5, steer:2.4, lives:3, tol:.65, perk:'Fastest top speed and the biggest boost from every landing.', bars:{ Speed:4, Jump:2, Steer:2, Flips:3, Toughness:2 } },
+    board: { speed:1.0,  boostMul:1.0,  jump:3.5,  flip:9.0, steer:2.1, lives:3, tol:.65, perk:'Highest jumps and quickest flips, but a little slower to turn.', bars:{ Speed:3, Jump:4, Steer:2, Flips:4, Toughness:2 } },
+    buggy: { speed:.95,  boostMul:.9,   jump:2.75, flip:6.0, steer:3.3, lives:4, tol:.95, perk:'Sharpest steering, an extra life and forgiving landings, but heavier in the air.', bars:{ Speed:2, Jump:2, Steer:4, Flips:2, Toughness:4 } }
+  };
+  const VS = () => VSTATS[settings.vehicle];
   function applyWorld(w){
     WORLD = WORLDS[w] || WORLDS.sunset;
     for (let i=0;i<3;i++){ CY[i] = WORLD.grid[i]; OR[i] = WORLD.accent[i]; }
@@ -459,7 +473,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       else if (started || source === 'mic') startDemo();
     }
   })));
-  applyWorld(settings.world); syncChips();
+  function showStats(){
+    const v = VS(); $('vstats').innerHTML = Object.entries(v.bars).map(([k, n]) => `<div><div class="st">${k}</div><div class="pips">${[1,2,3,4].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div></div>`).join('') + `<div class="perk">${v.perk}</div>`;
+  }
+  document.querySelectorAll('[data-group="vehicle"] button').forEach(b => b.addEventListener('click', showStats));
+  applyWorld(settings.world); syncChips(); showStats();
   async function begin(g){
     document.activeElement?.blur?.();
     started = true; $('start').hidden = true; $('pause').hidden = false; $('setup').hidden = false; $('steer').hidden = false; $('bar').classList.remove('hide'); syncBar();
@@ -575,7 +593,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   function startRun(){
     game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false;
-    score = 0; combo = 0; boost = 0; lives = 3; invuln = 1; flash = 0; runT = 0; diff = 0;
+    score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
     ramps = ramps.filter(r => r.z - travel < 10); nextRamp = Math.max(nextRamp, travel + 18);   // a clear stretch to start
     showScore(); pop('GO', CY);
   }
@@ -586,7 +604,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+    $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
   const FLIP_RATE = 7.5;  // radians per second at full spin: about 0.85 s per rotation
   const GRAV = 3.6;       // floatier jumps leave time to throw a flip
   let flipV = 0;          // current spin speed; it eases in and out so flips look smooth
@@ -770,7 +788,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     boost = Math.max(0, boost - dt*.04);
     // one grid line passes per beat, so the floor moves in time with the song
     const beatSpd = bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
-    const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.75) + boost : beatSpd;
+    const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.75)*VS().speed + boost : beatSpd;
     travel += dt*spd;
     const CZ = 2.5;
     const frac = travel % 1;
@@ -847,7 +865,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn));
     let want;
     const autoDrive = game === 'auto' || over;
-    if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5, 2.4*Math.max(1, spd/1.8)); }
+    if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5.5, VS().steer*Math.max(1, spd/1.8)); }
     else if (!autoDrive || (manualT -= dt) > 0){ laneTarget = cycX; want = 0; }
     else {
       // autopilot lines up with the next ramp when one is coming
@@ -897,7 +915,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     }
     if (jumpReq){
       jumpReq = false;
-      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = 3.0; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0; }   // peaks about twice a block's height
+      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = VS().jump; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0; }   // peaks about twice a block's height
     }
     if (!airborne){
       if (sf.obj){
@@ -906,10 +924,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
-        airborne = true; ollie = false; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
+        airborne = true; ollie = false; vy = (spd*(tun ? .45 : RH/RL)*1.5 + .8)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
         // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
         if (autoDrive && Math.random() < .55){
-          const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*FLIP_RATE/(Math.PI*2)));
+          const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
         if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
@@ -920,7 +938,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       vy -= GRAV*dt; alt += vy*dt; airT += dt;
       // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
       const fdir = flipKey || flipBtn || autoFlipDir;
-      flipV += (fdir*FLIP_RATE - flipV)*Math.min(1, dt*9);
+      flipV += (fdir*VS().flip - flipV)*Math.min(1, dt*9);
       flipA += flipV*dt;
       if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; flipV = 0; }
       if (alt <= 0){
@@ -928,7 +946,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         const turns = Math.round(flipA/(Math.PI*2)), off = Math.abs(flipA - turns*Math.PI*2), n = Math.abs(turns);
         flipA = 0; flipV = 0; autoFlipDir = 0;
         const trick = n ? (n === 2 ? 'DOUBLE ' : n >= 3 ? 'TRIPLE ' : '') + (turns > 0 ? 'BACKFLIP' : 'FRONT FLIP') : '';
-        if (off > .65){
+        if (off > VS().tol){
           // landed crooked: wipeout
           flash = 1; pop('WIPEOUT', RD);
           if (scoring){ lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); if (lives <= 0) gameOver(); }
@@ -937,7 +955,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
           if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; pop(trick + ' +' + pts, OR); showScore(); }
           else if (trick) pop(trick, OR);
         } else {
-          boost = Math.min(2.4, boost + .3);
+          boost = Math.min(2.4, boost + .3*VS().boostMul);
           if (scoring){
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
