@@ -670,6 +670,9 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
       if (file && navigator.canShare?.({ files: [file] })){ await navigator.share({ files: [file], text: text + ' ' + SITE_URL }); return; }
       if (navigator.share){ await navigator.share({ title: 'Gridline', text, url: SITE_URL }); return; }
       // no share sheet (most desktops): save the card and copy the message
+      // on the Claude-hosted page, files go through Claude's save prompt
+      const dlc = window.claude?.use ? await claude.use('downloads').catch(() => null) : null;
+      if (dlc && blob){ try { await dlc.save({ filename: 'gridline-score.png', data: blob }); } catch(_){} try { await navigator.clipboard.writeText(text + ' ' + SITE_URL); say('Score card ready to save, and the message is copied.'); } catch(_){ say(text + ' ' + SITE_URL); } return; }
       if (blob){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gridline-score.png'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
       try { await navigator.clipboard.writeText(text + ' ' + SITE_URL); say('Score card saved, and the message is copied. Paste it anywhere.'); }
       catch(_){ say(text + ' ' + SITE_URL); }
