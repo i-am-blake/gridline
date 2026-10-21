@@ -41,6 +41,14 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .tools{display:flex;gap:6px;pointer-events:auto}
 .tools button{width:40px;height:40px;min-height:40px;padding:0;justify-content:center;font-size:15px;background:rgba(4,14,22,.55);border-radius:6px}
 .hud .status{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:right;flex:none;white-space:normal;max-width:260px}
+.gauges{display:grid;grid-template-columns:auto minmax(80px,140px);gap:5px 8px;align-items:center;margin-top:8px}
+.gauges .gl{font-size:10px;letter-spacing:.16em;color:var(--dim);font-family:var(--mono);text-shadow:none}
+.gauge{display:block;height:7px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+.gauge em{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--orange)}
+.gauge.cp em{background:var(--cyan)}
+.gauge.low em{background:#ff4060;animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.gauge.low em{animation:none}}
 .meters{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.7;font-variant-numeric:tabular-nums}
 .meters b{color:var(--white);font-weight:400}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid rgba(41,243,255,.35);box-shadow:0 -1px 18px rgba(41,243,255,.18);
@@ -106,7 +114,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <canvas id="cv" aria-label="Sound-reactive visualization"></canvas>
 
 <div class="hud">
-  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div></div>
+  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div><div class="gauges" id="gauges" hidden><div class="gl">GAS</div><i class="gauge"><em id="gas"></em></i><div class="gl">NEXT GATE</div><i class="gauge cp"><em id="cpBar"></em></i></div></div>
   <div class="side">
     <div class="tools">
       <button id="pause" type="button" aria-label="Pause" title="Pause (P)" hidden>❚❚</button>
@@ -133,7 +141,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 </div></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
   <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div></div>
-<div class="over" id="over" hidden><div class="card"><h2>RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><div class="row"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
+<div class="over" id="over" hidden><div class="card"><h2 id="overTitle">RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><div class="row"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
 
 <div class="steer" id="steer" hidden>
   <div class="g"><button id="sl" type="button" aria-label="Steer left">◀</button><button id="sr" type="button" aria-label="Steer right">▶</button></div>
@@ -155,6 +163,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 </div>
 
 
+<script async src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -175,9 +184,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const VHW = () => ({ bike:.18, board:.2, buggy:.42 })[settings.vehicle];   // half-width for collisions
   // each vehicle trades strengths: the bike is fastest, the board jumps and flips best, the buggy steers sharpest and takes more hits
   const VSTATS = {
-    bike:  { speed:1.12, boostMul:1.35, jump:3.0,  flip:7.5, steer:2.4, lives:3, tol:.65, perk:'Fastest top speed and the biggest boost from every landing.', bars:{ Speed:4, Jump:2, Steer:2, Flips:3, Toughness:2 } },
-    board: { speed:1.0,  boostMul:1.0,  jump:3.5,  flip:9.0, steer:2.1, lives:3, tol:.65, perk:'Highest jumps and quickest flips, but a little slower to turn.', bars:{ Speed:3, Jump:4, Steer:2, Flips:4, Toughness:2 } },
-    buggy: { speed:.95,  boostMul:.9,   jump:2.75, flip:6.0, steer:3.3, lives:4, tol:.95, perk:'Sharpest steering, an extra life and forgiving landings, but heavier in the air.', bars:{ Speed:2, Jump:2, Steer:4, Flips:2, Toughness:4 } }
+    bike:  { speed:1.12, boostMul:1.35, jump:3.0,  flip:7.5, steer:2.4, lives:3, tol:1.15, perk:'Fastest top speed and the biggest boost from every landing.', bars:{ Speed:4, Jump:2, Steer:2, Flips:3, Toughness:2 } },
+    board: { speed:1.0,  boostMul:1.0,  jump:3.5,  flip:9.0, steer:2.1, lives:3, tol:1.2, perk:'Highest jumps and quickest flips, but a little slower to turn.', bars:{ Speed:3, Jump:4, Steer:2, Flips:4, Toughness:2 } },
+    buggy: { speed:.95,  boostMul:.9,   jump:2.75, flip:6.0, steer:3.3, lives:4, tol:1.5, perk:'Sharpest steering, an extra life and forgiving landings, but heavier in the air.', bars:{ Speed:2, Jump:2, Steer:4, Flips:2, Toughness:4 } }
   };
   const VS = () => VSTATS[settings.vehicle];
   function applyWorld(w){
@@ -216,7 +225,50 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     pump = ac.createGain(); pump.connect(mix);
     sFilt = ac.createBiquadFilter(); sFilt.type = 'lowpass'; sFilt.Q.value = 7; sFilt.frequency.value = 800; sFilt.connect(pump);
     routeBus();
+    setupTone();
   }
+  // ---------- Tone.js instruments. Samples come from the free Tone.js audio collection; anything that
+  // fails to load (offline, blocked) quietly falls back to the built-in synth voices
+  const T = {};
+  const nn = m => Tone.Frequency(m, 'midi').toNote();
+  const tn = fn => { try { fn(); return true; } catch(e){ return false; } };
+  function setupTone(){
+    if (T.tried || !window.Tone) return; T.tried = true;
+    try {
+      Tone.setContext(ac);
+      const base = 'https://tonejs.github.io/audio/';
+      // lo-fi: a sampled grand piano with a gentle wobble and a roomy reverb, ducking under the kick
+      T.rev = new Tone.Reverb({ decay: 3.2, wet: .3 }); T.rev.connect(duck);
+      T.vib = new Tone.Vibrato({ frequency: .45, depth: .06 }); T.vib.connect(T.rev);
+      const sal = {}; ['A1','C2','D#2','F#2','A2','C3','D#3','F#3','A3','C4','D#4','F#4','A4','C5','D#5','F#5','A5','C6'].forEach(n => sal[n] = n.replace('#','s') + '.mp3');
+      T.piano = new Tone.Sampler({ urls: sal, baseUrl: base + 'salamander/', release: 1.4, volume: -4, onload: () => { T.pianoOk = true; } });
+      T.piano.connect(T.vib);
+      // drum kits: a warm acoustic kit for lo-fi, an '80s drum machine for synthwave (with backups if one won't load)
+      const kit = (names, dest, key) => {
+        if (!names.length) return;
+        const smp = new Tone.Sampler({ urls: { C1: 'kick.mp3', D1: 'snare.mp3', 'F#1': 'hihat.mp3' }, baseUrl: base + 'drum-samples/' + names[0] + '/',
+          onload: () => { T[key] = smp; }, onerror: () => { tn(() => smp.dispose()); kit(names.slice(1), dest, key); } });
+        smp.connect(dest);
+      };
+      T.loKitOut = new Tone.Filter(4200, 'lowpass'); T.loKitOut.connect(master);
+      kit(['acoustic-kit', 'KPR77', 'CR78'], T.loKitOut, 'loKit');
+      kit(['LINN', 'Techno', 'CR78'], master, 'synKit');
+      // synthwave: thick detuned chord stabs into the sweeping filter, a squelchy bass on the pump,
+      // and a gliding lead through an envelope-following wah and a dotted-eighth echo
+      T.chords = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsawtooth', count: 3, spread: 28 }, envelope: { attack: .004, decay: .3, sustain: .35, release: .25 }, volume: -16 });
+      T.chords.connect(sFilt);
+      T.bass = new Tone.MonoSynth({ oscillator: { type: 'square' }, filter: { Q: 3, type: 'lowpass' }, filterEnvelope: { attack: .002, decay: .16, sustain: .15, baseFrequency: 160, octaves: 2.6 }, envelope: { attack: .003, decay: .2, sustain: .4, release: .08 }, volume: -12 });
+      T.bass.connect(pump);
+      T.delay = new Tone.FeedbackDelay({ delayTime: 60/122*.75, feedback: .3, wet: .25 }); T.delay.connect(master);
+      T.wah = new Tone.AutoWah({ baseFrequency: 250, octaves: 5, sensitivity: -40, Q: 4 }); T.wah.connect(T.delay);
+      T.lead = new Tone.MonoSynth({ oscillator: { type: 'fatsawtooth', count: 2, spread: 18 }, portamento: .05, filter: { Q: 2 }, filterEnvelope: { attack: .01, decay: .3, sustain: .6, baseFrequency: 500, octaves: 3 }, envelope: { attack: .01, decay: .2, sustain: .7, release: .25 }, volume: -15 });
+      T.lead.connect(T.wah);
+      T.loBass = new Tone.MonoSynth({ oscillator: { type: 'triangle' }, filter: { Q: 1, type: 'lowpass' }, filterEnvelope: { baseFrequency: 180, octaves: 1.2, attack: .01, decay: .3, sustain: .5 }, envelope: { attack: .02, decay: .4, sustain: .6, release: .5 }, volume: -8 });
+      T.loBass.connect(master);
+      T.ready = true;
+    } catch(e){ console.warn('Tone.js setup failed; using the built-in synths', e); T.ready = false; }
+  }
+  const kitNow = () => settings.beat === 'lofi' ? T.loKit : T.synKit;
   function routeBus(){ if (!master) return; master.disconnect(); master.connect(settings.beat === 'lofi' ? lofiIn : mix); }
   async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch(e){} }
 
@@ -253,9 +305,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const stp = () => 60/BEATS[settings.beat].bpm/4;
   function mkNoise(){ const b = ac.createBuffer(1, ac.sampleRate*.3, ac.sampleRate), d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
   function env(node, t, peak, dur, dest){ const g = ac.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak,t+.003); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(dur,.01)); node.connect(g); g.connect(dest || master); return g; }   // a 3 ms fade-in removes the click at each note's start
-  function kick(t, pk = 1, dur = .42){ const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+Math.min(.13, dur*.6)); env(o,t,pk,dur); o.start(t); o.stop(t+dur+.03); }
-  function hat(t,open,pk){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,pk || (open?.16:.1),open?.2:.04); s.start(t); s.stop(t+.25); }
-  function clap(t, pk = .4){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,pk,.22); s.start(t); s.stop(t+.25); }
+  function kick(t, pk = 1, dur = .42){ const K = kitNow(); if (K && tn(() => K.triggerAttack('C1', t, Math.min(1, pk)))){ if (settings.beat === 'lofi') return; pk *= .45; }  const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+Math.min(.13, dur*.6)); env(o,t,pk,dur); o.start(t); o.stop(t+dur+.03); }
+  function hat(t,open,pk){ const K = kitNow(); if (K && tn(() => K.triggerAttack('F#1', t, Math.min(1, (pk || (open ? .16 : .1))*(open ? 5 : 6))))) return;  const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,pk || (open?.16:.1),open?.2:.04); s.start(t); s.stop(t+.25); }
+  function clap(t, pk = .4){ const K = kitNow(); if (K && pk > .3) tn(() => K.triggerAttack('D1', t, Math.min(1, pk*1.6)));  const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,pk,.22); s.start(t); s.stop(t+.25); }
   function snareHit(t, v = 1){ clap(t, .5*v); const o = ac.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(140,t+.08); env(o,t,.3*v,.12); o.start(t); o.stop(t+.15); }
   function bass(t,m,len){ const st = stp(), o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type='sawtooth'; o.frequency.value = mtof(m);
     f.type='lowpass'; f.Q.value=8; f.frequency.setValueAtTime(1800,t); f.frequency.exponentialRampToValueAtTime(160,t+.16); o.connect(f); env(f,t,.3,(len||1.7)*st); o.start(t); o.stop(t+((len||1.7)+.3)*st); }
@@ -296,12 +348,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   // --- synthwave (French filter-house) voices
   function pumpAt(t){ pump.gain.cancelScheduledValues(t); pump.gain.setValueAtTime(.28, t); pump.gain.linearRampToValueAtTime(1, t + .22); }
   function sweep(t, f, dur){ sFilt.frequency.setTargetAtTime(f, t, dur/3); }
-  function stab(t, root, ivs, dur, v = 1){   // chopped saw chord into the filter
+  function stab(t, root, ivs, dur, v = 1){ if (T.ready && tn(() => T.chords.triggerAttackRelease(ivs.map(iv => nn(root + iv)), dur, t, .55*v))) return;    // chopped saw chord into the filter
     ivs.forEach(iv => [-11, 11].forEach(d => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(root + iv); o.detune.value = d;
       env(o, t, .05*v, dur, sFilt); o.start(t); o.stop(t + dur + .03); })); }
-  function bassFH(t, m, dur){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'square'; o.frequency.value = mtof(m);
+  function bassFH(t, m, dur){ if (T.ready && tn(() => T.bass.triggerAttackRelease(nn(m), dur, t))) return;  const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'square'; o.frequency.value = mtof(m);
     f.type = 'lowpass'; f.Q.value = 4; f.frequency.setValueAtTime(1300, t); f.frequency.exponentialRampToValueAtTime(260, t + dur); o.connect(f); env(f, t, .2, dur, pump); o.start(t); o.stop(t + dur + .03); }
-  function vox(t, m, prev, dur){   // a robotic, vocoder-like lead: saw through two vowel formants, gliding between notes
+  function vox(t, m, prev, dur){ if (T.ready && tn(() => T.lead.triggerAttackRelease(nn(m), dur, t))) return;    // a robotic, vocoder-like lead: saw through two vowel formants, gliding between notes
     const o = ac.createOscillator(), sub = ac.createOscillator(); o.type = 'sawtooth'; sub.type = 'square';
     o.frequency.setValueAtTime(mtof(prev || m), t); o.frequency.exponentialRampToValueAtTime(mtof(m), t + .07); sub.frequency.value = mtof(m - 12);
     const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.09, t + .02); g.gain.setValueAtTime(.09, t + dur*.7); g.gain.linearRampToValueAtTime(0, t + dur);
@@ -310,13 +362,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     g.connect(master); o.start(t); sub.start(t); o.stop(t + dur + .03); sub.stop(t + dur + .03); }
   // --- lo-fi voices
   function duckAt(t){ duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(.55, t); duck.gain.linearRampToValueAtTime(1, t + .3); }
-  function piano(t, m, v = 1){ const o = ac.createOscillator(), o2 = ac.createOscillator(), g2 = ac.createGain(); o.type = 'sine'; o2.type = 'triangle';
+  function piano(t, m, v = 1){ if (T.pianoOk && tn(() => T.piano.triggerAttackRelease(nn(m), 1.3, t, .42*v))) return;  const o = ac.createOscillator(), o2 = ac.createOscillator(), g2 = ac.createGain(); o.type = 'sine'; o2.type = 'triangle';
     o.frequency.value = mtof(m); o2.frequency.value = mtof(m)*2; g2.gain.value = .25; o2.connect(g2);
     const g = env(o, t, .08*v, 1.4); g2.connect(g); if (wowG){ wowG.connect(o.detune); wowG.connect(o2.detune); } o.start(t); o2.start(t); o.stop(t + 1.45); o2.stop(t + 1.45); }
   function rain(t, dur){ const s = ac.createBufferSource(); s.buffer = noise; s.loop = true; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = .5;
     const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05, t + .5); g.gain.setValueAtTime(.05, t + dur - .5); g.gain.linearRampToValueAtTime(0, t + dur);
     s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()*.2); s.stop(t + dur + .05); }
-  function keys(t, root, ivs, dur, v = 1){   // electric-piano chord, rolled slightly
+  function keys(t, root, ivs, dur, v = 1){ if (T.pianoOk && tn(() => ivs.forEach((iv, k) => T.piano.triggerAttackRelease(nn(root + iv), dur, t + k*.025 + Math.random()*.012, (.26 + Math.random()*.08)*v)))) return;    // electric-piano chord, rolled slightly
     ivs.forEach((iv, k) => { const t0 = t + k*.014, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), g2 = ac.createGain();
       o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = mtof(root + iv); o2.frequency.value = mtof(root + iv)*2; g2.gain.value = .15;
       g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.04*v, t0 + .012); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
@@ -325,9 +377,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function koto(t, m){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'triangle';
     o.frequency.setValueAtTime(mtof(m)*1.02, t); o.frequency.exponentialRampToValueAtTime(mtof(m), t + .06);
     f.type = 'lowpass'; f.frequency.value = 2600; o.connect(f); env(f, t, .09, .7); o.start(t); o.stop(t + .75); }
-  function softSnare(t, v = 1){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .7;
+  function softSnare(t, v = 1){ const K = kitNow(); if (K && tn(() => K.triggerAttack('D1', t, Math.min(1, .55*v)))) return;  const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .7;
     s.connect(f); env(f, t, .22*v, .28); s.start(t); s.stop(t + .3); }
-  function subBass(t, m, dur){ const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = mtof(m); env(o, t, .35, dur); o.start(t); o.stop(t + dur + .05); }
+  function subBass(t, m, dur){ if (T.ready && settings.beat === 'lofi' && tn(() => T.loBass.triggerAttackRelease(nn(m + 12), dur, t))) return;  const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = mtof(m); env(o, t, .35, dur); o.start(t); o.stop(t + dur + .05); }
   let crackBuf;
   function crackle(t, dur){
     if (!crackBuf){ crackBuf = ac.createBuffer(1, ac.sampleRate*2, ac.sampleRate); const d = crackBuf.getChannelData(0);
@@ -405,7 +457,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const B = BEATS[settings.beat]; if (!B) return;
     while (nextT < ac.currentTime + .3){
       const bar = Math.floor(idx/16);
-      B.play(idx % 16, bar, nextT);
+      try { B.play(idx % 16, bar, nextT); } catch(e){ console.warn(e); }
       if (idx % 16 === 0) setStatus(B.name + ' · ' + B.bpm + ' BPM · ' + { intro:'intro', groove:'groove', build:'build-up', drop:'drop', break:'breakdown', build2:'build-up' }[section(bar)] + (bar >= 32 ? ' · pass ' + (Math.floor(bar/32) + 1) : ''));
       nextT += 60/B.bpm/4; idx++;
     }
@@ -583,28 +635,34 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
+  let level = 1, nextCP = 0, fuel = 100, fuelHold = 0;
+  const LEVEL_LEN = 55, REFUEL = { ramp: 30, tunnel: 34, flip: 8 };
+  // how far a full tank goes: generous early, settling to the standard range from level 6
+  const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
   const RD = [255,64,96];
   function setGame(g){
     game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
-    $('scoreBox').hidden = g !== 'compete';
+    $('scoreBox').hidden = g !== 'compete'; $('gauges').hidden = g !== 'compete';
     if (g === 'compete') startRun(); else { over = false; $('over').hidden = true; }
   }
   function startRun(){
-    game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false;
+    game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false; $('gauges').hidden = false;
     score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
+    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 14;   // no gas burned on the empty opening stretch
     ramps = ramps.filter(r => r.z - travel < 10); nextRamp = Math.max(nextRamp, travel + 18);   // a clear stretch to start
     showScore(); pop('GO', CY);
   }
-  function gameOver(){
+  function gameOver(why){
+    $('overTitle').textContent = why || 'RUN OVER';
     over = true; best = Math.max(best, score);
     try { localStorage.setItem('gridline-best', best); } catch(_){}
     $('oScore').textContent = score.toLocaleString(); $('oBest').textContent = best.toLocaleString(); $('over').hidden = false;
   }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+    $('cb').textContent = 'LVL ' + level + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
   const FLIP_RATE = 7.5;  // radians per second at full spin: about 0.85 s per rotation
   const GRAV = 3.6;       // floatier jumps leave time to throw a flip
   let flipV = 0;          // current spin speed; it eases in and out so flips look smooth
@@ -781,15 +839,25 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0; return [vp + X*LX/Z + bX*f, hz + K*(1-h)/Z + bY*f]; };
     const competing = game === 'compete' && !over;
     if (competing){
-      runT += dt; const nd = Math.min(1, runT/100);
-      if (Math.floor(nd*5) > Math.floor(diff*5)){ pop('LEVEL ' + (1 + Math.floor(runT/20)), CY); showScore(); }
-      diff = nd;
+      runT += dt; diff = Math.min(1, (level - 1)/5);   // difficulty climbs with each checkpoint passed
     }
     boost = Math.max(0, boost - dt*.04);
     // one grid line passes per beat, so the floor moves in time with the song
     const beatSpd = bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
     const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.75)*VS().speed + boost : beatSpd;
     travel += dt*spd;
+    if (competing){
+      // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
+      if (travel > fuelHold) fuel -= 100/tankRange(level)*dt*spd;
+      if (travel >= nextCP){
+        level++; nextCP += LEVEL_LEN; fuel = 100; const bonus = 500*(level - 1); score += bonus;
+        pop('CHECKPOINT · LEVEL ' + level + '  +' + bonus, CY); flash = 0; showScore();
+      }
+      if (fuel <= 0){ fuel = 0; gameOver('OUT OF GAS'); }
+      const g = Math.max(0, fuel)/100;
+      $('gas').style.width = (g*100).toFixed(1) + '%'; $('gas').parentElement.classList.toggle('low', g < .25);
+      $('cpBar').style.width = (Math.min(1, 1 - (nextCP - travel)/LEVEL_LEN)*100).toFixed(1) + '%';
+    }
     const CZ = 2.5;
     const frac = travel % 1;
     ctx.lineWidth = 1.2;
@@ -930,7 +998,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
           const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
-        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -939,6 +1007,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
       const fdir = flipKey || flipBtn || autoFlipDir;
       flipV += (fdir*VS().flip - flipV)*Math.min(1, dt*9);
+      // grace: once you let go, the vehicle settles toward the nearest upright landing
+      if (!fdir){ const up = Math.round(flipA/(Math.PI*2))*Math.PI*2; flipA += (up - flipA)*Math.min(1, dt*2.8); }
       flipA += flipV*dt;
       if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; flipV = 0; }
       if (alt <= 0){
@@ -952,7 +1022,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
           if (scoring){ lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); if (lives <= 0) gameOver(); }
         } else if (ollie){
           // a jump from the flat only scores for the flips you land, and doesn't build the combo
-          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; pop(trick + ' +' + pts, OR); showScore(); }
+          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; fuel = Math.min(100, fuel + REFUEL.flip*n); pop(trick + ' +' + pts, OR); showScore(); }
           else if (trick) pop(trick, OR);
         } else {
           boost = Math.min(2.4, boost + .3*VS().boostMul);
@@ -960,7 +1030,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+            score += pts; fuel = Math.min(100, fuel + REFUEL.ramp + REFUEL.flip*n); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
           } else if (trick) pop(trick, OR);
         }
       }
@@ -970,6 +1040,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
     const under = alt < -.02;
+    const cpZ = nextCP - travel, gateOn = competing && cpZ < 46;
+    if (gateOn && cpZ > CZ + 1) drawGate(cpZ, P, hit);
     sorted.forEach(r => {
       if (r.kind === 'tunnel'){ drawTunnelBelow(r, P, hit); if (!(under && r === inTunnel)) drawTunnelRoof(r, P, hit); }
       else if (r.kind === 'block'){ if (r.z - travel + BL > CZ + .3) drawBlock(r, P, hit); }
@@ -990,6 +1062,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       trail.forEach((p,i) => { const [x,y] = P(p.x, zs[i], p.b + p.h); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }); gstroke();
     }
     if (hwy) deco.forEach(d => { if (d.kind === 'over' && d.z - travel <= CZ + 1) drawOver(d, P, hit); });
+    if (gateOn && cpZ <= CZ + 1) drawGate(cpZ, P, hit);
     // the glass roof of the tunnel you're in goes over the bike, so it reads as being below the grid
     if (under && inTunnel) drawTunnelRoof(inTunnel, P, hit);
     sorted.forEach(r => {
@@ -1128,6 +1201,26 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (!mirror){ tailLight(Q(-.21,.36,.03), Q(-.12,.36,.03), hit); tailLight(Q(.12,.36,.03), Q(.21,.36,.03), hit); }
   }
 
+  function drawGate(Z, P, hit){
+    // checkpoint: two pylons, a chequered banner overhead and a bright line across the road
+    if (Z < .35) return;
+    const xw = 4, h0 = 2.1, h1 = 2.6;
+    // light beams climbing from the pylons, so the gate can be spotted from far down the road
+    for (const sd of [-1, 1]){ const a = P(sd*xw, Z, h1), b = P(sd*xw, Z, 14);
+      const bg = ctx.createLinearGradient(a[0], a[1], b[0], b[1]); bg.addColorStop(0, rgba(CY, .8)); bg.addColorStop(1, rgba(CY, 0));
+      ctx.strokeStyle = bg; ctx.lineWidth = Math.max(2, 18/Z); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+    for (const sd of [-1, 1]){
+      poly([P(sd*xw - .14, Z, 0), P(sd*xw + .14, Z, 0), P(sd*xw + .14, Z, h1), P(sd*xw - .14, Z, h1)], '#0d1420');
+      glowLine(CY, .9, 1.6 + hit); line([P(sd*xw, Z, 0), P(sd*xw, Z, h1)]); gstroke();
+    }
+    const n = 16;
+    for (let i = 0; i < n; i++) for (let r = 0; r < 2; r++){
+      const x0 = -xw + i*(2*xw)/n, x1 = x0 + (2*xw)/n, y0 = h0 + r*(h1 - h0)/2, y1 = y0 + (h1 - h0)/2;
+      poly([P(x0, Z, y0), P(x1, Z, y0), P(x1, Z, y1), P(x0, Z, y1)], (i + r) % 2 ? rgba(WH, .9) : '#05060c');
+    }
+    glowLine(OR, .95, 2 + hit*2); line([P(-xw, Z, h0), P(xw, Z, h0)]); gstroke(); line([P(-xw, Z, h1), P(xw, Z, h1)]); gstroke();
+    glowLine(WH, .9, 2.5 + hit*2); line([P(-xw, Z, 0), P(xw, Z, 0)]); gstroke();
+  }
   function drawOver(o, P, hit){
     // a highway overpass: deck on two pillars, with an equaliser sign on its face
     const Z = o.z - travel; if (Z < .35) return;
