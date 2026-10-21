@@ -75,6 +75,19 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .page .lb{max-height:none;font-size:15px}
 .page .lb li{padding:12px 6px}
 .page .lb li:nth-child(-n+3) .rk{color:var(--orange)}
+.result{margin-top:18px;padding:16px;border:1px solid rgba(255,122,26,.45);background:rgba(255,122,26,.06)}
+.rtitle{font-family:var(--display);font-weight:800;letter-spacing:.2em;color:var(--orange);font-size:clamp(16px,4vw,20px)}
+.rscore{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:6px}
+.rscore b{font-family:var(--display);font-weight:800;font-size:clamp(30px,8vw,44px);color:var(--white);font-variant-numeric:tabular-nums}
+.rscore span{color:var(--dim);letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+.addrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.addrow label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.addrow input{font:15px var(--mono);color:var(--white);background:rgba(255,255,255,.06);border:1px solid rgba(41,243,255,.35);padding:10px;flex:1;min-width:10em}
+.addrow button,.rbtns button{margin-top:0}
+.result .note{color:var(--orange);font-size:13px;margin:10px 0 0;min-height:1em}
+.rbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:14px}
+.nolb{color:var(--dim);font-size:13px;margin-top:18px}
+.nolb b{color:var(--white)}
 .lbnote{color:var(--dim);font-size:12px;letter-spacing:.04em;margin-top:16px}
 .tabs button{min-height:34px;font-size:11px}
 .lb{list-style:none;margin:0;padding:0;text-align:left;max-height:50vh;overflow-y:auto}
@@ -90,8 +103,10 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
   width:min(400px, calc(100% - 32px));text-align:center;padding:8px 14px 10px;
   background:linear-gradient(rgba(2,4,10,.6), rgba(2,4,10,.25));border:1px solid rgba(41,243,255,.18);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .hsc{font-family:var(--display);font-weight:800;font-size:clamp(20px,4vw,28px);line-height:1.1;color:var(--orange);text-shadow:0 0 12px rgba(255,122,26,.5);font-variant-numeric:tabular-nums}
+.htop{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.htop .lvl{justify-self:start;font-family:var(--display);font-weight:800;font-size:clamp(13px,3vw,16px);letter-spacing:.12em;color:var(--void);background:var(--cyan);padding:4px 9px;box-shadow:0 0 12px rgba(41,243,255,.6)}
+.htop .lives{justify-self:end;font-size:clamp(18px,4.4vw,24px);line-height:1;color:var(--orange);letter-spacing:.12em;text-shadow:0 0 10px rgba(255,122,26,.7)}
 .hrow{display:flex;justify-content:center;gap:14px;margin-top:4px;font-size:11px;letter-spacing:.16em;color:var(--white)}
-.hrow .lives{color:var(--orange);letter-spacing:.25em}
 .hrow .combo{color:var(--cyan)}
 .hrow .combo:empty{display:none}
 .hbars{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
@@ -196,25 +211,33 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Endless Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
-  <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goDaily" class="big" type="button">Daily challenge</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
+  <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
   <div class="row links"><button id="toEntry" class="ghost" type="button">‹ Back</button></div>
 </div></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
   <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div></div>
-<div class="over" id="over" hidden><div class="card"><h2 id="overTitle">RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><p class="note" id="oNote"></p>
-  <div class="namerow" id="nameRow" hidden><label for="handle">Rider name</label><input id="handle" type="text" maxlength="16" autocomplete="off" placeholder="Shown on the leaderboard"></div>
-  <div class="row"><button id="again" class="big" type="button">Ride again</button><button id="lbBtn2" class="ghost" type="button" hidden>Leaderboard</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost" type="button">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2></header>
-  <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="all" aria-pressed="true">All time</button><button type="button" role="tab" data-tab="today" aria-pressed="false">Today's daily</button></div>
+  <div class="result" id="result" hidden>
+    <div class="rtitle" id="rTitle">RUN OVER</div>
+    <div class="rscore"><b id="rScore">0</b><span id="rMeta"></span></div>
+    <div class="addrow" id="addRow" hidden>
+      <label for="handle">Rider name</label>
+      <input id="handle" type="text" maxlength="16" autocomplete="off" placeholder="Your name on the board">
+      <button id="addScore" class="big" type="button">Add my score</button>
+    </div>
+    <p class="note" id="rNote"></p>
+    <div class="row rbtns"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Quit</button></div>
+  </div>
+  <p class="nolb" id="noLb" hidden>The shared leaderboard is on the hosted Gridline page. Your best here: <b id="localBest">0</b></p>
   <ol class="lb" id="lbList"></ol>
-  <p class="lbnote">Each rider's best score. The daily board resets at midnight UTC, when a new daily road begins.</p>
+  <p class="lbnote">Each rider's best score.</p>
 </div></section>
 <div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
 <div class="hudc" id="hudc" hidden aria-live="off">
-  <div class="hsc" id="sc">0</div>
-  <div class="hrow"><span id="hLvl">LVL 1</span><span id="hLives" class="lives">◆◆◆</span><span id="hCombo" class="combo"></span></div>
+  <div class="htop"><span class="lvl" id="hLvl">LVL 1</span><div class="hsc" id="sc">0</div><span id="hLives" class="lives">◆◆◆</span></div>
+  <div class="hrow"><span id="hCombo" class="combo"></span></div>
   <div class="hbars"><div class="hb"><span class="gl">GAS</span><i class="gauge"><em id="gas"></em></i></div><div class="hb"><span class="gl">GATE</span><i class="gauge cp"><em id="cpBar"></em></i></div></div>
 </div>
 <div class="steer" id="steer" hidden>
@@ -389,33 +412,49 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       const snap = await db.doc('scores/' + uid).get(); LB.mine = snap.exists ? { ...snap.data() } : null;
       if (!handle && LB.mine?.name) handle = LB.mine.name;
       db.collection('scores').orderBy('best', 'desc').limit(25).onSnapshot(q => { LB.all = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
-      db.collection('scores').where('day', '==', dayKey()).orderBy('dayBest', 'desc').limit(25).onSnapshot(q => { LB.today = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
-      $('lbBtn').hidden = false; $('lbBtn2').hidden = false; $('duo').classList.remove('solo');
+      $('lbBtn').hidden = false; $('duo').classList.remove('solo');
     } catch(_){}
   })();
   async function submitScore(sc, lv, isDaily){
-    if (!LB.db || LB.readOnly) return;
-    $('nameRow').hidden = false; $('handle').value = handle;
+    if (!LB.db || LB.readOnly) return false;
     const m = LB.mine || { best: 0 }, next = { ...m }, day = dayKey(); let better = false;
     if (!isDaily && sc > (m.best || 0)){ Object.assign(next, { best: sc, level: lv, vehicle: settings.vehicle }); better = true; }
     if (isDaily){ if (m.day !== day) Object.assign(next, { day, dayBest: 0 }); if (sc > (next.dayBest || 0)){ Object.assign(next, { day, dayBest: sc, dayLevel: lv }); better = true; } }
     if (handle) next.name = handle;
     if (!next.best) next.best = 0;
-    if (!better && next.name === m.name){ $('oNote').textContent = 'Your best is still ' + ((isDaily ? next.dayBest : next.best) || 0).toLocaleString() + '.'; return; }
-    await saveMine(next);
-    if (better) $('oNote').textContent = isDaily ? 'New best on today\'s daily challenge!' : 'New personal best on the leaderboard!';
+    if (better || next.name !== m.name) await saveMine(next);
+    if (LB.readOnly) return false;
+    $('rNote').textContent = better ? (isDaily ? 'Added: your new best on today\'s daily challenge.' : 'Added: your new personal best.')
+                                    : 'Your best is still ' + ((isDaily ? next.dayBest : next.best) || 0).toLocaleString() + (next.name !== m.name ? '. Name updated.' : '.');
+    return true;
   }
   async function saveMine(next){
     if (LB.busy) return; LB.busy = true;
     try { await LB.db.doc('scores/' + LB.uid).set(next); LB.mine = next; }
-    catch(e){ if (e?.code === 'invalid_argument'){ LB.readOnly = true; $('oNote').textContent = 'You can view the leaderboard, but your access to this page doesn\'t allow saving scores.'; } }
+    catch(e){ if (e?.code === 'invalid_argument'){ LB.readOnly = true; $('rNote').textContent = 'Your access to this page lets you view the leaderboard but not add scores.'; } }
     LB.busy = false;
   }
-  $('handle').addEventListener('change', () => {
+  $('addScore').addEventListener('click', async () => {
     handle = $('handle').value.trim().slice(0, 16);
     try { localStorage.setItem('gridline-handle', handle); } catch(_){}
-    if (LB.db && LB.mine && handle !== LB.mine.name) saveMine({ ...LB.mine, name: handle });
+    $('addScore').disabled = true;
+    const ok = await submitScore(lastRun.score, lastRun.level, lastRun.daily);
+    $('addScore').textContent = ok ? 'Added ✓' : 'Add my score';
+    if (!ok) $('addScore').disabled = false;
   });
+  let lastRun = { score: 0, level: 1, daily: false };
+  function showResults(why){
+    lastRun = { score, level, daily };
+    $('rTitle').textContent = why || 'RUN OVER';
+    $('rScore').textContent = score.toLocaleString();
+    $('rMeta').textContent = (daily ? 'Daily · ' : '') + 'Level ' + level + ' · Best ' + best.toLocaleString();
+    $('rNote').textContent = '';
+    const canAdd = !!LB.db && !LB.readOnly && score > 0;
+    $('addRow').hidden = !canAdd; $('handle').value = handle; $('addScore').disabled = false; $('addScore').textContent = 'Add my score';
+    $('result').hidden = false;
+    openBoard('all');
+    if (canAdd) setTimeout(() => $('handle').focus(), 50);
+  }
   async function renderBoard(){
     if ($('board').hidden) return;
     const rows = (LB.tab === 'today' ? LB.today.map(r => ({ ...r, s: r.dayBest, lv: r.dayLevel })) : LB.all.map(r => ({ ...r, s: r.best, lv: r.level }))).filter(r => r.s > 0);
@@ -429,11 +468,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       list.append(li);
     });
   }
-  const openBoard = tab => { LB.tab = tab || LB.tab; document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === LB.tab)); $('board').hidden = false; renderBoard(); };
-  $('lbBtn').addEventListener('click', () => openBoard('all'));
-  $('lbBtn2').addEventListener('click', () => openBoard(daily ? 'today' : 'all'));
-  $('lbClose').addEventListener('click', () => { $('board').hidden = true; });
-  document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => openBoard(b.dataset.tab)));
+  const openBoard = tab => {
+    LB.tab = tab || LB.tab; document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === LB.tab));
+    const has = !!LB.db; $('lbList').hidden = !has; document.querySelector('.lbnote').hidden = !has;
+    $('noLb').hidden = has; $('localBest').textContent = best.toLocaleString();
+    $('board').hidden = false; renderBoard();
+  };
+  const closeBoard = () => { $('board').hidden = true; $('result').hidden = true; };
+  $('lbBtn').addEventListener('click', () => { $('result').hidden = true; openBoard('all'); });
+  // after a run, Back means quit to the start screen; from the start screen it just closes the page
+  $('lbClose').addEventListener('click', () => { const afterRun = !$('result').hidden; closeBoard(); if (afterRun){ toStart(); showEntry(); } });
   function routeBus(){ if (!master) return; master.disconnect(); master.connect(settings.beat === 'lofi' ? lofiIn : mix); }
   async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch(e){} }
 
@@ -496,6 +540,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   // ---------- song engine: each beat plays a 32-bar arrangement (intro, groove, build, drop, breakdown, build),
   // and every pass moves to a new key and rewrites its melody, so the music keeps growing
   const MINOR = [0,2,3,5,7,8,10];
+  let curSec = 'intro';
   const section = bar => { const b = bar % 32; return b < 4 ? 'intro' : b < 12 ? 'groove' : b < 16 ? 'build' : b < 24 ? 'drop' : b < 28 ? 'break' : 'build2'; };
   const hash3 = (a, b, c) => { const x = Math.sin(a*127.1 + b*311.7 + c*74.7)*43758.5453; return x - Math.floor(x); };
   function pad(t, root, dur, cut, lvl = .028){
@@ -623,6 +668,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     while (nextT < ac.currentTime + .3){
       const bar = Math.floor(idx/16);
       try { B.play(idx % 16, bar, nextT); } catch(e){ console.warn(e); }
+      if (idx % 16 === 0) curSec = section(bar);
       if (idx % 16 === 0) setStatus(B.name + ' · ' + B.bpm + ' BPM · ' + { intro:'intro', groove:'groove', build:'build-up', drop:'drop', break:'breakdown', build2:'build-up' }[section(bar)] + (bar >= 32 ? ' · pass ' + (Math.floor(bar/32) + 1) : ''));
       nextT += 60/B.bpm/4; idx++;
     }
@@ -639,7 +685,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
   /* ---------- Controls ---------- */
   document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => started ? setGame(b.dataset.game) : begin(b.dataset.game)));
-  $('again').addEventListener('click', () => startRun(daily));
+  $('again').addEventListener('click', () => { closeBoard(); startRun(daily); });
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
   let barPx = 0;
@@ -707,7 +753,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   function toStart(){
     setPaused(false); setGame('auto');
-    started = false; $('start').hidden = false; $('pause').hidden = true; $('over').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing'); $('bar').classList.add('hide'); syncBar();
+    started = false; $('start').hidden = false; $('pause').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing'); $('bar').classList.add('hide'); syncBar();
   }
   $('goPlay').addEventListener('click', () => begin('compete'));
   const showEntry = () => { $('start').hidden = true; $('entry').hidden = false;
@@ -716,11 +762,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; });
   $('toEntry').addEventListener('click', showEntry);
   showEntry();
-  $('goDaily').addEventListener('click', () => begin('daily'));
   $('goTut').addEventListener('click', () => begin('tutorial'));
   $('tipSkip').addEventListener('click', () => tutEnd());
   $('goWatch').addEventListener('click', () => begin('auto'));
-  $('againWatch').addEventListener('click', () => { toStart(); showEntry(); });
+  $('againWatch').addEventListener('click', () => { closeBoard(); toStart(); showEntry(); });
   function setPaused(v){
     if (v === paused || !started) return;
     paused = v; $('paused').hidden = !v; $('pause').textContent = v ? '▶' : '❚❚'; $('pause').setAttribute('aria-label', v ? 'Resume' : 'Pause');
@@ -758,7 +803,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (paused) return;
     if (e.key === '1') setGame('auto');
     if (e.key === '2') setGame('compete');
-    if (e.key === 'Enter' && over) startRun();
+    if (e.key === 'Enter' && over && document.activeElement !== $('handle')){ closeBoard(); startRun(daily); }
   });
 
   /* ---------- Analysis ---------- */
@@ -866,13 +911,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (g !== 'compete' && tut) tutEnd();
     game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
     $('hudc').hidden = g !== 'compete';
-    if (g === 'compete') startRun(!!isDaily); else { over = false; daily = false; $('over').hidden = true; }
+    if (g === 'compete') startRun(!!isDaily); else { over = false; daily = false; }
   }
   function startRun(isDaily = daily){
     daily = isDaily; runStart = travel; oppZ = []; ghostRec = []; ghostDz = null;
     if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
-    $('oNote').textContent = '';
-    game = 'compete'; over = false; $('over').hidden = true; $('hudc').hidden = false;
+    if (typeof closeBoard === 'function') closeBoard();
+    game = 'compete'; over = false; $('hudc').hidden = false;
     score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
@@ -881,17 +926,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   function gameOver(why){
     if (over) return;
-    $('overTitle').textContent = why || 'RUN OVER';
     sfx('over'); vib([80, 60, 160]);
-    submitScore(score, level, daily);
     over = true; best = Math.max(best, score);
     try { localStorage.setItem('gridline-best', best); } catch(_){}
-    $('oScore').textContent = score.toLocaleString(); $('oBest').textContent = best.toLocaleString(); $('over').hidden = false;
+    showResults(why);
   }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('hLvl').textContent = (daily ? 'DAILY · ' : '') + 'LVL ' + level;
-    $('hLives').textContent = '◆'.repeat(Math.max(0, lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0, lives)));
+    $('hLvl').textContent = (daily ? 'DAILY ' : '') + 'LVL ' + level;
+    $('hLives').textContent = '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, VS().lives - Math.max(0, lives)));
+    $('hLives').setAttribute('aria-label', lives + ' lives');
     $('hCombo').textContent = combo > 1 ? 'x' + combo + ' COMBO' : '';
     if (!$('cb')) return;
     $('cb').textContent = (daily ? 'DAILY · ' : '') + 'LVL ' + level + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
@@ -987,10 +1031,17 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const WHEELS = [[.3,.28],[1.2,.28]], WR = .27, HALF = .14, S = 1.35;
 
 
+  let camE = 0, camClock = 0;   // 0 = chase camera, 1 = high overhead view (Endless Void)
   function drawGrid(dt){
-    const hz = H*(H > W ? .48 : .58), vp = W/2;
+    // Endless Void lifts the camera into a high overhead view during each drop (or every ~25 s with the mic), then settles back
+    const voidWorld = WORLD.scene === 'aether' && !reduce;
+    camClock += dt;
+    const wantHigh = voidWorld && (source === 'demo' ? curSec === 'drop' : (camClock % 25) > 16);
+    camE += ((wantHigh ? 1 : 0) - camE)*Math.min(1, dt*.7);
+    const camH = 1 + camE*1.6, camBack = camE*1.4;
+    const hz = H*(H > W ? .48 : .58) - (voidWorld ? H*.14*camE : 0), vp = W/2;
     // one scale for width and height so the vehicle keeps its proportions on any screen
-    const LX = laneW(), K = LX*1.45, Zmin = K / Math.max(40, H - hz);
+    const LX = laneW(), K = LX*1.45, Zmin = Math.max(.3, K*camH / Math.max(40, H - hz) - camBack);
     // Endless Void: the road through space curves, rises and falls, and the camera banks into the turns
     const aeth = WORLD.scene === 'aether', hwy = WORLD.scene === 'city', bendOn = (aeth || hwy) && !reduce ? 1 : 0;
     // Neon City rolls over gentle hills with soft curves; Endless Void swings harder and banks
@@ -1068,7 +1119,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     // ground in true perspective; in Endless Void only the floating track is drawn
     if (!aeth){ ctx.fillStyle = hwy ? '#05030a' : '#02040a'; ctx.fillRect(0,hz,W,H-hz); }
-    const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0; return [vp + X*LX/Z + bX*f, hz + K*(1-h)/Z + bY*f]; };
+    const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0, Zc = Z + camBack; return [vp + X*LX/Zc + bX*f, hz + K*(camH - h)/Zc + bY*f]; };
     const competing = game === 'compete' && !over;
     if (competing){
       runT += dt; diff = Math.min(1, (level - 1)/5);   // difficulty climbs with each checkpoint passed
