@@ -49,6 +49,23 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .gauge.low em{background:#ff4060;animation:blink .5s steps(2) infinite}
 @keyframes blink{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.gauge.low em{animation:none}}
+.over .row.links{margin-top:10px}
+.over .row.links button{min-height:34px;padding:8px 12px;font-size:11px}
+.over .note{color:var(--orange);text-transform:none;letter-spacing:.04em;font-size:13px;min-height:1em}
+.namerow{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.namerow label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.namerow input{font:14px var(--mono);color:var(--white);background:rgba(255,255,255,.06);border:1px solid rgba(41,243,255,.35);padding:8px 10px;width:12em;max-width:100%}
+.tabs{display:flex;gap:6px;justify-content:center;margin:6px 0 10px}
+.tabs button{min-height:34px;font-size:11px}
+.lb{list-style:none;margin:0;padding:0;text-align:left;max-height:50vh;overflow-y:auto}
+.lb li{display:grid;grid-template-columns:2em 1fr auto auto;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
+.lb li.me{color:var(--cyan)}
+.lb .rk{color:var(--dim)} .lb .sc{font-family:var(--display);color:var(--orange)} .lb .lv{color:var(--dim);font-size:11px}
+.lb .empty{display:block;color:var(--dim);text-align:center;border:0}
+.tip{position:fixed;left:50%;top:calc(110px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:15;display:flex;gap:10px;align-items:center;
+  background:var(--panel);border:1px solid var(--orange);box-shadow:0 0 20px rgba(255,122,26,.3);padding:10px 12px;max-width:calc(100% - 32px);font-size:14px;color:var(--white)}
+.tip button{min-height:32px;padding:6px 10px;font-size:10px;flex:none}
+.ghostInfo{grid-column:1/-1;font-size:10px;letter-spacing:.16em;color:var(--dim);font-family:var(--mono);text-shadow:none}
 .meters{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.7;font-variant-numeric:tabular-nums}
 .meters b{color:var(--white);font-weight:400}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid rgba(41,243,255,.35);box-shadow:0 -1px 18px rgba(41,243,255,.18);
@@ -96,7 +113,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .vstats .pips i{width:10px;height:5px;background:rgba(41,243,255,.15)}
 .vstats .pips i.on{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
 .vstats .perk{grid-column:1/-1;font-size:12px;color:var(--white);letter-spacing:.03em;margin-top:4px}
-.over .pv{display:block;width:100%;height:120px;margin:4px 0 2px}
+.over .pv{display:block;width:100%;height:104px;margin:4px 0 2px}
 .over .chips svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .over .card{max-height:calc(100% - 24px);overflow-y:auto}
 .over .chips button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.4),0 0 10px rgba(41,243,255,.2) inset}
@@ -114,7 +131,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <canvas id="cv" aria-label="Sound-reactive visualization"></canvas>
 
 <div class="hud">
-  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div><div class="gauges" id="gauges" hidden><div class="gl">GAS</div><i class="gauge"><em id="gas"></em></i><div class="gl">NEXT GATE</div><i class="gauge cp"><em id="cpBar"></em></i></div></div>
+  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div><div class="gauges" id="gauges" hidden><div class="gl">GAS</div><i class="gauge"><em id="gas"></em></i><div class="gl">NEXT GATE</div><i class="gauge cp"><em id="cpBar"></em></i><div class="ghostInfo" id="ghostInfo"></div></div></div>
   <div class="side">
     <div class="tools">
       <button id="pause" type="button" aria-label="Pause" title="Pause (P)" hidden>❚❚</button>
@@ -137,11 +154,21 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aetherial Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
-  <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
+  <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goDaily" class="big" type="button">Daily challenge</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
+  <div class="row links"><button id="lbBtn" class="ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="ghost" type="button">Tutorial</button></div>
 </div></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
   <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div></div>
-<div class="over" id="over" hidden><div class="card"><h2 id="overTitle">RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><div class="row"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
+<div class="over" id="over" hidden><div class="card"><h2 id="overTitle">RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><p class="note" id="oNote"></p>
+  <div class="namerow" id="nameRow" hidden><label for="handle">Rider name</label><input id="handle" type="text" maxlength="16" autocomplete="off" placeholder="Shown on the leaderboard"></div>
+  <div class="row"><button id="again" class="big" type="button">Ride again</button><button id="lbBtn2" class="ghost" type="button" hidden>Leaderboard</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
+<div class="over" id="board" hidden><div class="card">
+  <h2>LEADERBOARD</h2>
+  <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="all" aria-pressed="true">All time</button><button type="button" role="tab" data-tab="today" aria-pressed="false">Today's daily</button></div>
+  <ol class="lb" id="lbList"></ol>
+  <div class="row"><button id="lbClose" class="ghost" type="button">Close</button></div>
+</div></div>
+<div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
 <div class="steer" id="steer" hidden>
   <div class="g"><button id="sl" type="button" aria-label="Steer left">◀</button><button id="sr" type="button" aria-label="Steer right">▶</button></div>
@@ -269,6 +296,97 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     } catch(e){ console.warn('Tone.js setup failed; using the built-in synths', e); T.ready = false; }
   }
   const kitNow = () => settings.beat === 'lofi' ? T.loKit : T.synKit;
+  // ---------- sound effects: synthesized, routed past the music's filters so they stay crisp
+  let sfxOut;
+  function sfx(kind){
+    if (!ac || ac.state !== 'running' || !mix) return;
+    try {
+      if (!sfxOut){ sfxOut = ac.createGain(); sfxOut.gain.value = .55; sfxOut.connect(mix); }
+      if (!noise) noise = mkNoise();
+      const t0 = ac.currentTime + .005;
+      const tone = (type, f0, f1, dur, lvl, off = 0) => { const t = t0 + off, os = ac.createOscillator(), g = ac.createGain(); os.type = type;
+        os.frequency.setValueAtTime(f0, t); os.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + .008);
+        g.gain.exponentialRampToValueAtTime(.001, t + dur); os.connect(g); g.connect(sfxOut); os.start(t); os.stop(t + dur + .02); };
+      const hiss = (f0, f1, dur, lvl, type = 'bandpass') => { const sr = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); sr.buffer = noise; sr.loop = true;
+        f.type = type; f.Q.value = 1.2; f.frequency.setValueAtTime(f0, t0); f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+        g.gain.setValueAtTime(lvl, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur); sr.connect(f); f.connect(g); g.connect(sfxOut); sr.start(t0); sr.stop(t0 + dur + .02); };
+      ({
+        jump:   () => { tone('triangle', 260, 820, .16, .22); hiss(800, 3000, .18, .07); },
+        land:   () => { tone('sine', 140, 55, .16, .45); hiss(900, 300, .12, .1, 'lowpass'); },
+        trick:  () => [0, 4, 7, 12].forEach((iv, k) => tone('square', 523*Math.pow(2, iv/12), 523*Math.pow(2, iv/12), .2, .08, k*.055)),
+        gas:    () => { tone('sine', 880, 880, .12, .18); tone('sine', 1320, 1320, .22, .18, .08); },
+        crash:  () => { tone('sawtooth', 420, 70, .45, .26); hiss(2000, 200, .4, .32, 'lowpass'); },
+        gate:   () => { [0, 4, 7, 12].forEach(iv => tone('sawtooth', 392*Math.pow(2, iv/12), 392*Math.pow(2, iv/12), .6, .055)); hiss(400, 6000, .5, .1); },
+        lost:   () => tone('triangle', 600, 300, .2, .14),
+        whoosh: () => hiss(300, 2400, .35, .16),
+        tick:   () => tone('sine', 1046, 1046, .1, .12),
+        over:   () => { tone('sawtooth', 330, 110, .8, .16); tone('sawtooth', 247, 82, .8, .12); }
+      })[kind]?.();
+    } catch(_){}
+  }
+  // short buzzes on phones that support vibration (most Android browsers; iPhones ignore it)
+  const vib = p => { try { navigator.vibrate?.(p); } catch(_){} };
+  // ---------- shared leaderboard: only when this page runs as a Claude artifact with its database
+  const LB = { db: null, uid: null, user: null, mine: null, all: [], today: [], tab: 'all', busy: false };
+  let handle = ''; try { handle = localStorage.getItem('gridline-handle') || ''; } catch(_){}
+  (async () => {
+    try {
+      if (!window.claude?.use) return;
+      await null;   // let the rest of the page finish setting up first
+      const mic = document.querySelector('[data-group="beat"] [data-v="mic"]'); if (mic) mic.hidden = true;   // the microphone isn't available on hosted pages
+      if (settings.beat === 'mic'){ settings.beat = 'synth'; syncChips(); }
+      const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+      if (!db || !user) return;
+      const uid = await user.id(); if (!uid) return;
+      Object.assign(LB, { db, uid, user });
+      const snap = await db.doc('scores/' + uid).get(); LB.mine = snap.exists ? { ...snap.data() } : null;
+      if (!handle && LB.mine?.name) handle = LB.mine.name;
+      db.collection('scores').orderBy('best', 'desc').limit(25).onSnapshot(q => { LB.all = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
+      db.collection('scores').where('day', '==', dayKey()).orderBy('dayBest', 'desc').limit(25).onSnapshot(q => { LB.today = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
+      $('lbBtn').hidden = false; $('lbBtn2').hidden = false;
+    } catch(_){}
+  })();
+  async function submitScore(sc, lv, isDaily){
+    if (!LB.db || LB.readOnly) return;
+    $('nameRow').hidden = false; $('handle').value = handle;
+    const m = LB.mine || { best: 0 }, next = { ...m }, day = dayKey(); let better = false;
+    if (!isDaily && sc > (m.best || 0)){ Object.assign(next, { best: sc, level: lv, vehicle: settings.vehicle }); better = true; }
+    if (isDaily){ if (m.day !== day) Object.assign(next, { day, dayBest: 0 }); if (sc > (next.dayBest || 0)){ Object.assign(next, { day, dayBest: sc, dayLevel: lv }); better = true; } }
+    if (handle) next.name = handle;
+    if (!next.best) next.best = 0;
+    if (!better && next.name === m.name){ $('oNote').textContent = 'Your best is still ' + ((isDaily ? next.dayBest : next.best) || 0).toLocaleString() + '.'; return; }
+    await saveMine(next);
+    if (better) $('oNote').textContent = isDaily ? 'New best on today\'s daily challenge!' : 'New personal best on the leaderboard!';
+  }
+  async function saveMine(next){
+    if (LB.busy) return; LB.busy = true;
+    try { await LB.db.doc('scores/' + LB.uid).set(next); LB.mine = next; }
+    catch(e){ if (e?.code === 'invalid_argument'){ LB.readOnly = true; $('oNote').textContent = 'You can view the leaderboard, but your access to this page doesn\'t allow saving scores.'; } }
+    LB.busy = false;
+  }
+  $('handle').addEventListener('change', () => {
+    handle = $('handle').value.trim().slice(0, 16);
+    try { localStorage.setItem('gridline-handle', handle); } catch(_){}
+    if (LB.db && LB.mine && handle !== LB.mine.name) saveMine({ ...LB.mine, name: handle });
+  });
+  async function renderBoard(){
+    if ($('board').hidden) return;
+    const rows = (LB.tab === 'today' ? LB.today.map(r => ({ ...r, s: r.dayBest, lv: r.dayLevel })) : LB.all.map(r => ({ ...r, s: r.best, lv: r.level }))).filter(r => r.s > 0);
+    const ps = LB.user && rows.length ? await LB.user.profiles(rows.map(r => r.id)) : {};
+    const list = $('lbList'); list.replaceChildren();
+    if (!rows.length){ const li = document.createElement('li'); li.className = 'empty'; li.textContent = LB.tab === 'today' ? 'No daily runs yet today. Be the first.' : 'No scores yet. Be the first.'; list.append(li); return; }
+    rows.forEach((r, i) => {
+      const li = document.createElement('li'); if (r.id === LB.uid) li.className = 'me';
+      const cells = [String(i + 1), r.name || ps[r.id]?.name || 'Rider', (r.s || 0).toLocaleString(), r.lv ? 'LVL ' + r.lv : ''];
+      ['rk', 'nm', 'sc', 'lv'].forEach((c, k) => { const sp = document.createElement('span'); sp.className = c; sp.textContent = cells[k]; li.append(sp); });
+      list.append(li);
+    });
+  }
+  const openBoard = tab => { LB.tab = tab || LB.tab; document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === LB.tab)); $('board').hidden = false; renderBoard(); };
+  $('lbBtn').addEventListener('click', () => openBoard('all'));
+  $('lbBtn2').addEventListener('click', () => openBoard(daily ? 'today' : 'all'));
+  $('lbClose').addEventListener('click', () => { $('board').hidden = true; });
+  document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => openBoard(b.dataset.tab)));
   function routeBus(){ if (!master) return; master.disconnect(); master.connect(settings.beat === 'lofi' ? lofiIn : mix); }
   async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch(e){} }
 
@@ -474,7 +592,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
   /* ---------- Controls ---------- */
   document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => started ? setGame(b.dataset.game) : begin(b.dataset.game)));
-  $('again').addEventListener('click', () => startRun());
+  $('again').addEventListener('click', () => startRun(daily));
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
   let barPx = 0;
@@ -535,7 +653,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     started = true; $('start').hidden = true; $('pause').hidden = false; $('setup').hidden = false; $('steer').hidden = false; $('bar').classList.remove('hide'); syncBar();
     if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
     else if (source !== 'demo') startDemo();
-    setGame(g);
+    let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
+    if (g === 'tutorial' || (g === 'compete' && !seen)){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }
+    if (g === 'daily') setGame('compete', true); else setGame(g);
+    if (tut) tutShow();
   }
   function toStart(){
     setPaused(false); setGame('auto');
@@ -543,6 +664,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   $('setup').addEventListener('click', toStart);
   $('goPlay').addEventListener('click', () => begin('compete'));
+  $('goDaily').addEventListener('click', () => begin('daily'));
+  $('goTut').addEventListener('click', () => begin('tutorial'));
+  $('tipSkip').addEventListener('click', () => tutEnd());
   $('goWatch').addEventListener('click', () => begin('auto'));
   $('againWatch').addEventListener('click', () => toStart());
   function setPaused(v){
@@ -639,6 +763,30 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
   let level = 1, nextCP = 0, fuel = 100, fuelHold = 0;
+  // Daily challenge: the same road for everyone each (UTC) day, built from a seeded random sequence and laid out by
+  // distance from the start rather than by beat or speed, so it doesn't depend on song, vehicle or how you ride
+  let daily = false, runStart = 0, drng = Math.random;
+  const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; };
+  const dayKey = () => new Date().toISOString().slice(0, 10);
+  const seedOf = str => { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+  const R = () => daily && game === 'compete' && !over ? drng() : Math.random();
+  const levelAt = z => 1 + Math.max(0, Math.floor((z - runStart)/LEVEL_LEN));
+  // Ghost: your best run replays as a faint rider so you can race yourself
+  let ghostRec = [], ghost = null, ghostScore = 0, ghostDz = null;
+  const ghostKey = () => daily ? 'gridline-ghost-daily-' + dayKey() : 'gridline-ghost-run';
+  // Tutorial: a few guided prompts the first time you play
+  let tut = null;
+  const TUT = [
+    { id:'steer', desk:'Hold ← or → to steer', touch:'Hold ◀ or ▶ to steer' },
+    { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
+    { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
+    { id:'flip',  desk:'In the air, hold ↑ to backflip, then let go to land upright', touch:'In the air, hold ⟲ to backflip, then let go to land upright' },
+    { id:'gas',   desk:'Landing jumps and clearing tunnels refills gas. Reach the gate!', touch:'Landing jumps and clearing tunnels refills gas. Reach the gate!' }
+  ];
+  const isTouch = matchMedia('(hover: none)').matches;
+  function tutShow(){ const st = TUT[tut.step]; $('tipText').textContent = (tut.step + 1) + '/' + TUT.length + ' · ' + (isTouch ? st.touch : st.desk); $('tip').hidden = false; }
+  function tutEnd(){ tut = null; $('tip').hidden = true; try { localStorage.setItem('gridline-tut', '1'); } catch(_){} }
+  function tutEvent(id){ if (!tut || TUT[tut.step].id !== id) return; sfx('tick'); tut.step++; tut.t = 0; if (tut.step >= TUT.length) tutEnd(); else tutShow(); }
   const LEVEL_LEN = 55, REFUEL = { ramp: 30, tunnel: 34, flip: 8 };
   const fillK = () => 1;
   // gas is set so that hitting a share of the ramps and tunnels actually on the road gets you to the gate:
@@ -652,28 +800,37 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
   const RD = [255,64,96];
-  function setGame(g){
+  function setGame(g, isDaily){
+    if (g !== 'compete' && tut) tutEnd();
     game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
     $('scoreBox').hidden = g !== 'compete'; $('gauges').hidden = g !== 'compete';
-    if (g === 'compete') startRun(); else { over = false; $('over').hidden = true; }
+    if (g === 'compete') startRun(!!isDaily); else { over = false; daily = false; $('over').hidden = true; }
   }
-  function startRun(){
+  function startRun(isDaily = daily){
+    daily = isDaily; runStart = travel; oppZ = []; ghostRec = []; ghostDz = null;
+    if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
+    try { const gs = JSON.parse(localStorage.getItem(ghostKey()) || 'null'); ghost = gs?.path || null; ghostScore = gs?.score || 0; } catch(_){ ghost = null; ghostScore = 0; }
+    $('oNote').textContent = '';
     game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false; $('gauges').hidden = false;
     score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
-    ramps = ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
-    showScore(); pop('GO', CY);
+    ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
+    showScore(); pop(daily ? 'DAILY CHALLENGE' : 'GO', CY);
   }
   function gameOver(why){
+    if (over) return;
     $('overTitle').textContent = why || 'RUN OVER';
+    sfx('over'); vib([80, 60, 160]);
+    if (score > ghostScore && ghostRec.length > 20){ try { localStorage.setItem(ghostKey(), JSON.stringify({ score, path: ghostRec.slice(0, 6000) })); } catch(_){} }
+    submitScore(score, level, daily);
     over = true; best = Math.max(best, score);
     try { localStorage.setItem('gridline-best', best); } catch(_){}
     $('oScore').textContent = score.toLocaleString(); $('oBest').textContent = best.toLocaleString(); $('over').hidden = false;
   }
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
-    $('cb').textContent = 'LVL ' + level + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
+    $('cb').textContent = (daily ? 'DAILY · ' : '') + 'LVL ' + level + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
   const FLIP_RATE = 7.5;  // radians per second at full spin: about 0.85 s per rotation
   const GRAV = 3.6;       // floatier jumps leave time to throw a flip
   let flipV = 0;          // current spin speed; it eases in and out so flips look smooth
@@ -859,10 +1016,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     travel += dt*spd; lastSpd = spd;
     if (competing){
       // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
-      if (travel > fuelHold) fuel -= drainPerUnit()*dt*spd;
+      if (travel > fuelHold && !tut) fuel -= drainPerUnit()*dt*spd;
+      // record this run for the ghost, ten samples a second
+      if (runT >= ghostRec.length*.1) ghostRec.push([+(travel - runStart).toFixed(2), +cycX.toFixed(2), +Math.max(alt, -1.3).toFixed(2), +flipA.toFixed(2)]);
+      if (tut && TUT[tut.step].id === 'gas' && (tut.t += dt) > 5) tutEvent('gas');
       if (travel >= nextCP){
         level++; nextCP += LEVEL_LEN; fuel = 100; const bonus = 500*(level - 1); score += bonus;
-        pop('CHECKPOINT · LEVEL ' + level + '  +' + bonus, CY); flash = 0; showScore();
+        pop('CHECKPOINT · LEVEL ' + level + '  +' + bonus, CY); flash = 0; showScore(); sfx('gate'); vib([30, 40, 30, 40, 70]);
       }
       if (fuel <= 0){ fuel = 0; gameOver('OUT OF GAS'); }
       const g = Math.max(0, fuel)/100;
@@ -951,6 +1111,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     // the cycle holds a fixed distance ahead of the camera, so it rides toward the sun forever
     const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn));
+    if (tut && st && (tut.steerT += dt) > .5) tutEvent('steer');
     let want;
     const autoDrive = game === 'auto' || over;
     if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5.5, VS().steer*Math.max(1, spd/1.8)); }
@@ -973,7 +1134,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // so busy passages bring more of them and quiet passages fewer
     if (!seeded){ seeded = true; let z = 9; while (z < travel + 44) z = spawnOne(z); }
     const horizonZ = travel + 44;
-    if (spawnBeats > 0 || horizonZ - nextRamp > (competing ? 8 : 14)){
+    if (daily && competing){ let guard = 0; while (nextRamp < horizonZ && guard++ < 20) spawnOne(nextRamp); spawnBeats = 0; }
+    else if (spawnBeats > 0 || horizonZ - nextRamp > (competing ? 8 : 14)){
       if (horizonZ >= nextRamp) spawnOne(horizonZ);
       spawnBeats = 0;
     }
@@ -982,13 +1144,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     for (const r of ramps){
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
       if (cz - .6 < r.z + BL && cz + .6 > r.z && Math.abs(cycX - r.x) < BW + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
-        r.hit = true; lives--; invuln = 1.4; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore();
+        r.hit = true; if (!tut) lives--; invuln = 1.4; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore(); sfx('crash'); vib([60, 40, 90]);
         if (lives <= 0) gameOver();
       }
     }
     for (const r of ramps) if (r.kind === 'ramp' && !r.used && !r.missed && cz - r.z > RL){
       r.missed = true;
-      if (scoring){ if (combo > 0) pop('COMBO LOST', CY); combo = 0; boost *= .5; showScore(); }
+      if (scoring){ if (combo > 0){ pop('COMBO LOST', CY); sfx('lost'); } combo = 0; boost *= .5; showScore(); }
     }
     ramps = ramps.filter(r => r.z + r.len - travel > .5);
     // inside a tunnel the walls keep you in your lane
@@ -1003,22 +1165,24 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     }
     if (jumpReq){
       jumpReq = false;
-      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = VS().jump; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0; }   // peaks about twice a block's height
+      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = VS().jump; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0; sfx('jump'); vib(15); tutEvent('jump'); }   // peaks about twice a block's height
     }
     if (!airborne){
       if (sf.obj){
         alt = sf.h; vy = spd*sf.slope; sf.obj.used = true;
         rampOn = sf.slope > 0 ? sf.obj : null;
-        inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
+        const wasIn = inTunnel; inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
+        if (inTunnel && !wasIn) sfx('whoosh');
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
         airborne = true; ollie = false; vy = (tun ? TUN_VY : RAMP_VY)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
+        if (scoring){ sfx(tun ? 'whoosh' : 'jump'); vib(15); } if (!tun) tutEvent('ramp');
         // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
         if (autoDrive && Math.random() < .55){
           const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
-        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); sfx('gas'); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -1039,18 +1203,19 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         if (off > VS().tol){
           // landed crooked: wipeout
           flash = 1; pop('WIPEOUT', RD);
-          if (scoring){ lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); if (lives <= 0) gameOver(); }
-        } else if (ollie){
+          if (scoring){ if (!tut) lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); sfx('crash'); vib([60, 40, 90]); if (lives <= 0) gameOver(); }
+        } else if (scoring){ sfx(n ? 'trick' : 'land'); vib(n ? [20, 30, 20] : 12); if (n) tutEvent('flip'); }
+        if (off <= VS().tol && ollie){
           // a jump from the flat only scores for the flips you land, and doesn't build the combo
           if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; fuel = Math.min(100, fuel + REFUEL.flip*n*fillK()); pop(trick + ' +' + pts, OR); showScore(); }
           else if (trick) pop(trick, OR);
-        } else {
+        } else if (off <= VS().tol){
           boost = Math.min(1.6, boost + .3*VS().boostMul);
           if (scoring){
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
           } else if (trick) pop(trick, OR);
         }
       }
@@ -1060,6 +1225,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
     const under = alt < -.02;
+    // your best run's ghost, drawn where it was at this moment of its run
+    if (competing && ghost && ghost.length){
+      const gi = Math.floor(runT/.1), g = ghost[Math.min(ghost.length - 1, gi)];
+      ghostDz = gi < ghost.length ? g[0] - (travel - runStart) : null;
+      if (ghostDz !== null && ghostDz > -.5 && ghostDz < 40) drawGhost(P, CZ + ghostDz, g);
+      if ((frameN = (frameN || 0) + 1) % 15 === 0) $('ghostInfo').textContent = ghostDz === null ? 'GHOST RUN ENDED' : 'GHOST ' + Math.abs(ghostDz).toFixed(0) + 'M ' + (ghostDz >= 0 ? 'AHEAD' : 'BEHIND');
+    } else if (competing && (frameN = (frameN || 0) + 1) % 30 === 0) $('ghostInfo').textContent = ghostScore ? '' : 'BEAT THIS RUN TO SET A GHOST';
     const cpZ = nextCP - travel, gateOn = competing && cpZ < 46;
     if (gateOn && cpZ > CZ + 1) drawGate(cpZ, P, hit);
     sorted.forEach(r => {
@@ -1221,6 +1393,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (!mirror){ tailLight(Q(-.21,.36,.03), Q(-.12,.36,.03), hit); tailLight(Q(.12,.36,.03), Q(.21,.36,.03), hit); }
   }
 
+  let frameN = 0;
+  function drawGhost(P, Zg, g){
+    const keep = [cycX, alt, flipA, lean, pitch, invuln];
+    cycX = g[1]; alt = g[2]; flipA = g[3]; lean = 0; pitch = 0; invuln = 0;
+    ctx.globalAlpha = .5;
+    try { drawCycle(P, Zg, 0, false); } finally { [cycX, alt, flipA, lean, pitch, invuln] = keep; ctx.globalAlpha = 1; }
+  }
   function drawGate(Z, P, hit){
     // checkpoint: two pylons, a chequered banner overhead and a bright line across the road
     if (Z < .35) return;
@@ -1424,25 +1603,27 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const RAMP_VY = 2.5, TUN_VY = 2.3;
   const airTime = (v, h0) => (v + Math.sqrt(v*v + 2*GRAV*h0))/GRAV;
   function spawnOne(z){
-    const competing = game === 'compete' && !over, roll = Math.random();
-    const pT = .22, pB = competing ? .3 + diff*.18 : 0;
-    const kind = roll < pT ? 'tunnel' : roll < pT + pB ? 'block' : 'ramp';
+    const competing = game === 'compete' && !over, roll = R(), dl = daily && competing;
+    const dif = dl ? Math.min(1, (levelAt(z) - 1)/5) : diff;
+    const pT = .22, pB = competing ? .3 + dif*.18 : 0;
+    const kind = tut && tut.step < 4 ? 'ramp' : roll < pT ? 'tunnel' : roll < pT + pB ? 'block' : 'ramp';   // the tutorial serves ramps until you've flipped
     const xs = [-2.2, -1.1, 0, 1.1, 2.2];
-    const wall = kind === 'block' && diff > .25 && Math.random() < .2 + diff*.4, gapI = Math.floor(Math.random()*xs.length);
-    const x = wall ? xs[gapI] : (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
+    const wall = kind === 'block' && dif > .25 && R() < .2 + dif*.4, gapI = Math.floor(R()*xs.length);
+    const x = wall ? xs[gapI] : (R() < .5 ? -1 : 1)*(1 + Math.floor(R()*3)*.5);
     // leave room to land from the last obstacle, react, and steer across to this one, judged at a bit above the current speed
     if (prevOb){
-      const sp = Math.max(1.4, lastSpd)*1.12, steer = Math.min(5.5, VS().steer*Math.max(1, sp/1.8));
+      // the daily road is spaced for a fixed, generous speed and the slowest steering, so every vehicle can ride it
+      const sp = dl ? (2.03*(1 + dif*.6)*1.12 + .8)*1.12 : Math.max(1.4, lastSpd)*1.12, steer = Math.min(5.5, (dl ? 2.1 : VS().steer)*Math.max(1, sp/1.8));
       z = Math.max(z, prevOb.end + sp*(prevOb.air + .5 + Math.abs(x - prevOb.x)/steer));
     }
-    const jm = VS().jump/3;
+    const jm = dl ? 3.2/3 : VS().jump/3;
     if (kind !== 'block'){ oppZ.push(z); if (oppZ.length > 40) oppZ.shift(); }
     if (kind === 'tunnel'){ ramps.push({ kind:'tunnel', z, x, len: TL }); prevOb = { x, end: z + TL, air: airTime(TUN_VY*jm, 0) }; nextRamp = z + TL + 3; }
     else if (kind === 'block'){
       if (wall) xs.forEach((bx, k) => { if (k !== gapI) ramps.push({ kind:'block', z, x: bx, len: BL }); });   // a wall with one gap to thread
       else {
         ramps.push({ kind:'block', z, x, len: BL });
-        if (Math.random() < .35 + diff*.35) ramps.push({ kind:'block', z, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });
+        if (R() < .35 + dif*.35) ramps.push({ kind:'block', z, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });
       }
       prevOb = { x, end: z + BL, air: 0 }; nextRamp = z + 2.4;
     }
