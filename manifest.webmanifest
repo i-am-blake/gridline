@@ -1,0 +1,16 @@
+{
+  "name": "Gridline",
+  "short_name": "Gridline",
+  "description": "Ride the beat. Chase the sun. A neon, music-driven riding game.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#02040a",
+  "theme_color": "#02040a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

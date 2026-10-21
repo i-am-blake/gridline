@@ -53,7 +53,14 @@ Every level is faster than the last. Every five levels opens a new chapter:
 - A reward at each milestone: an extra life or a free force field.
 - **Weather** from level 3: rain, crosswinds, fog, snow and lightning storms, each changing how the road feels.
 
-Scores go to a shared leaderboard.
+Scores go to a shared leaderboard, split by map, showing each rider's best score and the level they reached.
+
+## More
+
+- **Share your score**: after a run, tap *Share score* to send a neon score card and a link to friends.
+- **Install it like an app**: on iPhone, open the game in Safari, tap Share ⬆ then *Add to Home Screen*. On Android, tap *Install app* on the home screen (or Chrome's menu → *Install app*). It then opens full screen and works offline.
+- **Colour-blind mode**: hazards turn bright yellow with a bold X, so they never depend on telling red from orange or green.
+- **Enjoying Gridline?** [☕ Buy me a coffee](https://venmo.com/u/Send-It-Blake) (Venmo @Send-It-Blake).
 
 ## Credits
 

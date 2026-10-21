@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Gridline</title>
+<meta name="description" content="Ride the beat. Chase the sun. A neon, music-driven riding game.">
+<meta name="theme-color" content="#02040a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gridline">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Share+Tech+Mono&display=swap">
 <style>
@@ -62,6 +70,15 @@ body:not(.playing) .hud h1{visibility:hidden}
 .entry .duo.solo{grid-template-columns:1fr}
 .entry .duo button{margin-top:0;width:100%;justify-content:center}
 .entry .best{margin-top:14px;min-height:1em}
+.entry .extras{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
+.over .extras .mini{margin:0;min-height:32px;padding:6px 10px;font-size:11px;letter-spacing:.06em;border:1px solid rgba(41,243,255,.3);background:transparent;color:var(--dim);display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:inherit;border-radius:2px}
+.over .extras .mini[aria-pressed="true"]{color:#ffe000;border-color:#ffe000}
+.over .extras a.mini:hover,.over .extras a.mini:focus-visible{color:var(--orange);border-color:var(--orange);background:rgba(255,122,26,.1)}
+.installHow{font-size:12px;color:var(--white);margin:10px 0 0;line-height:1.5}
+.coffeeCard{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:14px;padding:10px 12px;border:1px dashed rgba(255,122,26,.55);color:var(--white);text-decoration:none}
+.coffeeCard b{color:var(--orange);font-family:var(--display);letter-spacing:.06em}
+.coffeeCard small{color:var(--dim);font-size:11px;width:100%}
+.coffeeCard:hover,.coffeeCard:focus-visible{background:rgba(255,122,26,.12);border-style:solid}
 .over .row.links button{min-height:34px;padding:8px 12px;font-size:11px}
 .over .note{color:var(--orange);text-transform:none;letter-spacing:.04em;font-size:13px;min-height:1em}
 .namerow{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
@@ -96,7 +113,11 @@ body:not(.playing) .hud h1{visibility:hidden}
 .lb{list-style:none;margin:0;padding:0;text-align:left;max-height:50vh;overflow-y:auto}
 .lb li{display:grid;grid-template-columns:2em 1fr auto auto;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
 .lb li.me{color:var(--cyan)}
-.lb .rk{color:var(--dim)} .lb .sc{font-family:var(--display);color:var(--orange)} .lb .lv{color:var(--dim);font-size:11px}
+.lb .rk{color:var(--dim)} .lb .sc{font-family:var(--display);color:var(--orange)} .lb .lv{color:var(--white);font-family:var(--display);font-size:12px;min-width:4.5em;text-align:right}
+.lbhead{display:grid;grid-template-columns:2em 1fr auto auto;gap:10px;padding:0 6px 6px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid rgba(41,243,255,.25)}
+.lbhead span:nth-child(4){min-width:4.5em;text-align:right}
+.maptabs button{flex:1 1 0;justify-content:center}
+.maptabs button[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.35)}
 .lb .empty{display:block;color:var(--dim);text-align:center;border:0}
 .tip{position:fixed;left:50%;top:calc(110px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:15;display:flex;gap:10px;align-items:center;
   background:var(--panel);border:1px solid var(--orange);box-shadow:0 0 20px rgba(255,122,26,.3);padding:10px 12px;max-width:calc(100% - 32px);font-size:14px;color:var(--white)}
@@ -284,6 +305,12 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     <div class="duo solo" id="duo"><button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="big ghost" type="button">Tutorial</button></div>
   </div>
   <p class="best" id="entryBest"></p>
+  <div class="extras">
+    <button id="cbBtn" class="mini" type="button" aria-pressed="false" title="Hazards turn yellow with a bold X, so they never depend on telling red from orange or green">◐ Colour-blind mode</button>
+    <button id="installBtn" class="mini" type="button" hidden>⬇ Install app</button>
+    <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+  </div>
+  <p class="installHow" id="installHow" hidden>On iPhone: tap the Share button <b>⬆</b> in Safari, then <b>Add to Home Screen</b>. Gridline opens full screen like an app.</p>
 </div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
@@ -312,11 +339,15 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
       <button id="addScore" class="big" type="button">Add my score</button>
     </div>
     <p class="note" id="rNote"></p>
-    <div class="row rbtns"><button id="again" class="big" type="button">Ride again</button><button id="againWatch" class="ghost" type="button">Quit</button></div>
+    <div class="row rbtns"><button id="again" class="big" type="button">Ride again</button><button id="shareBtn" class="ghost" type="button">⇪ Share score</button><button id="againWatch" class="ghost" type="button">Quit</button></div>
+    <p class="note" id="shareNote" hidden></p>
+    <a class="coffeeCard" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span><b>☕ Buy me a coffee</b><small>Venmo @Send-It-Blake</small></a>
   </div>
-  <p class="nolb" id="noLb" hidden>The shared leaderboard is on the hosted Gridline page. Your best here: <b id="localBest">0</b></p>
+  <p class="nolb" id="noLb" hidden>The shared leaderboard isn't switched on for this copy of Gridline yet. Your best on this device: <b id="localBest">0</b></p>
+  <div class="tabs maptabs" role="group" aria-label="Map"><button type="button" data-tab="sunset" aria-pressed="true">Sunset Grid</button><button type="button" data-tab="city" aria-pressed="false">Neon City</button><button type="button" data-tab="aether" aria-pressed="false">Endless Void</button></div>
+  <div class="lbhead" id="lbHead"><span>#</span><span>Rider</span><span>Score</span><span>Level</span></div>
   <ol class="lb" id="lbList"></ol>
-  <p class="lbnote">Each rider's best score.</p>
+  <p class="lbnote">Each rider's best run on this map, with the level they reached.</p>
 </div></section>
 <div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
@@ -506,8 +537,14 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   }
   // short buzzes on phones that support vibration (most Android browsers; iPhones ignore it)
   const vib = p => { try { navigator.vibrate?.(p); } catch(_){} };
-  // ---------- shared leaderboard: only when this page runs as a Claude artifact with its database
-  const LB = { db: null, uid: null, user: null, mine: null, all: [], today: [], tab: 'all', busy: false };
+  /* ---------- the public site (GitHub Pages): settings you fill in once ---------- */
+  const SITE_URL = 'https://i-am-blake.github.io/gridline/';
+  const GOATCOUNTER_CODE = '';          // e.g. 'gridline' for gridline.goatcounter.com; visitor stats stay off until this is set
+  const SUPABASE_URL = '', SUPABASE_KEY = '';   // the shared leaderboard for the public site; off until both are set
+  const onPublicSite = !window.claude?.use && /^https?:$/.test(location.protocol) && !/claude/.test(location.hostname);
+  // ---------- shared leaderboard: Claude's storage on the Claude-hosted page, Supabase on the public site
+  const LB = { db: null, uid: null, user: null, mine: null, by: { sunset: [], city: [], aether: [] }, tab: settings.world, busy: false };
+  const WORLDS_LB = ['sunset', 'city', 'aether'];
   let handle = ''; try { handle = localStorage.getItem('gridline-handle') || ''; } catch(_){}
   (async () => {
     try {
@@ -521,21 +558,43 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
       Object.assign(LB, { db, uid, user });
       const snap = await db.doc('scores/' + uid).get(); LB.mine = snap.exists ? { ...snap.data() } : null;
       if (!handle && LB.mine?.name) handle = LB.mine.name;
-      db.collection('scores').orderBy('best', 'desc').limit(25).onSnapshot(q => { LB.all = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
+      WORLDS_LB.forEach(w => db.collection('scores').orderBy(w + '_best', 'desc').limit(25).onSnapshot(q => { LB.by[w] = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r[w + '_best'] > 0).map(r => ({ id: r.id, name: r.name, best: r[w + '_best'], level: r[w + '_level'] })); renderBoard(); }, () => {}));
       $('lbBtn').hidden = false; $('duo').classList.remove('solo');
     } catch(_){}
   })();
+  // the public site's shared leaderboard (Supabase); the Claude-hosted page keeps using its own storage above
+  const SB = { on: false, me: null };
+  let playerId = ''; try { playerId = localStorage.getItem('gridline-player') || ''; if (!playerId){ playerId = crypto.randomUUID(); localStorage.setItem('gridline-player', playerId); } } catch(_){ playerId = String(Math.random()).slice(2); }
+  const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + path, { ...opts, headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  async function sbLoad(w){
+    try { const res = await sbFetch('leaderboard?select=name,best,level,vehicle&world=eq.' + w + '&order=best.desc&limit=25'); if (!res.ok) return;
+      LB.by[w] = (await res.json()).map((r, i) => ({ id: 'sb' + i, ...r })); renderBoard(); } catch(_){}
+  }
+  if (onPublicSite && SUPABASE_URL && SUPABASE_KEY){
+    SB.on = true; try { SB.me = JSON.parse(localStorage.getItem('gridline-sb-me') || 'null'); } catch(_){}
+    $('lbBtn').hidden = false; $('duo').classList.remove('solo');
+  }
   async function submitScore(sc, lv, isDaily){
+    if (SB.on){
+      const w = lastRun.world, prev = SB.me?.[w] || 0, name = handle || 'Rider';
+      try {
+        const res = await sbFetch('rpc/submit_score', { method: 'POST', body: JSON.stringify({ p_player: playerId, p_world: w, p_name: name, p_best: sc, p_level: lv, p_vehicle: settings.vehicle }) });
+        if (!res.ok) throw new Error('save failed');
+      } catch(_){ $('rNote').textContent = 'Couldn\'t reach the leaderboard. Check your connection and try again.'; return false; }
+      SB.me = { ...(SB.me || {}), [w]: Math.max(prev, sc), name }; try { localStorage.setItem('gridline-sb-me', JSON.stringify(SB.me)); } catch(_){}
+      $('rNote').textContent = sc > prev ? 'Added: your new best on ' + MAPNAME[w] + '.' : 'Your best on ' + MAPNAME[w] + ' is still ' + prev.toLocaleString() + '.';
+      sbLoad(w); track('score-added'); return true;
+    }
     if (!LB.db || LB.readOnly) return false;
-    const m = LB.mine || { best: 0 }, next = { ...m }, day = dayKey(); let better = false;
-    if (!isDaily && sc > (m.best || 0)){ Object.assign(next, { best: sc, level: lv, vehicle: settings.vehicle }); better = true; }
-    if (isDaily){ if (m.day !== day) Object.assign(next, { day, dayBest: 0 }); if (sc > (next.dayBest || 0)){ Object.assign(next, { day, dayBest: sc, dayLevel: lv }); better = true; } }
+    const w = lastRun.world, m = LB.mine || {}, next = { ...m }; let better = false;
+    if (sc > (m[w + '_best'] || 0)){ Object.assign(next, { [w + '_best']: sc, [w + '_level']: lv, [w + '_vehicle']: settings.vehicle }); better = true; }
+    if (sc > (m.best || 0)) Object.assign(next, { best: sc, level: lv });
     if (handle) next.name = handle;
-    if (!next.best) next.best = 0;
+    WORLDS_LB.forEach(k => { if (!next[k + '_best']) next[k + '_best'] = 0; }); if (!next.best) next.best = 0;
     if (better || next.name !== m.name) await saveMine(next);
     if (LB.readOnly) return false;
-    $('rNote').textContent = better ? (isDaily ? 'Added: your new best on today\'s daily challenge.' : 'Added: your new personal best.')
-                                    : 'Your best is still ' + ((isDaily ? next.dayBest : next.best) || 0).toLocaleString() + (next.name !== m.name ? '. Name updated.' : '.');
+    $('rNote').textContent = better ? 'Added: your new best on ' + MAPNAME[w] + '.'
+                                    : 'Your best on ' + MAPNAME[w] + ' is still ' + (next[w + '_best'] || 0).toLocaleString() + (next.name !== m.name ? '. Name updated.' : '.');
     return true;
   }
   async function saveMine(next){
@@ -552,41 +611,106 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     $('addScore').textContent = ok ? 'Added ✓' : 'Add my score';
     if (!ok) $('addScore').disabled = false;
   });
-  let lastRun = { score: 0, level: 1, daily: false };
+  let lastRun = { score: 0, level: 1, daily: false, world: settings.world };
+  const MAPNAME = { sunset: 'Sunset Grid', city: 'Neon City', aether: 'Endless Void' };
+
+  // visitor stats (GoatCounter: free, no cookies, no consent banner needed)
+  const track = (name, title) => { try { window.goatcounter?.count?.({ path: name, title: title || name, event: true }); } catch(_){} };
+  if (onPublicSite && GOATCOUNTER_CODE){ const sc = document.createElement('script'); sc.async = true; sc.src = 'https://gc.zgo.at/count.js'; sc.dataset.goatcounter = 'https://' + GOATCOUNTER_CODE + '.goatcounter.com/count'; document.head.append(sc); }
+
+  // play offline / install like an app (only on the public site, which has the app files)
+  if (onPublicSite && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let installEvt = null;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (!standalone) $('installBtn').hidden = false; });
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (onPublicSite && isIOS && !standalone) $('installBtn').hidden = false;
+  $('installBtn').addEventListener('click', async () => {
+    if (installEvt){ installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r?.outcome === 'accepted'){ $('installBtn').hidden = true; track('install'); } installEvt = null; }
+    else $('installHow').hidden = !$('installHow').hidden;
+  });
+  $('cbBtn').addEventListener('click', () => { cbMode = !cbMode; try { localStorage.setItem('gridline-cb', cbMode ? '1' : '0'); } catch(_){} applyCb(); });
+  document.querySelectorAll('.coffee, .coffeeCard').forEach(a => a.addEventListener('click', () => track('coffee-click')));
+
+  // share your score: a neon score card image plus a link back to the game
+  function scoreCard(r){
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d'), w = 1080, h = 1350, hz = 820;
+    const bg = x.createLinearGradient(0, 0, 0, hz); bg.addColorStop(0, '#02040a'); bg.addColorStop(.6, '#0c1a33'); bg.addColorStop(1, '#3a1d2e');
+    x.fillStyle = bg; x.fillRect(0, 0, w, h); x.fillStyle = '#02040a'; x.fillRect(0, hz, w, h - hz);
+    for (let i = 0; i < 90; i++){ x.fillStyle = 'rgba(232,253,255,' + (.2 + (i*37 % 10)/14) + ')'; x.fillRect((i*271) % w, (i*137) % (hz - 100), 2, 2); }
+    // sun with stripes
+    x.save(); x.beginPath(); x.arc(w/2, hz, 200, Math.PI, 0); x.closePath(); x.clip();
+    const sg = x.createLinearGradient(0, hz - 200, 0, hz); sg.addColorStop(0, '#ff9a3a'); sg.addColorStop(1, '#ff4060'); x.fillStyle = sg; x.fillRect(w/2 - 200, hz - 200, 400, 200);
+    x.fillStyle = '#02040a'; for (let k = 0; k < 5; k++) x.fillRect(w/2 - 200, hz - 26 - k*32, 400, 6 + (4 - k)*2); x.restore();
+    x.shadowColor = '#ff7a1a'; x.shadowBlur = 30; x.strokeStyle = '#ff7a1a'; x.lineWidth = 4; x.beginPath(); x.arc(w/2, hz, 200, Math.PI, 0); x.stroke(); x.shadowBlur = 0;
+    // grid floor
+    x.strokeStyle = 'rgba(41,243,255,.6)'; x.lineWidth = 2; x.shadowColor = '#29f3ff'; x.shadowBlur = 10;
+    for (let i = -12; i <= 12; i++){ x.beginPath(); x.moveTo(w/2 + i*14, hz); x.lineTo(w/2 + i*170, h); x.stroke(); }
+    for (let k = 1; k < 14; k++){ const y = hz + (h - hz)*Math.pow(k/14, 2.2); x.beginPath(); x.moveTo(0, y); x.lineTo(w, y); x.stroke(); }
+    x.shadowBlur = 0; x.strokeStyle = '#e8fdff'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, hz); x.lineTo(w, hz); x.stroke();
+    // words
+    x.textAlign = 'center'; const disp = '"Orbitron", "Arial Black", sans-serif';
+    x.font = '800 92px ' + disp; x.fillStyle = '#29f3ff'; x.shadowColor = '#29f3ff'; x.shadowBlur = 28; x.fillText('GRIDLINE', w/2, 170); x.shadowBlur = 0;
+    x.font = '500 34px ' + disp; x.fillStyle = '#e8fdff'; x.fillText('RIDE THE BEAT. CHASE THE SUN.', w/2, 228);
+    x.font = '800 150px ' + disp; x.fillStyle = '#ff7a1a'; x.shadowColor = '#ff7a1a'; x.shadowBlur = 36; x.fillText(r.score.toLocaleString(), w/2, 420); x.shadowBlur = 0;
+    const names = { bike:'LIGHT BIKE', board:'HOVERBOARD', buggy:'DUNE BUGGY', sunset:'SUNSET GRID', city:'NEON CITY', aether:'ENDLESS VOID' };
+    x.font = '800 44px ' + disp; x.fillStyle = '#e8fdff'; x.fillText('LEVEL ' + r.level, w/2, 495);
+    x.font = '500 30px ' + disp; x.fillStyle = '#7fd8e6'; x.fillText(names[settings.vehicle] + '  ·  ' + names[settings.world], w/2, 548);
+    x.fillStyle = 'rgba(2,4,10,.75)'; x.fillRect(140, 1180, 800, 96);
+    x.font = '800 40px ' + disp; x.fillStyle = '#e8fdff'; x.fillText('CAN YOU BEAT IT?', w/2, 1226);
+    x.font = '500 28px ' + disp; x.fillStyle = '#29f3ff'; x.fillText(SITE_URL.replace(/^https:\/\//, '').replace(/\/$/, ''), w/2, 1262);
+    return new Promise(res => c.toBlob(res, 'image/png'));
+  }
+  $('shareBtn').addEventListener('click', async () => {
+    const r = lastRun, text = 'I scored ' + r.score.toLocaleString() + ' and reached level ' + r.level + ' on Gridline. Can you beat it?', note = $('shareNote');
+    const say = t => { note.textContent = t; note.hidden = false; };
+    track('share');
+    try {
+      const blob = await scoreCard(r), file = blob && new File([blob], 'gridline-score.png', { type: 'image/png' });
+      if (file && navigator.canShare?.({ files: [file] })){ await navigator.share({ files: [file], text: text + ' ' + SITE_URL }); return; }
+      if (navigator.share){ await navigator.share({ title: 'Gridline', text, url: SITE_URL }); return; }
+      // no share sheet (most desktops): save the card and copy the message
+      if (blob){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gridline-score.png'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+      try { await navigator.clipboard.writeText(text + ' ' + SITE_URL); say('Score card saved, and the message is copied. Paste it anywhere.'); }
+      catch(_){ say(text + ' ' + SITE_URL); }
+    } catch(e){ if (e?.name !== 'AbortError') say(text + ' ' + SITE_URL); }
+  });
   function showResults(why){
     musicOff();
-    lastRun = { score, level, daily };
+    lastRun = { score, level, daily, world: settings.world };
     $('rTitle').textContent = why || 'RUN OVER';
     $('rScore').textContent = score.toLocaleString();
     $('rMeta').textContent = (daily ? 'Daily · ' : '') + 'Level ' + level + ' · Best ' + best.toLocaleString();
-    $('rNote').textContent = '';
-    const canAdd = !!LB.db && !LB.readOnly && score > 0;
+    $('rNote').textContent = ''; $('shareNote').hidden = true;
+    track('run-over', 'Run over at level ' + level);
+    const canAdd = (SB.on || (!!LB.db && !LB.readOnly)) && score > 0;
     $('addRow').hidden = !canAdd; $('handle').value = handle; $('addScore').disabled = false; $('addScore').textContent = 'Add my score';
     $('result').hidden = false;
-    openBoard('all');
+    openBoard(settings.world);
     if (canAdd) setTimeout(() => $('handle').focus(), 50);
   }
   async function renderBoard(){
     if ($('board').hidden) return;
-    const rows = (LB.tab === 'today' ? LB.today.map(r => ({ ...r, s: r.dayBest, lv: r.dayLevel })) : LB.all.map(r => ({ ...r, s: r.best, lv: r.level }))).filter(r => r.s > 0);
-    const ps = LB.user && rows.length ? await LB.user.profiles(rows.map(r => r.id)) : {};
+    const rows = (LB.by[LB.tab] || []).map(r => ({ ...r, s: r.best, lv: r.level })).filter(r => r.s > 0);
+    const ps = LB.user && rows.length && !SB.on ? await LB.user.profiles(rows.map(r => r.id)) : {};
     const list = $('lbList'); list.replaceChildren();
-    if (!rows.length){ const li = document.createElement('li'); li.className = 'empty'; li.textContent = LB.tab === 'today' ? 'No daily runs yet today. Be the first.' : 'No scores yet. Be the first.'; list.append(li); return; }
+    if (!rows.length){ const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No scores on ' + MAPNAME[LB.tab] + ' yet. Be the first.'; list.append(li); return; }
     rows.forEach((r, i) => {
-      const li = document.createElement('li'); if (r.id === LB.uid) li.className = 'me';
-      const cells = [String(i + 1), r.name || ps[r.id]?.name || 'Rider', (r.s || 0).toLocaleString(), r.lv ? 'LVL ' + r.lv : ''];
+      const li = document.createElement('li'); if (r.id === LB.uid || (SB.on && SB.me?.[LB.tab] && r.name === SB.me.name && r.best === SB.me[LB.tab])) li.className = 'me';
+      const cells = [String(i + 1), r.name || ps[r.id]?.name || 'Rider', (r.s || 0).toLocaleString(), r.lv ? 'LVL ' + r.lv : '—'];
       ['rk', 'nm', 'sc', 'lv'].forEach((c, k) => { const sp = document.createElement('span'); sp.className = c; sp.textContent = cells[k]; li.append(sp); });
       list.append(li);
     });
   }
   const openBoard = tab => {
     LB.tab = tab || LB.tab; document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === LB.tab));
-    const has = !!LB.db; $('lbList').hidden = !has; document.querySelector('.lbnote').hidden = !has;
+    const has = !!LB.db || SB.on; if (SB.on) sbLoad(LB.tab); $('lbList').hidden = !has; $('lbHead').hidden = !has; document.querySelector('.maptabs').hidden = !has; document.querySelector('.lbnote').hidden = !has;
     $('noLb').hidden = has; $('localBest').textContent = best.toLocaleString();
     $('board').hidden = false; renderBoard();
   };
   const closeBoard = () => { $('board').hidden = true; $('result').hidden = true; };
-  $('lbBtn').addEventListener('click', () => { $('result').hidden = true; openBoard('all'); });
+  $('lbBtn').addEventListener('click', () => { $('result').hidden = true; openBoard(settings.world); });
+  document.querySelectorAll('.maptabs [data-tab]').forEach(b => b.addEventListener('click', () => openBoard(b.dataset.tab)));
   // after a run, Back means quit to the start screen; from the start screen it just closes the page
   $('lbClose').addEventListener('click', () => { const afterRun = !$('result').hidden; closeBoard(); if (afterRun){ toStart(); showEntry(); } });
   function routeBus(){ if (!master) return; master.disconnect(); master.connect(settings.beat === 'lofi' ? lofiIn : mix); }
@@ -1089,7 +1213,12 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, lvMul = 1, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
-  const RD = [255,64,96];
+  let RD = [255,64,96];
+  // colour-blind mode: hazards turn bright yellow and carry a bold X; good things stay cyan and blue
+  let cbMode = false; try { cbMode = localStorage.getItem('gridline-cb') === '1'; } catch(_){}
+  const HZ = () => cbMode ? [255,224,0] : [255,40,90];
+  function applyCb(){ RD = cbMode ? [255,224,0] : [255,64,96]; const b = document.getElementById('cbBtn'); if (b) b.setAttribute('aria-pressed', cbMode); }
+  applyCb();
   function setGame(g, isDaily){
     if (g !== 'compete' && tut) tutEnd();
     game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
@@ -1097,6 +1226,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     if (g === 'compete') startRun(!!isDaily); else { over = false; daily = false; }
   }
   function startRun(isDaily = daily){
+    if (typeof track === 'function') track('run-start', 'Run: ' + settings.vehicle + ' / ' + settings.world + ' / ' + settings.beat);
     daily = isDaily; runStart = travel; oppZ = []; lastOppZ = travel; ghostRec = []; ghostDz = null;
     if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
     if (typeof closeBoard === 'function') closeBoard();
@@ -1580,7 +1710,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     if (competing && level % 5 === 4){
       const gs = runStart + (level - 1)*LEVEL_LEN + LEVEL_LEN*.4 - travel, ge = cpZ;
       if (gs < 46 && ge > .5){
-        const a = Math.max(.6, gs), bz = Math.min(46, ge), RC = [255,40,90];
+        const a = Math.max(.6, gs), bz = Math.min(46, ge), RC = HZ();
         for (const sx of [-2.95, 2.95]){
           ctx.fillStyle = rgba(RC, .1 + hit*.08);
           const q = [P(sx, a, 0), P(sx, bz, 0), P(sx, bz, .3), P(sx, a, .3)]; ctx.beginPath(); q.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.closePath(); ctx.fill();
@@ -1866,8 +1996,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     const sc = WORLD.scene, ch = game === 'compete' ? chapterOf(level) : 0, mad = ch >= 3;
     const dir = Math.cos(r.ph + slideT*r.sp*1.6) >= 0 ? 1 : -1;   // which way it's sliding
     const dead = r.hit, k = dead ? .35 : 1, beat = hit;
-    const EYE = mad ? [255,40,60] : sc === 'city' ? [255,214,64] : sc === 'aether' ? [120,255,205] : [255,90,40];
-    const BODY = sc === 'city' ? [255,70,210] : sc === 'aether' ? [168,140,255] : [255,122,26];
+    const EYE = cbMode ? [255,224,0] : mad ? [255,40,60] : sc === 'city' ? [255,214,64] : sc === 'aether' ? [120,255,205] : [255,90,40];
+    const BODY = cbMode ? [255,224,0] : sc === 'city' ? [255,70,210] : sc === 'aether' ? [168,140,255] : [255,122,26];
     ctx.save(); ctx.translate(c[0], c[1]);
     // shadow on the road
     ctx.fillStyle = rgba([0,0,0], .45); ctx.beginPath(); ctx.ellipse(0, 0, u*.5, v*.08, 0, 0, Math.PI*2); ctx.fill();
@@ -1976,7 +2106,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   }
   function drawLaser(r, P, hit){
     const z0 = r.z - travel; if (z0 < .5) return;
-    const on = laserOn(r) && !r.hit, X = 2.9, hh = .32, LC = [255,40,90];
+    const on = laserOn(r) && !r.hit, X = 2.9, hh = .32, LC = HZ();
     glowLine(on ? LC : [120,60,80], .9, 2); line([P(-X, z0, 0), P(-X, z0, .95)]); gstroke(); line([P(X, z0, 0), P(X, z0, .95)]); gstroke();
     if (on){
       glowLine(LC, 1, 3 + hit*3); line([P(-X, z0, hh), P(X, z0, hh)]); gstroke();
@@ -1997,8 +2127,9 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     const fg = ctx.createLinearGradient(0, fD[1], 0, fA[1]); fg.addColorStop(0, '#3a0f1d'); fg.addColorStop(1, '#12040a');
     poly([fA, fB, fC, fD], fg);
     glowLine(col, .95, 1.8 + hit*1.5); line([fA, fB, fC, fD, fA]); gstroke(); line([fD, tD, tC, fC]); gstroke(); line([sv[2], sv[3]]); gstroke();
-    // warning stripe across the face
+    // warning stripe across the face, and a bold X so blocks read as "don't touch" by shape, not just colour
     glowLine(col, .8, 1.2); line([P(xl + .08, z0, hh*.5), P(xr - .08, z0, hh*.5)]); ctx.stroke();
+    if (!r.div){ glowLine(col, cbMode ? 1 : .75, cbMode ? 2.4 : 1.6); line([P(xl + .1, z0, hh*.9), P(xr - .1, z0, hh*.1)]); ctx.stroke(); line([P(xr - .1, z0, hh*.9), P(xl + .1, z0, hh*.1)]); ctx.stroke(); }
   }
 
   function drawRamp(r, P, hit){
