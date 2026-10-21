@@ -50,6 +50,12 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 @keyframes blink{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.gauge.low em{animation:none}}
 .over .row.links{margin-top:10px}
+.entry{max-width:360px}
+.entry .logo{font-family:var(--display);font-weight:800;font-size:clamp(34px,9vw,52px);letter-spacing:.22em;color:var(--cyan);text-shadow:0 0 8px var(--cyan),0 0 28px rgba(41,243,255,.55);margin:6px 0 4px}
+.entry .tag{color:var(--white);text-transform:none;letter-spacing:.04em;font-size:14px}
+.entry .stack{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.entry .stack button{margin-top:0;justify-content:center;width:100%}
+.entry .best{margin-top:14px;min-height:1em}
 .over .row.links button{min-height:34px;padding:8px 12px;font-size:11px}
 .over .note{color:var(--orange);text-transform:none;letter-spacing:.04em;font-size:13px;min-height:1em}
 .namerow{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
@@ -131,23 +137,33 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <canvas id="cv" aria-label="Sound-reactive visualization"></canvas>
 
 <div class="hud">
-  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div><div class="gauges" id="gauges" hidden><div class="gl">GAS</div><i class="gauge"><em id="gas"></em></i><div class="gl">NEXT GATE</div><i class="gauge cp"><em id="cpBar"></em></i><div class="ghostInfo" id="ghostInfo"></div></div></div>
+  <div><h1>GRIDLINE</h1><div class="score" id="scoreBox" hidden><b id="sc">0</b><span id="cb">Ride over ramps to score</span></div><div class="gauges" id="gauges" hidden><div class="gl">GAS</div><i class="gauge"><em id="gas"></em></i><div class="gl">NEXT GATE</div><i class="gauge cp"><em id="cpBar"></em></i></div></div>
   <div class="side">
     <div class="tools">
       <button id="pause" type="button" aria-label="Pause" title="Pause (P)" hidden>❚❚</button>
       <button id="setup" type="button" aria-label="Quit to Ready to ride" title="Quit" hidden>⏏</button>
       <button id="fs" type="button" aria-label="Fullscreen" title="Fullscreen">⛶</button>
     </div>
-  <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer · space jump · ↑ ↓ flip · P pause</span>
+  <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer · space jump · ↓ backflip · ↑ front flip · P pause</span>
     <div class="vu" aria-hidden="true"><i><em id="vB"></em></i><i><em id="vM"></em></i><i><em id="vH"></em></i></div></div>
   <div class="status" id="status">Idle</div>
   </div>
 </div>
-<div class="over" id="start"><div class="card">
+<div class="over" id="entry"><div class="card entry">
+  <div class="logo">GRIDLINE</div>
+  <p class="tag">Ride the beat. Jump, flip and chase the gate.</p>
+  <div class="stack">
+    <button id="goSetup" class="big" type="button">▶ Play Gridline</button>
+    <button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button>
+    <button id="goTut" class="big ghost" type="button">Tutorial</button>
+  </div>
+  <p class="best" id="entryBest"></p>
+</div></div>
+<div class="over" id="start" hidden><div class="card">
   <h2>READY TO RIDE</h2>
   <canvas id="pv" class="pv" aria-label="Preview of the selected vehicle"></canvas>
   <div class="vstats" id="vstats"></div>
-  <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↑</kbd> <kbd>↓</kbd> flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
+  <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
   <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
@@ -155,7 +171,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goDaily" class="big" type="button">Daily challenge</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
-  <div class="row links"><button id="lbBtn" class="ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="ghost" type="button">Tutorial</button></div>
+  <div class="row links"><button id="toEntry" class="ghost" type="button">‹ Back</button></div>
 </div></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
   <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div></div>
@@ -650,7 +666,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   applyWorld(settings.world); syncChips(); showStats();
   async function begin(g){
     document.activeElement?.blur?.();
-    started = true; $('start').hidden = true; $('pause').hidden = false; $('setup').hidden = false; $('steer').hidden = false; $('bar').classList.remove('hide'); syncBar();
+    started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('setup').hidden = false; $('steer').hidden = false; $('bar').classList.remove('hide'); syncBar();
     if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
     else if (source !== 'demo') startDemo();
     let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
@@ -664,6 +680,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   }
   $('setup').addEventListener('click', toStart);
   $('goPlay').addEventListener('click', () => begin('compete'));
+  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false;
+    let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
+    $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
+  $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; });
+  $('toEntry').addEventListener('click', showEntry);
+  showEntry();
   $('goDaily').addEventListener('click', () => begin('daily'));
   $('goTut').addEventListener('click', () => begin('tutorial'));
   $('tipSkip').addEventListener('click', () => tutEnd());
@@ -689,9 +711,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (e.key === 'ArrowLeft' || e.key === 'a'){ keyL = true; e.preventDefault(); }
     if (e.key === 'ArrowRight' || e.key === 'd'){ keyR = true; e.preventDefault(); }
     if (e.key === ' '){ e.preventDefault(); if (started && !paused) jumpReq = true; }
-    if (e.key === 'ArrowUp' || e.key === 'w'){ flipKey = 1; e.preventDefault(); }
-    if (e.key === 'ArrowDown' || e.key === 's'){ flipKey = -1; e.preventDefault(); }
-    if (!started){ if (e.key === 'Enter') begin('compete'); return; }
+    if (e.key === 'ArrowDown' || e.key === 's'){ flipKey = 1; e.preventDefault(); }    // back: backflip
+    if (e.key === 'ArrowUp' || e.key === 'w'){ flipKey = -1; e.preventDefault(); }      // forward: front flip
+    if (!started){ if (e.key === 'Enter'){ if (!$('entry').hidden) $('goSetup').click(); else begin('compete'); } return; }
     if (e.key === 'p' || e.key === 'Escape') setPaused(!paused);
     if (paused) return;
     if (e.key === '1') setGame('auto');
@@ -780,7 +802,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     { id:'steer', desk:'Hold ← or → to steer', touch:'Hold ◀ or ▶ to steer' },
     { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
     { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
-    { id:'flip',  desk:'In the air, hold ↑ to backflip, then let go to land upright', touch:'In the air, hold ⟲ to backflip, then let go to land upright' },
+    { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, hold ⟲ to backflip, then let go to land upright' },
     { id:'gas',   desk:'Landing jumps and clearing tunnels refills gas. Reach the gate!', touch:'Landing jumps and clearing tunnels refills gas. Reach the gate!' }
   ];
   const isTouch = matchMedia('(hover: none)').matches;
@@ -809,7 +831,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function startRun(isDaily = daily){
     daily = isDaily; runStart = travel; oppZ = []; ghostRec = []; ghostDz = null;
     if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
-    try { const gs = JSON.parse(localStorage.getItem(ghostKey()) || 'null'); ghost = gs?.path || null; ghostScore = gs?.score || 0; } catch(_){ ghost = null; ghostScore = 0; }
     $('oNote').textContent = '';
     game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false; $('gauges').hidden = false;
     score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
@@ -822,7 +843,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (over) return;
     $('overTitle').textContent = why || 'RUN OVER';
     sfx('over'); vib([80, 60, 160]);
-    if (score > ghostScore && ghostRec.length > 20){ try { localStorage.setItem(ghostKey(), JSON.stringify({ score, path: ghostRec.slice(0, 6000) })); } catch(_){} }
     submitScore(score, level, daily);
     over = true; best = Math.max(best, score);
     try { localStorage.setItem('gridline-best', best); } catch(_){}
@@ -1017,8 +1037,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (competing){
       // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
       if (travel > fuelHold && !tut) fuel -= drainPerUnit()*dt*spd;
-      // record this run for the ghost, ten samples a second
-      if (runT >= ghostRec.length*.1) ghostRec.push([+(travel - runStart).toFixed(2), +cycX.toFixed(2), +Math.max(alt, -1.3).toFixed(2), +flipA.toFixed(2)]);
       if (tut && TUT[tut.step].id === 'gas' && (tut.t += dt) > 5) tutEvent('gas');
       if (travel >= nextCP){
         level++; nextCP += LEVEL_LEN; fuel = 100; const bonus = 500*(level - 1); score += bonus;
@@ -1225,13 +1243,6 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
     const under = alt < -.02;
-    // your best run's ghost, drawn where it was at this moment of its run
-    if (competing && ghost && ghost.length){
-      const gi = Math.floor(runT/.1), g = ghost[Math.min(ghost.length - 1, gi)];
-      ghostDz = gi < ghost.length ? g[0] - (travel - runStart) : null;
-      if (ghostDz !== null && ghostDz > -.5 && ghostDz < 40) drawGhost(P, CZ + ghostDz, g);
-      if ((frameN = (frameN || 0) + 1) % 15 === 0) $('ghostInfo').textContent = ghostDz === null ? 'GHOST RUN ENDED' : 'GHOST ' + Math.abs(ghostDz).toFixed(0) + 'M ' + (ghostDz >= 0 ? 'AHEAD' : 'BEHIND');
-    } else if (competing && (frameN = (frameN || 0) + 1) % 30 === 0) $('ghostInfo').textContent = ghostScore ? '' : 'BEAT THIS RUN TO SET A GHOST';
     const cpZ = nextCP - travel, gateOn = competing && cpZ < 46;
     if (gateOn && cpZ > CZ + 1) drawGate(cpZ, P, hit);
     sorted.forEach(r => {
