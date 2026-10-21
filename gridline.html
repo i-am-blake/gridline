@@ -55,6 +55,9 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .entry .tag{color:var(--white);text-transform:none;letter-spacing:.04em;font-size:14px}
 .entry .stack{display:flex;flex-direction:column;gap:10px;margin-top:20px}
 .entry .stack button{margin-top:0;justify-content:center;width:100%}
+.entry .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.entry .duo.solo{grid-template-columns:1fr}
+.entry .duo button{margin-top:0;width:100%;justify-content:center}
 .entry .best{margin-top:14px;min-height:1em}
 .over .row.links button{min-height:34px;padding:8px 12px;font-size:11px}
 .over .note{color:var(--orange);text-transform:none;letter-spacing:.04em;font-size:13px;min-height:1em}
@@ -62,6 +65,17 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .namerow label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 .namerow input{font:14px var(--mono);color:var(--white);background:rgba(255,255,255,.06);border:1px solid rgba(41,243,255,.35);padding:8px 10px;width:12em;max-width:100%}
 .tabs{display:flex;gap:6px;justify-content:center;margin:6px 0 10px}
+.page{position:fixed;inset:0;z-index:30;overflow-y:auto;color:var(--white);
+  background:radial-gradient(ellipse at 50% -10%, rgba(41,243,255,.14), transparent 60%), var(--void);
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.pagein{max-width:640px;margin:0 auto}
+.phead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.phead h2{margin:0;font-family:var(--display);font-weight:800;letter-spacing:.2em;color:var(--orange);font-size:clamp(20px,5vw,30px);text-shadow:0 0 14px rgba(255,122,26,.45)}
+.page .tabs{justify-content:flex-start;margin:22px 0 12px}
+.page .lb{max-height:none;font-size:15px}
+.page .lb li{padding:12px 6px}
+.page .lb li:nth-child(-n+3) .rk{color:var(--orange)}
+.lbnote{color:var(--dim);font-size:12px;letter-spacing:.04em;margin-top:16px}
 .tabs button{min-height:34px;font-size:11px}
 .lb{list-style:none;margin:0;padding:0;text-align:left;max-height:50vh;overflow-y:auto}
 .lb li{display:grid;grid-template-columns:2em 1fr auto auto;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
@@ -154,8 +168,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <p class="tag">Ride the beat. Jump, flip and chase the gate.</p>
   <div class="stack">
     <button id="goSetup" class="big" type="button">▶ Play Gridline</button>
-    <button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button>
-    <button id="goTut" class="big ghost" type="button">Tutorial</button>
+    <div class="duo solo" id="duo"><button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="big ghost" type="button">Tutorial</button></div>
   </div>
   <p class="best" id="entryBest"></p>
 </div></div>
@@ -167,7 +180,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
-    <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aetherial Void</span></button></div>
+    <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Endless Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goDaily" class="big" type="button">Daily challenge</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
@@ -178,12 +191,12 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <div class="over" id="over" hidden><div class="card"><h2 id="overTitle">RUN OVER</h2><p>Score <b id="oScore">0</b></p><p>Best <b id="oBest">0</b></p><p class="note" id="oNote"></p>
   <div class="namerow" id="nameRow" hidden><label for="handle">Rider name</label><input id="handle" type="text" maxlength="16" autocomplete="off" placeholder="Shown on the leaderboard"></div>
   <div class="row"><button id="again" class="big" type="button">Ride again</button><button id="lbBtn2" class="ghost" type="button" hidden>Leaderboard</button><button id="againWatch" class="ghost" type="button">Quit</button></div></div></div>
-<div class="over" id="board" hidden><div class="card">
-  <h2>LEADERBOARD</h2>
+<section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
+  <header class="phead"><button id="lbClose" class="ghost" type="button">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2></header>
   <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="all" aria-pressed="true">All time</button><button type="button" role="tab" data-tab="today" aria-pressed="false">Today's daily</button></div>
   <ol class="lb" id="lbList"></ol>
-  <div class="row"><button id="lbClose" class="ghost" type="button">Close</button></div>
-</div></div>
+  <p class="lbnote">Each rider's best score. The daily board resets at midnight UTC, when a new daily road begins.</p>
+</div></section>
 <div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
 <div class="steer" id="steer" hidden>
@@ -229,7 +242,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const VSTATS = {
     bike:  { speed:1.12, boostMul:1.35, jump:3.0,  flip:7.5, steer:2.4, lives:3, tol:1.15, perk:'Fastest top speed and the biggest boost from every landing.', bars:{ Speed:4, Jump:2, Steer:2, Flips:3, Toughness:2 } },
     board: { speed:1.0,  boostMul:1.0,  jump:3.5,  flip:9.0, steer:2.1, lives:3, tol:1.2, perk:'Highest jumps and quickest flips, but a little slower to turn.', bars:{ Speed:3, Jump:4, Steer:2, Flips:4, Toughness:2 } },
-    buggy: { speed:.95,  boostMul:.9,   jump:2.75, flip:6.0, steer:3.3, lives:4, tol:1.5, perk:'Sharpest steering, an extra life and forgiving landings, but heavier in the air.', bars:{ Speed:2, Jump:2, Steer:4, Flips:2, Toughness:4 } }
+    buggy: { speed:.95,  boostMul:.9,   jump:2.75, flip:6.0, steer:3.3, lives:4, tol:1.5, perk:'Sharpest steering, an extra life and forgiving landings. Flips only off ramps and tunnels.', bars:{ Speed:2, Jump:2, Steer:4, Flips:2, Toughness:4 } }
   };
   const VS = () => VSTATS[settings.vehicle];
   function applyWorld(w){
@@ -359,7 +372,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       if (!handle && LB.mine?.name) handle = LB.mine.name;
       db.collection('scores').orderBy('best', 'desc').limit(25).onSnapshot(q => { LB.all = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
       db.collection('scores').where('day', '==', dayKey()).orderBy('dayBest', 'desc').limit(25).onSnapshot(q => { LB.today = q.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); }, () => {});
-      $('lbBtn').hidden = false; $('lbBtn2').hidden = false;
+      $('lbBtn').hidden = false; $('lbBtn2').hidden = false; $('duo').classList.remove('solo');
     } catch(_){}
   })();
   async function submitScore(sc, lv, isDaily){
@@ -781,7 +794,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   // Neon City alternates between downtown stretches lined with buildings and open stretches of empty highway
   const zoneAt = z => Math.floor((z + 20)/60) % 2 ? 'city' : 'open';
   let bldgs = [], bNext = null;
-  let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
+  let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipWarned = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
   let level = 1, nextCP = 0, fuel = 100, fuelHold = 0;
@@ -925,7 +938,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         glowLine(CY, .6 + hit*.3, 1.2); ctx.beginPath(); ctx.moveTo(x0, hz); ctx.lineTo(x0, y0); ctx.lineTo(x0 + bw, y0); ctx.lineTo(x0 + bw, hz); ctx.stroke();
       }
     } else {
-      // Aether: open space — a ringed planet and drifting nebulae that brighten with the music
+      // Endless Void: open space — a ringed planet and drifting nebulae that brighten with the music
       for (const [nx, ny, nr, c, e] of [[.78, .22, .3, CY, sky.h], [.15, .7, .35, OR, sky.m], [.6, .85, .25, CY, sky.b]]){
         const x = nx*W + bX*.3, y = ny*H + bY*.3, rr = nr*Math.min(W,H);
         const ng = ctx.createRadialGradient(x, y, 0, x, y, rr); ng.addColorStop(0, rgba(c, .06 + e*.12)); ng.addColorStop(1, rgba(c, 0));
@@ -947,9 +960,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const hz = H*(H > W ? .48 : .58), vp = W/2;
     // one scale for width and height so the vehicle keeps its proportions on any screen
     const LX = laneW(), K = LX*1.45, Zmin = K / Math.max(40, H - hz);
-    // Aether: the road through space curves, rises and falls, and the camera banks into the turns
+    // Endless Void: the road through space curves, rises and falls, and the camera banks into the turns
     const aeth = WORLD.scene === 'aether', hwy = WORLD.scene === 'city', bendOn = (aeth || hwy) && !reduce ? 1 : 0;
-    // Neon City rolls over gentle hills with soft curves; Aether swings harder and banks
+    // Neon City rolls over gentle hills with soft curves; Endless Void swings harder and banks
     const cv1 = bendOn*(aeth ? Math.sin(travel*.075)*1.25 + Math.sin(travel*.031 + 2)*.75 : Math.sin(travel*.03)*.45 + Math.sin(travel*.011 + 1)*.25);
     const cv2 = bendOn*(aeth ? Math.sin(travel*.05 + 1)*.65 : Math.sin(travel*.07 + .5)*.45);
     const bX = cv1*LX*1.6, bY = cv2*K*.7, roll = Math.max(-.17, Math.min(.17, -cv1*.08));
@@ -1022,7 +1035,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 
     drawScenery(hz, hit, dt, bX, bY);
 
-    // ground in true perspective; in Aether only the floating track is drawn
+    // ground in true perspective; in Endless Void only the floating track is drawn
     if (!aeth){ ctx.fillStyle = hwy ? '#05030a' : '#02040a'; ctx.fillRect(0,hz,W,H-hz); }
     const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0; return [vp + X*LX/Z + bX*f, hz + K*(1-h)/Z + bY*f]; };
     const competing = game === 'compete' && !over;
@@ -1207,14 +1220,17 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (airborne){
       vy -= GRAV*dt; alt += vy*dt; airT += dt;
       // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
-      const fdir = flipKey || flipBtn || autoFlipDir;
+      // the dune buggy can only flip when a ramp or tunnel launched it, not from a hop on the flat
+      const canFlip = !(settings.vehicle === 'buggy' && ollie);
+      if (!canFlip && (flipKey || flipBtn) && !flipWarned){ flipWarned = true; pop('BUGGY FLIPS OFF RAMPS', CY); }
+      const fdir = canFlip ? (flipKey || flipBtn || autoFlipDir) : 0;
       flipV += (fdir*VS().flip - flipV)*Math.min(1, dt*9);
       // grace: once you let go, the vehicle settles toward the nearest upright landing
       if (!fdir){ const up = Math.round(flipA/(Math.PI*2))*Math.PI*2; flipA += (up - flipA)*Math.min(1, dt*2.8); }
       flipA += flipV*dt;
       if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; flipV = 0; }
       if (alt <= 0){
-        alt = 0; vy = 0; airborne = false; jumps++; if (ripples.length < 4) ripples.push(0);
+        alt = 0; vy = 0; airborne = false; flipWarned = false; jumps++; if (ripples.length < 4) ripples.push(0);
         const turns = Math.round(flipA/(Math.PI*2)), off = Math.abs(flipA - turns*Math.PI*2), n = Math.abs(turns);
         flipA = 0; flipV = 0; autoFlipDir = 0;
         const trick = n ? (n === 2 ? 'DOUBLE ' : n >= 3 ? 'TRIPLE ' : '') + (turns > 0 ? 'BACKFLIP' : 'FRONT FLIP') : '';
