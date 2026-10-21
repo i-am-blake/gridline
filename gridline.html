@@ -1394,7 +1394,7 @@ body:not(.playing) .meters{display:none}
       if (r.kind === 'laser' && !r.hit && scoring && invuln <= 0 && laserOn(r) && cz - .5 < r.z + r.len && cz + .5 > r.z && alt < .5 && alt > -.05){ r.hit = true; takeHit('ZAPPED'); continue; }
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
       if (cz - .6 < r.z + r.len && cz + .6 > r.z && Math.abs(cycX - r.x) < (r.div ? .12 : BW*.85) + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
-        r.hit = true; takeHit('CRASH');
+        r.hit = true; takeHit(r.amp ? 'BOT SMASH' : 'CRASH');
       }
     }
     for (const r of ramps) if (r.kind === 'ramp' && !r.used && !r.missed && cz - r.z > RL){
@@ -1756,6 +1756,87 @@ body:not(.playing) .meters{display:none}
     finally { [ctx, cycX, lean, pitch, flipA, alt, invuln, laneOv] = keep; }
   }
 
+  /* the patrol robots that slide across the road, one design per world:
+     Sunset Grid - a one-wheeled sentinel with a scanning visor
+     Neon City  - a hovering traffic drone with siren lights
+     Endless Void - a floating orb with a spinning ring and trailing tendrils
+     they get angrier (red eyes, spikes) in later chapters */
+  function drawBot(r, P, hit){
+    const zc = r.z - travel + BL/2; if (zc < .7) return;
+    const c = P(r.x, zc, 0), u = Math.abs(P(r.x + 1, zc, 0)[0] - c[0])*1.25, v = Math.abs(c[1] - P(r.x, zc, 1)[1])*1.25;   // drawn a little larger than a block so they read as robots
+    if (u < 1.5) return;
+    const sc = WORLD.scene, ch = game === 'compete' ? chapterOf(level) : 0, mad = ch >= 3;
+    const dir = Math.cos(r.ph + slideT*r.sp*1.6) >= 0 ? 1 : -1;   // which way it's sliding
+    const dead = r.hit, k = dead ? .35 : 1, beat = hit;
+    const EYE = mad ? [255,40,60] : sc === 'city' ? [255,214,64] : sc === 'aether' ? [120,255,205] : [255,90,40];
+    const BODY = sc === 'city' ? [255,70,210] : sc === 'aether' ? [168,140,255] : [255,122,26];
+    ctx.save(); ctx.translate(c[0], c[1]);
+    // shadow on the road
+    ctx.fillStyle = rgba([0,0,0], .45); ctx.beginPath(); ctx.ellipse(0, 0, u*.5, v*.08, 0, 0, Math.PI*2); ctx.fill();
+    const X = x => x*u, Y = y => -y*v;   // local units: x across the road, y up
+    const lean = dead ? 0 : -dir*.12;
+    if (sc === 'city'){
+      // hovering traffic drone
+      const hov = .22 + Math.sin(slideT*5 + r.ph)*.04;
+      ctx.translate(0, Y(hov)); ctx.rotate(lean);
+      const tg = ctx.createLinearGradient(0, 0, 0, Y(-hov)); tg.addColorStop(0, rgba(EYE, .5*k)); tg.addColorStop(1, rgba(EYE, 0));
+      ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(X(-.18), 0); ctx.lineTo(X(.18), 0); ctx.lineTo(X(.3), Y(-hov)); ctx.lineTo(X(-.3), Y(-hov)); ctx.closePath(); ctx.fill();
+      // rotor arms with blurred spinning props
+      glowLine(BODY, .8*k, 1.4); line([[X(-.4), Y(.3)], [X(-.62), Y(.42)]]); ctx.stroke(); line([[X(.4), Y(.3)], [X(.62), Y(.42)]]); ctx.stroke();
+      for (const sx of [-.62, .62]){ const w = .2*Math.abs(Math.sin(slideT*40 + sx)); ctx.fillStyle = rgba(WH, .25*k); ctx.beginPath(); ctx.ellipse(X(sx), Y(.44), X(.05 + w), v*.025, 0, 0, Math.PI*2); ctx.fill(); }
+      ctx.fillStyle = '#16061c'; ctx.beginPath(); ctx.ellipse(0, Y(.22), X(.48), v*.2, 0, 0, Math.PI*2); ctx.fill();
+      glowLine(BODY, .95*k, 2); ctx.stroke(); gstroke();
+      ctx.fillStyle = '#0a0310'; ctx.fillRect(X(-.36), Y(.27), X(.72), v*.08);
+      const ex = Math.sin(slideT*3)*.22*0 + dir*.2;
+      ctx.fillStyle = rgba(EYE, k); ctx.shadowColor = rgba(EYE, 1); ctx.shadowBlur = dead ? 0 : 10; ctx.fillRect(X(ex - .1), Y(.265), X(.2), v*.06); ctx.shadowBlur = 0;
+      // siren lights swap on the beat
+      const on = Math.floor(slideT*4) % 2 === 0;
+      [[-.2, [255,70,210], on], [.2, [255,214,64], !on]].forEach(([x, col, lit]) => {
+        ctx.fillStyle = rgba(col, (lit && !dead ? .95 : .25)); ctx.beginPath(); ctx.arc(X(x), Y(.44), u*.07, 0, Math.PI*2); ctx.fill();
+        if (lit && !dead){ ctx.fillStyle = rgba(col, .25 + beat*.2); ctx.beginPath(); ctx.arc(X(x), Y(.44), u*.18, 0, Math.PI*2); ctx.fill(); } });
+      if (mad){ glowLine(EYE, .9*k, 1.5); line([[X(-.48), Y(.22)], [X(-.66), Y(.3)]]); ctx.stroke(); line([[X(.48), Y(.22)], [X(.66), Y(.3)]]); ctx.stroke(); }
+    } else if (sc === 'aether'){
+      // floating orb with a ring and tendrils
+      const hov = .42 + Math.sin(slideT*3 + r.ph)*.05, R = .26;
+      ctx.translate(0, Y(hov));
+      glowLine(BODY, .6*k, 1.4);
+      for (let t = -1; t <= 1; t++){ ctx.beginPath(); ctx.moveTo(X(t*.12), 0);
+        for (let i = 1; i <= 6; i++){ const yy = -i*.06, sw = Math.sin(slideT*4 + i*.8 + t*2 + r.ph)*.05*i/6 - dir*.03*i/6; ctx.lineTo(X(t*.12 + sw), Y(yy)); } ctx.stroke(); }
+      const og = ctx.createRadialGradient(X(-.08), Y(R*1.2), 1, 0, Y(R*.9), u*R*1.1);
+      og.addColorStop(0, rgba(BODY, .55*k)); og.addColorStop(1, rgba([10,6,30], .95));
+      ctx.fillStyle = og; ctx.beginPath(); ctx.ellipse(0, Y(R*.9), X(R), v*R*.9, 0, 0, Math.PI*2); ctx.fill();
+      glowLine(BODY, .9*k, 1.8); ctx.stroke(); gstroke();
+      // ring: back half, then the eye, then front half
+      const tilt = Math.sin(slideT*1.5 + r.ph)*.25;
+      ctx.lineWidth = 2; ctx.strokeStyle = rgba(EYE, .45*k); ctx.beginPath(); ctx.ellipse(0, Y(R*.9), X(R*1.7), v*R*.35, tilt, Math.PI, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = rgba(EYE, k); ctx.shadowColor = rgba(EYE, 1); ctx.shadowBlur = dead ? 0 : 12; ctx.beginPath(); ctx.arc(X(dir*.08), Y(R*.95), u*.06, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+      glowLine(EYE, .9*k, 2); ctx.beginPath(); ctx.ellipse(0, Y(R*.9), X(R*1.7), v*R*.35, tilt, 0, Math.PI); gstroke();
+      if (mad) for (let i = 0; i < 6; i++){ const a = i/6*Math.PI*2 + slideT; glowLine(EYE, .8*k, 1.2); line([[Math.cos(a)*X(R), Y(R*.9) + Math.sin(a)*v*R*.9], [Math.cos(a)*X(R*1.35), Y(R*.9) + Math.sin(a)*v*R*1.2]]); ctx.stroke(); }
+    } else {
+      // one-wheeled sentinel
+      ctx.rotate(lean);
+      const wr = .15, spin = slideT*r.sp*10*dir;
+      ctx.fillStyle = '#0b0608'; ctx.beginPath(); ctx.ellipse(0, Y(wr), X(wr*.55), v*wr, 0, 0, Math.PI*2); ctx.fill();
+      glowLine(BODY, .9*k, 1.6); ctx.stroke();
+      for (let i = 0; i < 3; i++){ const a = spin + i*Math.PI/3; line([[X(-Math.cos(a)*wr*.5), Y(wr - Math.sin(a)*wr)], [X(Math.cos(a)*wr*.5), Y(wr + Math.sin(a)*wr)]]); ctx.stroke(); }
+      // body
+      const bg = ctx.createLinearGradient(0, Y(.75), 0, Y(.28)); bg.addColorStop(0, '#2a1208'); bg.addColorStop(1, '#0d0604');
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(X(-.3), Y(.28)); ctx.lineTo(X(.3), Y(.28)); ctx.lineTo(X(.4), Y(.62)); ctx.lineTo(X(.3), Y(.76)); ctx.lineTo(X(-.3), Y(.76)); ctx.lineTo(X(-.4), Y(.62)); ctx.closePath(); ctx.fill();
+      glowLine(BODY, .95*k, 2); gstroke();
+      // arms
+      glowLine(BODY, .8*k, 1.6); line([[X(-.4), Y(.55)], [X(-.52), Y(.4 + Math.sin(slideT*6)*.05)]]); ctx.stroke(); line([[X(.4), Y(.55)], [X(.52), Y(.4 - Math.sin(slideT*6)*.05)]]); ctx.stroke();
+      // visor with a scanning eye
+      ctx.fillStyle = '#050203'; ctx.fillRect(X(-.28), Y(.68), X(.56), v*.1);
+      const ex = dead ? 0 : Math.max(-.2, Math.min(.2, dir*.12 + Math.sin(slideT*5)*.08));
+      ctx.fillStyle = rgba(EYE, k); ctx.shadowColor = rgba(EYE, 1); ctx.shadowBlur = dead ? 0 : 10; ctx.fillRect(X(ex - .07), Y(.665), X(.14), v*.07); ctx.shadowBlur = 0;
+      // antenna blinks on the beat
+      glowLine(BODY, .8*k, 1.2); line([[X(.15), Y(.76)], [X(.2), Y(.92)]]); ctx.stroke();
+      ctx.fillStyle = rgba(EYE, dead ? .2 : .4 + beat*.6); ctx.beginPath(); ctx.arc(X(.2), Y(.94), u*.035, 0, Math.PI*2); ctx.fill();
+      if (mad){ glowLine(EYE, .9*k, 1.4); for (const sx of [-.2, 0, .2]){ line([[X(sx - .05), Y(.76)], [X(sx), Y(.86)], [X(sx + .05), Y(.76)]]); ctx.stroke(); } }
+    }
+    if (dead){ ctx.fillStyle = rgba(WH, .5); for (let i = 0; i < 5; i++){ ctx.fillRect(X(Math.sin(i*7.1)*.3), Y(.4 + Math.cos(i*3.3)*.2) - (slideT*20 % 10), 2, 2); } }
+    ctx.restore();
+  }
   function drawWeather(dt, hz){
     const rain = Math.max(wxAmt.rain, wxAmt.storm), snow = wxAmt.snow, wind = wxAmt.wind;
     wxT += dt;
@@ -1806,6 +1887,7 @@ body:not(.playing) .meters{display:none}
     } else { ctx.setLineDash([4, 6]); glowLine(LC, .3, 1); line([P(-X, z0, hh), P(X, z0, hh)]); ctx.stroke(); ctx.setLineDash([]); }
   }
   function drawBlock(r, P, hit){
+    if (r.amp) return drawBot(r, P, hit);
     const z0 = Math.max(.5, r.z - travel), z1 = r.z - travel + r.len;
     if (z1 < .6 || (!r.div && z0 > r.z - travel)) return;
     const bw = r.div ? .12 : BW, xl = r.x - bw, xr = r.x + bw, hh = BH*(r.div ? .75 : 1)*(1 + hit*.08), col = r.hit ? [90,40,50] : r.amp ? [255,60,200] : RD;
