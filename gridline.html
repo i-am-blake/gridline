@@ -105,7 +105,12 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .hsc{font-family:var(--display);font-weight:800;font-size:clamp(20px,4vw,28px);line-height:1.1;color:var(--orange);text-shadow:0 0 12px rgba(255,122,26,.5);font-variant-numeric:tabular-nums}
 .htop{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
 .htop .lvl{justify-self:start;font-family:var(--display);font-weight:800;font-size:clamp(13px,3vw,16px);letter-spacing:.12em;color:var(--void);background:var(--cyan);padding:4px 9px;box-shadow:0 0 12px rgba(41,243,255,.6)}
-.htop .lives{justify-self:end;font-size:clamp(18px,4.4vw,24px);line-height:1;color:var(--orange);letter-spacing:.12em;text-shadow:0 0 10px rgba(255,122,26,.7)}
+.htop .lvwrap{justify-self:end;display:flex;align-items:center;gap:6px;position:relative}
+.htop .shieldB{font-size:clamp(18px,4.4vw,24px);line-height:1;color:var(--cyan);text-shadow:0 0 10px var(--cyan),0 0 18px var(--cyan);animation:shp 1.6s ease-in-out infinite}
+@keyframes shp{50%{opacity:.6}}
+@media (prefers-reduced-motion:reduce){.htop .shieldB{animation:none}}
+.htop .shieldN{position:absolute;right:0;top:100%;margin-top:3px;font-size:9px;letter-spacing:.14em;color:var(--dim);white-space:nowrap}
+.htop .lives{font-size:clamp(18px,4.4vw,24px);line-height:1;color:var(--orange);letter-spacing:.12em;text-shadow:0 0 10px rgba(255,122,26,.7)}
 .hrow{display:flex;justify-content:center;gap:14px;margin-top:4px;font-size:11px;letter-spacing:.16em;color:var(--white)}
 .hrow .combo{color:var(--cyan)}
 .hrow .combo:empty{display:none}
@@ -139,6 +144,11 @@ body.playing .keys{display:none}
 .lbl{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
 button,.file{font:13px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--white);background:transparent;
   border:1px solid rgba(41,243,255,.35);border-radius:2px;padding:10px 12px;min-height:40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;position:relative}
+/* a game, not a document: an arrow over labels and text instead of the text-select cursor, a hand only on things you can press */
+body{cursor:default;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+input,textarea{cursor:text;-webkit-user-select:text;user-select:text}
+button *,button svg{pointer-events:none}
+body.playing:not(.paused) #cv{cursor:none}
 button{cursor:pointer;transition:background-color .15s,color .15s,border-color .15s,box-shadow .15s,transform .1s}
 button:disabled{cursor:default}
 .file:hover{border-color:var(--cyan)}
@@ -272,7 +282,7 @@ body:not(.playing) .meters{display:none}
 <div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
 <div class="hudc" id="hudc" hidden aria-live="off">
-  <div class="htop"><span class="lvl" id="hLvl">LVL 1</span><div class="hsc" id="sc">0</div><span id="hLives" class="lives">◆◆◆</span></div>
+  <div class="htop"><span class="lvl" id="hLvl">LVL 1</span><div class="hsc" id="sc">0</div><span class="lvwrap"><span id="hLives" class="lives">◆◆◆</span><span id="hShield" class="shieldB" title="Force field: takes the next hit" hidden>⬡</span><span id="hShieldNext" class="shieldN"></span></span></div>
   <div class="hrow"><span id="hCombo" class="combo"></span></div>
   <div class="hbars"><div class="hb"><span class="gl">GAS</span><i class="gauge"><em id="gas"></em></i></div><div class="hb"><span class="gl">GATE</span><i class="gauge cp"><em id="cpBar"></em></i></div></div>
 </div>
@@ -813,7 +823,7 @@ body:not(.playing) .meters{display:none}
   }
   function toStart(){
     setPaused(false); setGame('auto'); musicOff();
-    started = false; $('start').hidden = false; $('pause').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing'); $('bar').classList.add('hide'); syncBar();
+    started = false; $('start').hidden = false; $('pause').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing', 'paused'); $('bar').classList.add('hide'); syncBar();
   }
   $('goPlay').addEventListener('click', () => begin('compete'));
   const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff();
@@ -828,7 +838,7 @@ body:not(.playing) .meters{display:none}
   $('againWatch').addEventListener('click', () => { closeBoard(); toStart(); showEntry(); });
   function setPaused(v){
     if (v === paused || !started) return;
-    paused = v; $('paused').hidden = !v; $('pause').textContent = v ? '▶' : '❚❚'; $('pause').setAttribute('aria-label', v ? 'Resume' : 'Pause');
+    paused = v; document.body.classList.toggle('paused', v); $('paused').hidden = !v; $('pause').textContent = v ? '▶' : '❚❚'; $('pause').setAttribute('aria-label', v ? 'Resume' : 'Pause');
     if (!ac) return;
     if (v){
       clearInterval(demoTimer); demoTimer = null;                      // stop scheduling new notes
@@ -935,7 +945,15 @@ body:not(.playing) .meters{display:none}
   const zoneAt = z => Math.floor((z + 20)/60) % 2 ? 'city' : 'open';
   let bldgs = [], bNext = null;
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipWarned = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
-  let score = 0, combo = 0, boost = 0, airT = 0;
+  let score = 0, combo = 0, boost = 0, airT = 0, shield = false, shieldT = 0;
+  const SHIELD_COMBO = 15;
+  // a hit costs a life, unless the force field is up: then it takes the hit and breaks
+  function takeHit(label){
+    combo = 0; boost = 0; invuln = 1.4;
+    if (shield){ shield = false; shieldT = 1; flash = .5; pop('FORCE FIELD BROKE', CY); sfx('lost'); vib([40, 30, 40]); showScore(); return; }
+    if (!tut) lives--; flash = 1; if (label) pop(label, RD); showScore(); sfx('crash'); vib([60, 40, 90]);
+    if (lives <= 0) gameOver();
+  }
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
   let level = 1, nextCP = 0, fuel = 100, fuelHold = 0;
   // Daily challenge: the same road for everyone each (UTC) day, built from a seeded random sequence and laid out by
@@ -986,7 +1004,7 @@ body:not(.playing) .meters{display:none}
     if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
     if (typeof closeBoard === 'function') closeBoard();
     game = 'compete'; over = false; $('hudc').hidden = false;
-    score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
+    score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
@@ -1003,7 +1021,9 @@ body:not(.playing) .meters{display:none}
   const showScore = () => { $('sc').textContent = score.toLocaleString();
     $('hLvl').textContent = (daily ? 'DAILY ' : '') + 'LVL ' + level;
     $('hLives').textContent = '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, VS().lives - Math.max(0, lives)));
-    $('hLives').setAttribute('aria-label', lives + ' lives');
+    $('hLives').setAttribute('aria-label', lives + ' lives' + (shield ? ', force field on' : ''));
+    $('hShield').hidden = !shield;
+    $('hShieldNext').textContent = !shield && game === 'compete' && combo > 0 ? 'FIELD ' + (combo % SHIELD_COMBO) + '/' + SHIELD_COMBO : '';
     $('hCombo').textContent = combo > 1 ? 'x' + combo + ' COMBO' : '';
     if (!$('cb')) return;
     $('cb').textContent = (daily ? 'DAILY · ' : '') + 'LVL ' + level + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(Math.max(0, VS().lives - Math.max(0,lives))) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
@@ -1328,8 +1348,7 @@ body:not(.playing) .meters{display:none}
     for (const r of ramps){
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
       if (cz - .6 < r.z + BL && cz + .6 > r.z && Math.abs(cycX - r.x) < BW + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
-        r.hit = true; if (!tut) lives--; invuln = 1.4; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore(); sfx('crash'); vib([60, 40, 90]);
-        if (lives <= 0) gameOver();
+        r.hit = true; takeHit('CRASH');
       }
     }
     for (const r of ramps) if (r.kind === 'ramp' && !r.used && !r.missed && cz - r.z > RL){
@@ -1389,8 +1408,7 @@ body:not(.playing) .meters{display:none}
         const trick = n ? (n === 2 ? 'DOUBLE ' : n >= 3 ? 'TRIPLE ' : '') + (turns > 0 ? 'BACKFLIP' : 'FRONT FLIP') : '';
         if (off > VS().tol){
           // landed crooked: wipeout
-          flash = 1; pop('WIPEOUT', RD);
-          if (scoring){ if (!tut) lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); sfx('crash'); vib([60, 40, 90]); if (lives <= 0) gameOver(); }
+          if (scoring) takeHit('WIPEOUT'); else { flash = 1; pop('WIPEOUT', RD); }
         } else if (scoring){ sfx(n ? 'trick' : 'land'); vib(n ? [20, 30, 20] : 12); if (n) tutEvent('flip'); }
         if (off <= VS().tol && ollie){
           // a jump from the flat only scores for the flips you land, and doesn't build the combo
@@ -1402,7 +1420,9 @@ body:not(.playing) .meters{display:none}
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR);
+            if (combo % SHIELD_COMBO === 0 && !shield){ shield = true; shieldT = 1; setTimeout(() => { pop('FORCE FIELD ON · x' + combo, CY); sfx('gate'); vib([20, 20, 20, 20, 40]); }, 700); }
+            showScore();
           } else if (trick) pop(trick, OR);
         }
       }
@@ -1421,6 +1441,8 @@ body:not(.playing) .meters{display:none}
     });
     if (alt > -.01) drawCycle(P, CZ, hit, true);    // reflection in the glossy floor
     drawCycle(P, CZ, hit, false);
+    shieldT = Math.max(0, shieldT - dt*1.2);
+    if (shield || shieldT > 0) drawShield(P, CZ);
     // light wall: its height traces the loudness of the last second or so
     trail.push({ x: cycX, d: travel, b: alt, h: .07 + Math.min(1, sm.b*.6 + sm.m*.3 + sm.h*.1 + hit*.3)*.6 });
     while (trail.length > 2 && CZ - (travel - trail[0].d) < Math.min(.5, Zmin)) trail.shift();
@@ -1705,6 +1727,26 @@ body:not(.playing) .meters{display:none}
     }
   }
 
+  function drawShield(P, CZ){
+    const c = P(cycX, CZ + .75*S, alt + .5*S), ex = P(cycX + 1.05*S, CZ + .75*S, alt + .5*S), ey = P(cycX, CZ + .75*S, alt + 1.25*S);
+    const rx = Math.abs(ex[0] - c[0]), ry = Math.max(rx*.55, Math.abs(ey[1] - c[1]));
+    const on = shield ? 1 : shieldT, burst = shield ? 1 + shieldT*.25 : 1 + (1 - shieldT)*.6;   // grows in when earned, bursts outward when it breaks
+    const a = on*(.55 + sky.b*.35 + Math.sin(skyT*5)*.08);
+    ctx.save(); ctx.translate(c[0], c[1]); ctx.scale(burst, burst);
+    const g = ctx.createRadialGradient(0, 0, rx*.2, 0, 0, rx);
+    g.addColorStop(0, rgba(CY, 0)); g.addColorStop(.75, rgba(CY, .05*a)); g.addColorStop(1, rgba(CY, .22*a));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter'; ctx.shadowColor = rgba(CY, 1); ctx.shadowBlur = 14;
+    ctx.strokeStyle = rgba(CY, .8*a); ctx.lineWidth = 2; ctx.stroke();
+    // a slow-turning band of hexes so it reads as a force field, not a glow
+    ctx.shadowBlur = 0; ctx.strokeStyle = rgba(WH, .5*a); ctx.lineWidth = 1;
+    for (let i = 0; i < 10; i++){
+      const t = skyT*.6 + i/10*Math.PI*2, hx = Math.cos(t)*rx*.86, hy = Math.sin(t)*ry*.86, r = Math.max(2.5, rx*.07);
+      if (Math.sin(t) > .35) continue;   // keep the front of the bubble clear over the rider
+      ctx.beginPath(); for (let k = 0; k < 6; k++){ const q = k/6*Math.PI*2; ctx[k ? 'lineTo' : 'moveTo'](hx + Math.cos(q)*r, hy + Math.sin(q)*r); } ctx.closePath(); ctx.stroke();
+    }
+    ctx.restore();
+  }
   function drawCycle(P, CZ, hit, mirror){
     const cl = Math.cos(lean), sl = Math.sin(lean);
     // local (x lateral, y up, z forward) -> screen, with lean around the contact line
