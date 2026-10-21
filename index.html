@@ -277,6 +277,51 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
 .steer .flipb{font-size:22px;opacity:.55}
 .steer.air .flipb{opacity:1;border-color:var(--orange);color:var(--orange)}
 @media (max-width:560px){.status{flex-basis:100%;text-align:left}}
+/* ---- leaderboard page: centred, clear hierarchy, readable on phones ---- */
+#board .pagein{max-width:560px;margin:0 auto;padding:0 0 32px}
+#board .phead{display:block;position:relative;min-height:44px}
+#board .phead .back{position:absolute;left:0;top:50%;transform:translateY(-50%);white-space:nowrap}
+#board .phead > span{display:none}
+#board .phead h2{line-height:44px;padding:0 84px}
+@media (max-width:420px){ #board .phead h2{font-size:18px;letter-spacing:.12em;padding:0 70px} #board .phead .back{padding:8px 10px;font-size:11px} }
+#board .phead .back{margin:0;min-height:40px;padding:8px 12px;font-size:12px}
+#board .phead h2{text-align:center;font-size:clamp(18px,5.2vw,26px);letter-spacing:.16em}
+#board .result{margin-top:16px;padding:22px 18px 18px;text-align:center;border-radius:4px}
+#board .rtitle{font-size:clamp(14px,3.8vw,16px);letter-spacing:.24em}
+#board .rscore{display:block;margin-top:10px}
+#board .rscore b{display:block;font-size:clamp(46px,14vw,68px);line-height:1;letter-spacing:.02em}
+#board .rmeta{margin-top:10px;font-size:15px;letter-spacing:.06em;color:var(--white);opacity:.85}
+#board .rbadge{display:inline-block;margin-top:10px;padding:5px 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--void);background:var(--orange);font-weight:700}
+#board .addrow{display:block;margin-top:18px;text-align:left}
+#board .addrow label{display:block;margin-bottom:8px;font-size:13px;letter-spacing:.04em;text-transform:none;color:var(--white);text-align:center}
+#board .addline{display:flex;gap:8px}
+#board .addline input{flex:1;min-width:0;font-size:16px;padding:12px;border-radius:2px}
+#board .addline button{margin:0;white-space:nowrap;padding:12px 16px;font-size:14px}
+#board .result .note{margin:12px 0 0;font-size:14px;line-height:1.5;color:var(--white)}
+#board .result .note:empty{display:none}
+#board .linkbtn{margin:6px auto 0;min-height:32px;padding:4px 8px;border:0;background:none;color:var(--cyan);font-size:13px;text-decoration:underline;text-underline-offset:3px;box-shadow:none}
+#board .ractions{margin-top:20px;display:grid;gap:10px}
+#board .ractions .primary{width:100%;justify-content:center;margin:0;font-size:17px;padding:15px}
+#board .ractions .primary{background:rgba(41,243,255,.14);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 14px rgba(41,243,255,.25)}
+#board .rsub{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#board .rsub button{margin:0;justify-content:center;min-height:46px;font-size:13px}
+#board .coffeeCard{justify-content:center;align-items:center;gap:8px;margin-top:18px;padding:12px;font-size:14px;border-radius:2px}
+#board .coffeeCard b{font-size:14px}
+#board .lbsub{margin:28px 0 0;text-align:center;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+#board .tabs{justify-content:center;margin:12px 0 14px;gap:6px}
+#board .maptabs button{margin:0;min-height:42px;font-size:12px;padding:8px 4px;letter-spacing:.06em}
+#board .lbhead,#board .lb li{grid-template-columns:2.2em minmax(0,1fr) auto 4.2em;gap:12px}
+#board .lbhead{padding:0 10px 8px;font-size:11px}
+#board .lb{font-size:16px}
+#board .lb li{padding:14px 10px;align-items:center}
+#board .lb .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#board .lb .sc{font-size:16px;text-align:right}
+#board .lb .lv{font-size:13px;min-width:0}
+#board .lb li.me{background:rgba(41,243,255,.08)}
+#board .lb .empty{padding:22px 10px;font-size:14px;line-height:1.5}
+#board .lbnote{text-align:center;font-size:12px}
+#board .nolb{text-align:center;font-size:14px;line-height:1.5}
+@media (max-width:380px){ #board .addline{flex-direction:column} #board .addline button{width:100%;justify-content:center} #board .maptabs button{font-size:11px} }
 </style>
 </head>
 <body>
@@ -328,21 +373,27 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
   <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
-  <header class="phead"><button id="lbClose" class="ghost" type="button">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2></header>
+  <header class="phead"><button id="lbClose" class="ghost back" type="button" aria-label="Back">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2><span aria-hidden="true"></span></header>
   <div class="result" id="result" hidden>
     <div class="rtitle" id="rTitle">RUN OVER</div>
-    <div class="rscore"><b id="rScore">0</b><span id="rMeta"></span></div>
+    <div class="rscore"><b id="rScore">0</b></div>
+    <div class="rmeta" id="rMeta"></div>
+    <div class="rbadge" id="rBadge" hidden>★ New personal best</div>
     <div class="addrow" id="addRow" hidden>
-      <label for="handle">Rider name</label>
-      <input id="handle" type="text" maxlength="16" autocomplete="off" placeholder="Your name on the board">
-      <button id="addScore" class="big" type="button">Add my score</button>
+      <label for="handle" id="handleLbl">Add your name to save this run</label>
+      <div class="addline"><input id="handle" type="text" maxlength="16" autocomplete="nickname" enterkeyhint="done" placeholder="Rider name"><button id="addScore" class="big" type="button">Save score</button></div>
     </div>
     <p class="note" id="rNote"></p>
-    <div class="row rbtns"><button id="again" class="big" type="button">Ride again</button><button id="shareBtn" class="ghost" type="button">⇪ Share score</button><button id="againWatch" class="ghost" type="button">Quit</button></div>
+    <button id="chName" class="linkbtn" type="button" hidden>Change name</button>
+    <div class="ractions">
+      <button id="again" class="big primary" type="button">▶ Ride again</button>
+      <div class="rsub"><button id="shareBtn" class="ghost" type="button">⇪ Share score</button><button id="againWatch" class="ghost" type="button">Quit</button></div>
+    </div>
     <p class="note" id="shareNote" hidden></p>
-    <a class="coffeeCard" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span><b>☕ Buy me a coffee</b><small>Venmo @Send-It-Blake</small></a>
+    <a class="coffeeCard" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy me a coffee</b></a>
   </div>
   <p class="nolb" id="noLb" hidden>The shared leaderboard isn't switched on for this copy of Gridline yet. Your best on this device: <b id="localBest">0</b></p>
+  <h3 class="lbsub">Top riders</h3>
   <div class="tabs maptabs" role="group" aria-label="Map"><button type="button" data-tab="sunset" aria-pressed="true">Sunset Grid</button><button type="button" data-tab="city" aria-pressed="false">Neon City</button><button type="button" data-tab="aether" aria-pressed="false">Endless Void</button></div>
   <div class="lbhead" id="lbHead"><span>#</span><span>Rider</span><span>Score</span><span>Level</span></div>
   <ol class="lb" id="lbList"></ol>
@@ -583,7 +634,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
         if (!res.ok) throw new Error('save failed');
       } catch(_){ $('rNote').textContent = 'Couldn\'t reach the leaderboard. Check your connection and try again.'; return false; }
       SB.me = { ...(SB.me || {}), [w]: Math.max(prev, sc), name }; try { localStorage.setItem('gridline-sb-me', JSON.stringify(SB.me)); } catch(_){}
-      $('rNote').textContent = sc > prev ? 'Added: your new best on ' + MAPNAME[w] + '.' : 'Your best on ' + MAPNAME[w] + ' is still ' + prev.toLocaleString() + '.';
+      $('rNote').textContent = sc > prev ? 'Saved to the ' + MAPNAME[w] + ' board as ' + name + '.' : 'Saved. Your best on ' + MAPNAME[w] + ' is still ' + prev.toLocaleString() + '.';
       sbLoad(w); track('score-added'); return true;
     }
     if (!LB.db || LB.readOnly) return false;
@@ -594,8 +645,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     WORLDS_LB.forEach(k => { if (!next[k + '_best']) next[k + '_best'] = 0; }); if (!next.best) next.best = 0;
     if (better || next.name !== m.name) await saveMine(next);
     if (LB.readOnly) return false;
-    $('rNote').textContent = better ? 'Added: your new best on ' + MAPNAME[w] + '.'
-                                    : 'Your best on ' + MAPNAME[w] + ' is still ' + (next[w + '_best'] || 0).toLocaleString() + (next.name !== m.name ? '. Name updated.' : '.');
+    $('rNote').textContent = better ? 'Saved to the ' + MAPNAME[w] + ' board as ' + (next.name || 'Rider') + '.'
+                                    : 'Saved. Your best on ' + MAPNAME[w] + ' is still ' + (next[w + '_best'] || 0).toLocaleString() + '.';
     return true;
   }
   async function saveMine(next){
@@ -604,13 +655,14 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     catch(e){ if (e?.code === 'invalid_argument'){ LB.readOnly = true; $('rNote').textContent = 'Your access to this page lets you view the leaderboard but not add scores.'; } }
     LB.busy = false;
   }
+  $('chName').addEventListener('click', () => { $('chName').hidden = true; $('addRow').hidden = false; $('handleLbl').textContent = 'Change the name on your scores'; $('addScore').textContent = 'Update'; $('handle').focus(); });
+  $('handle').addEventListener('keydown', e => { if (e.key === 'Enter') $('addScore').click(); });
   $('addScore').addEventListener('click', async () => {
     handle = $('handle').value.trim().slice(0, 16);
     try { localStorage.setItem('gridline-handle', handle); } catch(_){}
     $('addScore').disabled = true;
     const ok = await submitScore(lastRun.score, lastRun.level, lastRun.daily);
-    $('addScore').textContent = ok ? 'Added ✓' : 'Add my score';
-    if (!ok) $('addScore').disabled = false;
+    if (ok){ $('addRow').hidden = true; $('chName').hidden = false; } else $('addScore').disabled = false;
   });
   let lastRun = { score: 0, level: 1, daily: false, world: settings.world };
   const MAPNAME = { sunset: 'Sunset Grid', city: 'Neon City', aether: 'Endless Void' };
@@ -683,14 +735,17 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     lastRun = { score, level, daily, world: settings.world };
     $('rTitle').textContent = why || 'RUN OVER';
     $('rScore').textContent = score.toLocaleString();
-    $('rMeta').textContent = (daily ? 'Daily · ' : '') + 'Level ' + level + ' · Best ' + best.toLocaleString();
     $('rNote').textContent = ''; $('shareNote').hidden = true;
     track('run-over', 'Run over at level ' + level);
     const canAdd = (SB.on || (!!LB.db && !LB.readOnly)) && score > 0;
-    $('addRow').hidden = !canAdd; $('handle').value = handle; $('addScore').disabled = false; $('addScore').textContent = 'Add my score';
+    $('rMeta').textContent = 'Level ' + level + ' · ' + MAPNAME[settings.world];
+    $('rBadge').hidden = !(score > 0 && score >= best);
+    $('handle').value = handle; $('addScore').disabled = false; $('chName').hidden = true;
     $('result').hidden = false;
     openBoard(settings.world);
-    if (canAdd) setTimeout(() => $('handle').focus(), 50);
+    // once you've given a name, every run saves itself; the first time, ask for a name
+    if (canAdd && handle){ $('addRow').hidden = true; $('rNote').textContent = 'Saving…'; submitScore(score, level, daily).then(ok => { if (ok) $('chName').hidden = false; }); }
+    else { $('addRow').hidden = !canAdd; $('handleLbl').textContent = 'Add your name to save this run'; $('addScore').textContent = 'Save score'; }
   }
   async function renderBoard(){
     if ($('board').hidden) return;
