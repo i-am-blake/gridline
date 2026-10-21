@@ -166,6 +166,37 @@ body button:not(:disabled):active{transform:translateY(1px)}
 #start .card{position:relative}
 #start .cornerBack{position:absolute;top:12px;left:12px;margin:0;min-height:32px;padding:6px 10px;font-size:11px}
 @media (max-width:480px){ #start h2{margin-top:34px} }
+/* Ready to ride fits on one screen: tighter on short screens, two columns on phones turned sideways */
+@media (max-height:760px){
+  #start .card{padding:12px 14px}
+  #start h2{margin:2px 0 0;font-size:18px;letter-spacing:.14em}
+  #start .cornerBack{top:8px;left:8px;min-height:28px;padding:4px 8px;font-size:10px}
+  #start .pv{height:58px;margin:0}
+  #start .vstats{margin:0 0 2px;gap:2px 6px}
+  #start .vstats .st{font-size:9px}
+  #start .vstats .perk{font-size:11px;margin-top:2px}
+  #start p.how{display:none}
+  #start .pick{margin-top:8px;gap:5px 10px}
+  #start .chips button{min-height:40px;flex-direction:row;gap:6px;padding:5px 4px;font-size:10px}
+  #start .chips svg{width:18px;height:18px}
+  #start .row{margin-top:10px}
+  #start .row .big{padding:10px 18px;font-size:15px}
+  .over .ctl{font-size:10px;line-height:1.6;padding:3px 10px}
+  .over{gap:6px}
+}
+@media (max-height:760px) and (max-width:480px){ #start h2{margin-top:30px} }
+@media (max-height:760px) and (max-width:560px){ #start .chips button{flex-direction:column;gap:3px;min-height:48px;font-size:9.5px;letter-spacing:.06em;padding:5px 2px} #start .chips svg{width:17px;height:17px} }
+@media (max-height:620px) and (max-width:480px){ #start .cornerBack{padding:4px 7px} #start h2{margin-top:2px;padding:0 0 0 56px;text-align:left;font-size:16px} #start .pv{height:48px} #start .chips button{min-height:42px} }
+@media (max-height:520px) and (orientation:landscape){
+  #start .card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);column-gap:18px;max-width:780px;align-content:start;align-items:start;max-height:calc(100% - 40px)}
+  #start .card > *{grid-column:1}
+  #start .card > .pick{grid-column:2;grid-row:1 / span 6;margin-top:0}
+  #start h2{margin-top:30px}
+  #start .pv{height:70px}
+  #start .chips button{min-height:34px}
+  #start .row .big{padding:9px 14px}
+  #start + .ctl, #start .ctl{display:none}
+}
 button.go{border-color:var(--orange);color:var(--orange);box-shadow:0 0 12px rgba(255,122,26,.35) inset}
 button.on,button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.45),0 0 10px rgba(41,243,255,.25) inset}
 .file input{position:absolute;width:1px;height:1px;opacity:0}
@@ -216,6 +247,9 @@ body:not(.playing) .meters{display:none}
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
   justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
 .steer .g{display:flex;gap:10px}
+body.tiltMode .steer{justify-content:center}
+body.tiltMode .steer .g:empty{display:none}
+body.tiltMode .steer .flipb{width:72px;height:72px}
 .steer .flipb{font-size:22px;opacity:.55}
 .steer.air .flipb{opacity:1;border-color:var(--orange);color:var(--orange)}
 @media (max-width:560px){.status{flex-basis:100%;text-align:left}}
@@ -334,6 +368,7 @@ body:not(.playing) .meters{display:none}
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
   if (!['drag','tilt'].includes(settings.steer)) settings.steer = 'drag';
+  document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
   if (!['synth','lofi','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
   delete settings.sound;
   if (!['sunset','city','aether'].includes(settings.world)) settings.world = 'aether';
@@ -779,7 +814,7 @@ body:not(.playing) .meters{display:none}
   let jumpReq = false, flick = null, flickAt = 0;
   /* Touch: put a finger anywhere and drag; the rider follows sideways. A quick swipe up jumps.
      In the air, dragging up or down (and holding) spins a front flip or a backflip. */
-  let touchX = null, dragFlip = 0, tiltX = null, tiltZero = null, tiltSeen = false;
+  let touchX = null, dragFlip = 0, tiltX = null, tiltZero = null, tiltF = 0, tiltSeen = false;
   const DRAG_PX = () => Math.max(50, W*.16);   // screen pixels per lane
   cv.addEventListener('pointerdown', e => {
     flick = { y: e.clientY, x: e.clientX, t: performance.now(), cx: cycX, id: e.pointerId, lastY: e.clientY };
@@ -803,15 +838,19 @@ body:not(.playing) .meters{display:none}
     const a = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
     const raw = a === 90 ? e.beta : (a === -90 || a === 270) ? -e.beta : e.gamma;
     if (raw == null) return; tiltSeen = true;
-    if (tiltZero === null) tiltZero = raw;
-    tiltX = Math.max(-2.6, Math.min(2.6, (raw - tiltZero)/9));
+    if (tiltZero === null){ tiltZero = raw; tiltF = raw; }
+    // smooth out hand shake, ignore tiny tilts near level, then map about 24 degrees to the full road
+    tiltF += (raw - tiltF)*.18;
+    let d = tiltF - tiltZero; d = Math.sign(d)*Math.max(0, Math.abs(d) - 2.5);
+    const nx = Math.max(-2.6, Math.min(2.6, d/8.5));
+    tiltX = tiltX === null ? nx : Math.abs(nx - tiltX) < .06 ? tiltX : nx;   // hold still through jitter smaller than a sliver of a lane
   }
   let tiltOn = false;
   function enableTilt(){
     const go = () => { if (!tiltOn){ addEventListener('deviceorientation', onTilt); tiltOn = true; }
-      tiltZero = null; setTimeout(() => { if (!tiltSeen && settings.steer === 'tilt'){ settings.steer = 'drag'; syncChips(); try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){} pop('TILT NOT AVAILABLE HERE · DRAG TO STEER', CY); } }, 1500); };
+      tiltZero = null; setTimeout(() => { if (!tiltSeen && settings.steer === 'tilt'){ settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){} pop('TILT NOT AVAILABLE HERE · DRAG TO STEER', CY); } }, 1500); };
     const D = window.DeviceOrientationEvent;
-    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(r => { if (r === 'granted') go(); else { settings.steer = 'drag'; syncChips(); } }).catch(() => { settings.steer = 'drag'; syncChips(); });
+    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(r => { if (r === 'granted') go(); else { settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); } }).catch(() => { settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); });
     else go();
   }
 
@@ -844,6 +883,7 @@ body:not(.playing) .meters{display:none}
     try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){}
     if (g.dataset.group === 'world') applyWorld(settings.world);
     if (g.dataset.group === 'steer' && settings.steer === 'tilt') enableTilt();
+    document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
     if (g.dataset.group === 'beat'){
       bpm = 0; beats = [];
       if (settings.beat === 'mic'){ if (started || source !== 'idle') startMic(); }
@@ -1400,7 +1440,8 @@ body:not(.playing) .meters{display:none}
     else if (posT !== null && !autoDrive){
       // follow the finger (or the tilt) quickly, but no faster than this vehicle can steer
       const cap = Math.min(6.5, VS().steer*Math.max(1, spd/1.8)*1.25);
-      want = Math.max(-cap, Math.min(cap, (posT - cycX)*9)); laneTarget = cycX;
+      const gain = posT === touchX ? 9 : 4.5;   // the finger is precise; tilt glides
+      want = Math.max(-cap, Math.min(cap, (posT - cycX)*gain)); if (Math.abs(posT - cycX) < .04) want = 0; laneTarget = cycX;
     }
     else if (!autoDrive || (manualT -= dt) > 0){ laneTarget = cycX; want = 0; }
     else {
