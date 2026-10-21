@@ -371,7 +371,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function sfx(kind){
     if (!ac || ac.state !== 'running' || !mix) return;
     try {
-      if (!sfxOut){ sfxOut = ac.createGain(); sfxOut.gain.value = .55; sfxOut.connect(mix); }
+      if (!sfxOut){ sfxOut = ac.createGain(); sfxOut.gain.value = .55; sfxOut.connect(monitor); }   // effects skip the music mix, so muting music never cuts them
       if (!noise) noise = mkNoise();
       const t0 = ac.currentTime + .005;
       const tone = (type, f0, f1, dur, lvl, off = 0) => { const t = t0 + off, os = ac.createOscillator(), g = ac.createGain(); os.type = type;
@@ -444,6 +444,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   });
   let lastRun = { score: 0, level: 1, daily: false };
   function showResults(why){
+    musicOff();
     lastRun = { score, level, daily };
     $('rTitle').textContent = why || 'RUN OVER';
     $('rScore').textContent = score.toLocaleString();
@@ -481,6 +482,17 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function routeBus(){ if (!master) return; master.disconnect(); master.connect(settings.beat === 'lofi' ? lofiIn : mix); }
   async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch(e){} }
 
+  // hard stop: cut the entire music mix immediately and stop scheduling notes; nothing waits for the phrase to finish
+  function musicOff(){
+    stopAll();
+    if (ac && mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(mix.gain.value, t); mix.gain.linearRampToValueAtTime(0, t + .03); }
+  }
+  function musicOn(){ if (ac && mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(0, t); mix.gain.linearRampToValueAtTime(.7, t + .05); } }
+  async function ensureMusic(){
+    if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
+    else if (source !== 'demo') startDemo();
+    musicOn();
+  }
   function stopAll(){
     clearInterval(demoTimer); demoTimer = null;
     if (micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
@@ -678,14 +690,14 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (!BEATS[settings.beat]) return;
     bpm = BEATS[settings.beat].bpm;
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
-    routeBus(); nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
+    routeBus(); musicOn(); nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
     setStatus(BEATS[settings.beat].name + ' · ' + BEATS[settings.beat].bpm + ' BPM'); keepAwake();
   }
 
   /* ---------- Controls ---------- */
   document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => started ? setGame(b.dataset.game) : begin(b.dataset.game)));
-  $('again').addEventListener('click', () => { closeBoard(); startRun(daily); });
+  $('again').addEventListener('click', async () => { closeBoard(); await ensureMusic(); startRun(daily); });
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
   let barPx = 0;
@@ -744,19 +756,18 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   async function begin(g){
     document.activeElement?.blur?.();
     started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = false; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
-    if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
-    else if (source !== 'demo') startDemo();
+    await ensureMusic();
     let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
     if (g === 'tutorial' || (g === 'compete' && !seen)){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }
     if (g === 'daily') setGame('compete', true); else setGame(g);
     if (tut) tutShow();
   }
   function toStart(){
-    setPaused(false); setGame('auto');
+    setPaused(false); setGame('auto'); musicOff();
     started = false; $('start').hidden = false; $('pause').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing'); $('bar').classList.add('hide'); syncBar();
   }
   $('goPlay').addEventListener('click', () => begin('compete'));
-  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false;
+  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff();
     let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
     $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
   $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; });
@@ -772,11 +783,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (!ac) return;
     if (v){
       clearInterval(demoTimer); demoTimer = null;                      // stop scheduling new notes
-      master?.gain.setTargetAtTime(0, ac.currentTime, .015);            // fade out what's already playing
+      if (mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(mix.gain.value, t); mix.gain.linearRampToValueAtTime(0, t + .03); }   // silence every channel at once
       setTimeout(() => { if (paused) ac.suspend().catch(() => {}); }, 120);
     } else {
       ac.resume().then(() => {
-        master?.gain.setTargetAtTime(1, ac.currentTime, .02);
+        musicOn();
         if (source === 'demo' && !demoTimer){ nextT = ac.currentTime + .08; demoTimer = setInterval(schedule, 25); }
       }).catch(() => {});
     }
@@ -803,7 +814,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (paused) return;
     if (e.key === '1') setGame('auto');
     if (e.key === '2') setGame('compete');
-    if (e.key === 'Enter' && over && document.activeElement !== $('handle')){ closeBoard(); startRun(daily); }
+    if (e.key === 'Enter' && over && document.activeElement !== $('handle')){ closeBoard(); ensureMusic(); startRun(daily); }
   });
 
   /* ---------- Analysis ---------- */
