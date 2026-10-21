@@ -177,10 +177,15 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .vstats .pips i.on{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
 .vstats .perk{grid-column:1/-1;font-size:12px;color:var(--white);letter-spacing:.03em;margin-top:4px}
 .over .pv{display:block;width:100%;height:104px;margin:4px 0 2px}
+@media (max-height:760px){ .over .card{padding-top:16px;padding-bottom:16px} .over .card h2{margin-top:0} .over .pv{height:80px} #start .how{margin:6px 0;line-height:1.5} #start .row{margin-top:10px} }
 .over .chips svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.over .card{max-height:calc(100% - 24px);overflow-y:auto}
+.over .card{max-height:calc(100% - 64px);overflow-y:auto}
 .over .chips button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.4),0 0 10px rgba(41,243,255,.2) inset}
 .touch{display:none}
+body:not(.playing) .meters{display:none}
+.over{flex-direction:column;gap:10px}
+.over .ctl{pointer-events:none;margin:0;padding:4px 12px;background:rgba(3,6,16,.72);max-width:calc(100% - 32px);text-align:center;font-size:11px;letter-spacing:.06em;line-height:1.9;color:var(--dim)}
+.over .ctl kbd{font-family:var(--mono);font-size:11px;color:var(--cyan);border-radius:2px;border:1px solid rgba(41,243,255,.45);padding:1px 6px;margin:0 1px}
 @media (hover:none){.touch{display:inline}.desk{display:none}}
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
   justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
@@ -204,25 +209,23 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     <div class="mtop"><canvas id="eq" aria-hidden="true"></canvas><span class="bpm" id="bpmB">— BPM</span></div>
     <div class="tl" id="tl" aria-hidden="true"><i class="sg intro" style="flex:4"></i><i class="sg groove" style="flex:8"></i><i class="sg build" style="flex:4"></i><i class="sg drop" style="flex:8"></i><i class="sg brk" style="flex:4"></i><i class="sg build" style="flex:4"></i><b class="tlpos" id="tlPos"></b></div>
     <div class="tlname" id="tlName">MUSIC OFF</div>
-    <span class="keys">← → steer · space jump · ↓ backflip · ↑ front flip · P pause</span>
   </div>
   <div class="status" id="status"></div>
   </div>
 </div>
 <div class="over" id="entry"><div class="card entry">
   <div class="logo">GRIDLINE</div>
-  <p class="tag">Ride the beat. Jump, flip and chase the gate.</p>
+  <p class="tag">Ride the beat. Jump, flip, and swerve to the finish</p>
   <div class="stack">
     <button id="goSetup" class="big" type="button">▶ Play Gridline</button>
     <div class="duo solo" id="duo"><button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="big ghost" type="button">Tutorial</button></div>
   </div>
   <p class="best" id="entryBest"></p>
-</div></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <h2>READY TO RIDE</h2>
   <canvas id="pv" class="pv" aria-label="Preview of the selected vehicle"></canvas>
   <div class="vstats" id="vstats"></div>
-  <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
   <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
@@ -231,9 +234,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
   <div class="row links"><button id="toEntry" class="ghost" type="button">‹ Back</button></div>
-</div></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
-  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div></div>
+  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost" type="button">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2></header>
   <div class="result" id="result" hidden>
