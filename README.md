@@ -6,7 +6,7 @@ Gridline is a neon, music-driven riding game that runs in the browser from a sin
 
 ## How to play
 
-Open `gridline.html` in a modern browser, pick a vehicle, world and beat, and press **Play**.
+Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a modern browser, pick a vehicle, world and beat, and press **Play**.
 
 | Action | Desktop | Phone |
 |---|---|---|
