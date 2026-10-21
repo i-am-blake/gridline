@@ -540,7 +540,9 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   /* ---------- the public site (GitHub Pages): settings you fill in once ---------- */
   const SITE_URL = 'https://i-am-blake.github.io/gridline/';
   const GOATCOUNTER_CODE = '';          // e.g. 'gridline' for gridline.goatcounter.com; visitor stats stay off until this is set
-  const SUPABASE_URL = '', SUPABASE_KEY = '';   // the shared leaderboard for the public site; off until both are set
+  // the shared leaderboard for the public site. This is Supabase's publishable key: it is meant to be public,
+  // and it can only call the two leaderboard functions (the scores table itself is locked).
+  const SUPABASE_URL = 'https://iuorhpfkooetghvxjgmf.supabase.co', SUPABASE_KEY = 'sb_publishable_bkMc-iKpFe3EQussb3gqWQ_XXDqx3I_';
   const onPublicSite = !window.claude?.use && /^https?:$/.test(location.protocol) && !/claude/.test(location.hostname);
   // ---------- shared leaderboard: Claude's storage on the Claude-hosted page, Supabase on the public site
   const LB = { db: null, uid: null, user: null, mine: null, by: { sunset: [], city: [], aether: [] }, tab: settings.world, busy: false };
@@ -565,9 +567,9 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   // the public site's shared leaderboard (Supabase); the Claude-hosted page keeps using its own storage above
   const SB = { on: false, me: null };
   let playerId = ''; try { playerId = localStorage.getItem('gridline-player') || ''; if (!playerId){ playerId = crypto.randomUUID(); localStorage.setItem('gridline-player', playerId); } } catch(_){ playerId = String(Math.random()).slice(2); }
-  const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + path, { ...opts, headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + path, { ...opts, headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
   async function sbLoad(w){
-    try { const res = await sbFetch('leaderboard?select=name,best,level,vehicle&world=eq.' + w + '&order=best.desc&limit=25'); if (!res.ok) return;
+    try { const res = await sbFetch('rpc/get_leaderboard', { method: 'POST', body: JSON.stringify({ p_world: w, p_limit: 25 }) }); if (!res.ok) return;
       LB.by[w] = (await res.json()).map((r, i) => ({ id: 'sb' + i, ...r })); renderBoard(); } catch(_){}
   }
   if (onPublicSite && SUPABASE_URL && SUPABASE_KEY){

@@ -1,6 +1,7 @@
 -- Gridline shared leaderboard (Supabase)
 -- Paste this whole file into Supabase → SQL Editor → New query, then press Run.
 -- Players can only read the top scores and submit their own run; they can't edit or delete anyone's rows.
+-- The table itself is locked (row-level security on, no direct access); the game only calls the two functions below.
 
 create table if not exists public.scores (
   player     uuid    not null,                       -- a random id each device makes for itself
@@ -12,17 +13,24 @@ create table if not exists public.scores (
   updated_at timestamptz not null default now(),
   primary key (player, world)
 );
+create index if not exists scores_world_best on public.scores (world, best desc);
 
 -- lock the table: nobody reads or writes it directly
 alter table public.scores enable row level security;
 revoke all on public.scores from anon, authenticated;
 
--- what the game reads: top scores per map, without the private player ids
-create or replace view public.leaderboard as
-  select world, name, best, level, vehicle, updated_at
-  from public.scores
-  where best > 0;
-grant select on public.leaderboard to anon, authenticated;
+-- what the game reads: the top scores on one map, without the private player ids
+create or replace function public.get_leaderboard(p_world text, p_limit integer default 25)
+returns table (name text, best integer, level integer, vehicle text)
+language sql stable security definer set search_path = public as $$
+  select s.name, s.best, s.level, s.vehicle
+  from scores s
+  where s.world = p_world and s.best > 0
+  order by s.best desc, s.updated_at asc
+  limit least(greatest(coalesce(p_limit, 25), 1), 100);
+$$;
+revoke all on function public.get_leaderboard(text, integer) from public;
+grant execute on function public.get_leaderboard(text, integer) to anon;
 
 -- what the game calls after a run: keeps each player's best per map
 create or replace function public.submit_score(p_player uuid, p_world text, p_name text, p_best integer, p_level integer, p_vehicle text)
@@ -38,4 +46,7 @@ begin
     updated_at = now();
 end $$;
 revoke all on function public.submit_score(uuid, text, text, integer, integer, text) from public;
-grant execute on function public.submit_score(uuid, text, text, integer, integer, text) to anon, authenticated;
+grant execute on function public.submit_score(uuid, text, text, integer, integer, text) to anon;
+
+-- Supabase's Security Advisor will flag both functions as "security definer functions anyone can call".
+-- That is on purpose: they are the only way in, and each one does exactly one safe thing.
