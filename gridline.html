@@ -21,7 +21,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-family:var(--mono);overflow:hidden;-webkit-tap-highlight-color:transparent}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .hud h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(18px,4.6vw,28px);letter-spacing:.28em;color:var(--cyan);
@@ -78,6 +78,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .over .pick{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin-top:14px;text-align:left}
 .over .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .over .chips button{margin-top:0;padding:8px 6px;min-height:58px;font-size:11px;flex-direction:column;justify-content:center;gap:5px;line-height:1.15;border-color:rgba(41,243,255,.3);color:var(--white)}
+.over .chips[data-group="beat"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:480px){.over .chips[data-group="beat"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.over .pv{display:block;width:100%;height:120px;margin:4px 0 2px}
 .over .chips svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .over .card{max-height:calc(100% - 24px);overflow-y:auto}
 .over .chips button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.4),0 0 10px rgba(41,243,255,.2) inset}
@@ -101,12 +104,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 </div>
 <div class="over" id="start"><div class="card">
   <h2>READY TO RIDE</h2>
+  <canvas id="pv" class="pv" aria-label="Preview of the selected vehicle"></canvas>
   <p class="how"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↑</kbd> <kbd>↓</kbd> flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold ◀ ▶ to steer · swipe up to jump · hold ⟲ ⟳ in the air to flip · ❚❚ to pause</span></p>
-  <p class="how">Land jumps and flips for points. Hit a block or land a flip upside down and you lose a life.</p>
+  <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aether</span></button></div>
-    <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="dnb"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 2l3 5M16 2l-3 5"/></svg><span>Breakbeat</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
+    <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="dnb"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 2l3 5M16 2l-3 5"/></svg><span>Breakbeat</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
 </div></div>
@@ -132,7 +136,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   </div>
   <div class="grp">
     <button id="pause" type="button">❚❚ Pause</button>
-    <button id="setup" type="button">⚙ Setup</button>
+    <button id="setup" type="button">⏏ Quit</button>
     <button id="fs" type="button" title="Fullscreen">⛶</button>
   </div>
   <span class="status" id="status">Idle · tap the screen to hide controls</span>
@@ -142,7 +146,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const cv = $('cv'), ctx = cv.getContext('2d');
+  const cv = $('cv'); let ctx = cv.getContext('2d');
   const CY = [41,243,255], OR = [255,122,26], WH = [232,253,255];
   const WORLDS = {
     sunset:  { grid:[41,243,255], accent:[255,122,26], mid0:[4,10,24],  mid1:[18,50,84],  hor0:[16,30,50],  hor1:[166,100,100], scene:'mountains' },
@@ -153,7 +157,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const settings = { vehicle:'bike', world:'sunset', beat:'synth' };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
-  if (!['synth','dnb','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
+  if (!['synth','dnb','lofi','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
   delete settings.sound;
   if (!['sunset','city','aether'].includes(settings.world)) settings.world = 'aether';
   const VHW = () => ({ bike:.18, board:.2, buggy:.42 })[settings.vehicle];   // half-width for collisions
@@ -178,7 +182,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     analyser.minDecibels = -78; analyser.maxDecibels = -18;   // room noise sits below the floor, so silence reads as zero
     master = ac.createGain();            // things we want to HEAR (demo, file)
     monitor = ac.createGain(); monitor.gain.value = 0.85;
-    master.connect(analyser); master.connect(monitor); monitor.connect(ac.destination);
+    // a limiter keeps the mix from overloading (overloads sound like crackles and clicks)
+    const lim = ac.createDynamicsCompressor(); lim.threshold.value = -12; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .2;
+    master.gain.value = .7; master.connect(lim); lim.connect(analyser); lim.connect(monitor); monitor.connect(ac.destination);
   }
   async function keepAwake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch(e){} }
 
@@ -214,7 +220,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let nextT = 0, idx = 0, noise;
   const stp = () => 60/BEATS[settings.beat].bpm/4;
   function mkNoise(){ const b = ac.createBuffer(1, ac.sampleRate*.3, ac.sampleRate), d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
-  function env(node, t, peak, dur){ const g = ac.createGain(); g.gain.setValueAtTime(peak,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); node.connect(g); g.connect(master); return g; }
+  function env(node, t, peak, dur){ const g = ac.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak,t+.003); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(dur,.01)); node.connect(g); g.connect(master); return g; }   // a 3 ms fade-in removes the click at each note's start
   function kick(t, pk = 1, dur = .42){ const o = ac.createOscillator(); o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(40,t+Math.min(.13, dur*.6)); env(o,t,pk,dur); o.start(t); o.stop(t+dur+.03); }
   function hat(t,open,pk){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=8000; s.connect(f); env(f,t,pk || (open?.16:.1),open?.2:.04); s.start(t); s.stop(t+.25); }
   function clap(t, pk = .4){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500; s.connect(f); env(f,t,pk,.22); s.start(t); s.stop(t+.25); }
@@ -255,6 +261,24 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     const g = ac.createGain(); g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(.18, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + .05);
     s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + .1);
   }
+  function keys(t, root, ivs, dur, v = 1){   // electric-piano chord, rolled slightly
+    ivs.forEach((iv, k) => { const t0 = t + k*.014, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), g2 = ac.createGain();
+      o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = mtof(root + iv); o2.frequency.value = mtof(root + iv)*2; g2.gain.value = .15;
+      g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.04*v, t0 + .012); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(master); o.start(t0); o2.start(t0); o.stop(t0 + dur + .05); o2.stop(t0 + dur + .05); }); }
+  function koto(t, m){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'triangle';
+    o.frequency.setValueAtTime(mtof(m)*1.02, t); o.frequency.exponentialRampToValueAtTime(mtof(m), t + .06);
+    f.type = 'lowpass'; f.frequency.value = 2600; o.connect(f); env(f, t, .09, .7); o.start(t); o.stop(t + .75); }
+  function softSnare(t, v = 1){ const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .7;
+    s.connect(f); env(f, t, .22*v, .28); s.start(t); s.stop(t + .3); }
+  function subBass(t, m, dur){ const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = mtof(m); env(o, t, .35, dur); o.start(t); o.stop(t + dur + .05); }
+  let crackBuf;
+  function crackle(t, dur){
+    if (!crackBuf){ crackBuf = ac.createBuffer(1, ac.sampleRate*2, ac.sampleRate); const d = crackBuf.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i] = Math.random() < .0007 ? (Math.random()*2 - 1)*.7 : (Math.random()*2 - 1)*.012; }
+    const s = ac.createBufferSource(); s.buffer = crackBuf; s.loop = true; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1200;
+    const g = ac.createGain(); g.gain.value = .45; s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + dur);
+  }
   function pluck(t, m, lvl = .06){ const o = ac.createOscillator(), f = ac.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = mtof(m);
     f.type = 'lowpass'; f.frequency.setValueAtTime(4000, t); f.frequency.exponentialRampToValueAtTime(400, t + .25); o.connect(f); env(f, t, lvl, .3); o.start(t); o.stop(t + .35); }
   // a melody that stays the same within a pass and changes on the next one
@@ -279,6 +303,24 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       if (sec === 'groove' && b32 >= 8){ const n = tune(pass, bar, s, root); if (n) pluck(t, n); }
       if (full && s % 2 === 0){ const n = tune(pass + 1, bar, s, root); if (n) pluck(t, n + 12, .05); }
       if (s === 0 && (b32 === 12 || b32 === 28)) riser(t, st*64);
+    } },
+    lofi: { name:'Lo-fi', bpm:78, prog:[53,55,52,57], q:[[0,4,7,11,14],[0,4,7,10,14],[0,3,7,10,14],[0,3,7,10,14]], play(s, bar, t){
+      // the "royal road" progression (IVmaj7, V7, iii7, vi7), swung drums, vinyl crackle and a koto-like melody on the yo scale
+      const sec = section(bar), pass = Math.floor(bar/32), b32 = bar % 32, st = stp(), key = [0,2,-3,5][pass % 4];
+      const ci = bar % 4, root = this.prog[ci] + key, tt = t + (s % 2 ? st*.18 : 0);
+      if (s === 0) crackle(t, st*16);
+      if (sec !== 'intro' && sec !== 'break'){
+        if (s === 0 || s === 7 || s === 10) kick(tt, .7, .3);
+        if (s === 4 || s === 12) softSnare(tt);
+        if (s % 2 === 0 || sec === 'drop') hat(tt, false, s % 4 === 2 ? .05 : .03);
+        if (s === 0 || s === 10) subBass(tt, root - 24, st*(s === 0 ? 9 : 5));
+      }
+      if (sec === 'break' && s === 8) softSnare(tt, .5);
+      if (s === 0) keys(t, root, this.q[ci], st*16, sec === 'intro' ? .55 : 1);
+      if (s === 8 && (sec === 'drop' || sec === 'groove')) keys(t, root, this.q[ci], st*8, .5);
+      if (sec !== 'intro' && (sec !== 'groove' || b32 >= 8) && hash3(pass + 5, bar % 4, s) < (sec === 'drop' ? .32 : .2)){
+        const YO = [0,2,5,7,9]; koto(tt, 72 + key + YO[Math.floor(hash3(pass + 11, bar % 2, s)*5)] + (hash3(pass, s, bar % 2) > .75 ? 12 : 0));
+      }
     } },
     dnb: { name:'Breakbeat', bpm:172, prog:[38,34,41,36], play(s, bar, t){
       const sec = section(bar), pass = Math.floor(bar/32), b32 = bar % 32, st = stp();
@@ -311,6 +353,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   $('demo').addEventListener('click', () => source === 'demo' ? (stopAll(), setStatus('Demo stopped')) : startDemo());
   function startDemo(){
     if (!BEATS[settings.beat]) return;
+    bpm = BEATS[settings.beat].bpm;
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
     nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
@@ -366,7 +409,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (g.dataset.group === 'beat'){
       bpm = 0; beats = [];
       if (settings.beat === 'mic'){ if (started || source !== 'idle') startMic(); }
-      else if (source === 'demo'){ idx = 0; nextT = ac.currentTime + .05; }
+      else if (source === 'demo'){ idx = 0; nextT = ac.currentTime + .05; bpm = BEATS[settings.beat].bpm; }
       else if (started || source === 'mic') startDemo();
     }
   })));
@@ -502,7 +545,8 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
   const FLIP_RATE = 13;   // radians per second while a flip control is held
   const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
-  const laneW = () => Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
+  let laneOv = 0;   // set while drawing the setup-card preview, which uses its own scale
+  const laneW = () => laneOv || Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
   const sky = { b:0, m:0, h:0, bands: new Float32Array(48) };
   const ease = (cur, v, dt) => cur + (v - cur)*Math.min(1, dt*(v > cur ? 14 : 1.8));
   let stars = [], ridge = [];
@@ -1048,6 +1092,25 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       poly([P(a, Z, h0 + .08), P(c, Z, h0 + .08), P(c, Z, top), P(a, Z, top)], rgba(i % 2 ? CY : OR, .85)); }
   }
 
+  /* Ready to ride: the chosen vehicle turns slowly on a glowing pad, drawn with the same code as in the game */
+  function drawPreview(t){
+    const pv = $('pv'), r = pv.getBoundingClientRect(); if (!r.width) return;
+    const d = Math.min(devicePixelRatio || 1, 2);
+    if (pv.width !== Math.round(r.width*d) || pv.height !== Math.round(r.height*d)){ pv.width = Math.round(r.width*d); pv.height = Math.round(r.height*d); }
+    const pc = pv.getContext('2d'), w = r.width, h = r.height;
+    pc.setTransform(d,0,0,d,0,0); pc.clearRect(0,0,w,h);
+    const keep = [ctx, cycX, lean, pitch, flipA, alt, invuln, laneOv];
+    const yaw = (reduce ? .9 : t*.6), cyw = Math.cos(yaw), syw = Math.sin(yaw), Dd = 3.6, f = h*1.55, CZp = 2.5, piv = CZp + .75*S;
+    ctx = pc; cycX = syw < 0 ? -1e-3 : 1e-3; lean = 0; pitch = 0; flipA = 0; alt = 0; invuln = 0; laneOv = f/Dd*2.5;
+    const Pp = (X, Z, hh = 0) => { const dx = X - cycX, dz = Z - piv, rx = dx*cyw - dz*syw, rz = dx*syw + dz*cyw, k = f/(Dd + rz);
+      return [w/2 + rx*k, h*.8 - hh*k - rz*k*.22]; };
+    glowLine(CY, .55, 1.4); ctx.beginPath();
+    for (let i=0;i<=48;i++){ const a = i/48*Math.PI*2, [x,y] = Pp(cycX + Math.cos(a)*1.25, piv + Math.sin(a)*1.25); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }
+    gstroke();
+    try { drawCycle(Pp, CZp, pulse*.6, true); drawCycle(Pp, CZp, pulse*.6, false); }
+    finally { [ctx, cycX, lean, pitch, flipA, alt, invuln, laneOv] = keep; }
+  }
+
   function drawBlock(r, P, hit){
     const z0 = r.z - travel, z1 = z0 + BL;
     if (z0 < .5) return;
@@ -1189,6 +1252,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       ctx.globalCompositeOperation = 'source-over';
       drawGrid(dt);
     }
+    if (!$('start').hidden) drawPreview(t);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
