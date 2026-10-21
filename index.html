@@ -24,6 +24,9 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 #cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+/* the small corner logo only shows during a ride (the home screens have the big one); phones have no fullscreen button */
+body:not(.playing) .hud h1{visibility:hidden}
+@media (hover:none){ #fs{display:none!important} }
 .hud h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(18px,4.6vw,28px);letter-spacing:.28em;color:var(--cyan);
   text-shadow:0 0 6px var(--cyan),0 0 22px rgba(41,243,255,.6)}
 .score{margin-top:8px;font-family:var(--display);font-weight:800;font-size:clamp(20px,4.4vw,30px);color:var(--orange);letter-spacing:.06em;
