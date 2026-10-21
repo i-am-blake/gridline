@@ -306,7 +306,6 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   </div>
   <p class="best" id="entryBest"></p>
   <div class="extras">
-    <button id="cbBtn" class="mini" type="button" aria-pressed="false" title="Hazards turn yellow with a bold X, so they never depend on telling red from orange or green">◐ Colour-blind mode</button>
     <button id="installBtn" class="mini" type="button" hidden>⬇ Install app</button>
     <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ Buy me a coffee</a>
   </div>
@@ -384,7 +383,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   const CY = [41,243,255], OR = [255,122,26], WH = [232,253,255];
   const WORLDS = {
     sunset:  { grid:[41,243,255], accent:[255,122,26], mid0:[4,10,24],  mid1:[18,50,84],  hor0:[16,30,50],  hor1:[166,100,100], scene:'mountains' },
-    city:    { grid:[255,70,210], accent:[255,214,64], mid0:[14,4,28],  mid1:[60,18,92],  hor0:[34,10,54],  hor1:[210,64,150],  scene:'city' },
+    city:    { grid:[255,70,210], accent:[70,175,255], mid0:[14,4,28],  mid1:[60,18,92],  hor0:[34,10,54],  hor1:[210,64,150],  scene:'city' },
     aether:  { grid:[120,255,205], accent:[168,140,255], mid0:[4,6,22],  mid1:[24,30,80], hor0:[6,8,26],    hor1:[40,46,110],   scene:'aether' }
   };
   let WORLD = WORLDS.sunset;
@@ -631,7 +630,6 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     if (installEvt){ installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r?.outcome === 'accepted'){ $('installBtn').hidden = true; track('install'); } installEvt = null; }
     else $('installHow').hidden = !$('installHow').hidden;
   });
-  $('cbBtn').addEventListener('click', () => { cbMode = !cbMode; try { localStorage.setItem('gridline-cb', cbMode ? '1' : '0'); } catch(_){} applyCb(); });
   document.querySelectorAll('.coffee, .coffeeCard').forEach(a => a.addEventListener('click', () => track('coffee-click')));
 
   // share your score: a neon score card image plus a link back to the game
@@ -1218,12 +1216,11 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, lvMul = 1, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
-  let RD = [255,64,96];
-  // colour-blind mode: hazards turn bright yellow and carry a bold X; good things stay cyan and blue
-  let cbMode = false; try { cbMode = localStorage.getItem('gridline-cb') === '1'; } catch(_){}
-  const HZ = () => cbMode ? [255,224,0] : [255,40,90];
-  function applyCb(){ RD = cbMode ? [255,224,0] : [255,64,96]; const b = document.getElementById('cbBtn'); if (b) b.setAttribute('aria-pressed', cbMode); }
-  applyCb();
+  // hazards are always bright yellow with a bold X, and the things you want (ramps, tunnels, gates) are cyan and blue:
+  // that pairing reads clearly for every kind of colour vision, so there's no separate colour-blind mode
+  const cbMode = true;
+  const RD = [255,224,0];
+  const HZ = () => RD;
   function setGame(g, isDaily){
     if (g !== 'compete' && tut) tutEnd();
     game = g; document.querySelectorAll('[data-game]').forEach(x => x.setAttribute('aria-pressed', x.dataset.game === g));
