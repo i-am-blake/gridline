@@ -71,7 +71,7 @@ body:not(.playing) .hud h1{visibility:hidden}
 .entry .duo button{margin-top:0;width:100%;justify-content:center}
 .entry .best{margin-top:14px;min-height:1em}
 .entry .extras{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
-.over .extras .mini{margin:0;min-height:32px;padding:6px 10px;font-size:11px;letter-spacing:.06em;border:1px solid rgba(41,243,255,.3);background:transparent;color:var(--dim);display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:inherit;border-radius:2px}
+.over .extras .mini{margin:0;min-height:32px;padding:6px 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(41,243,255,.3);background:transparent;color:var(--dim);display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:inherit;border-radius:2px}
 .over .extras .mini[aria-pressed="true"]{color:#ffe000;border-color:#ffe000}
 .over .extras a.mini:hover,.over .extras a.mini:focus-visible{color:var(--orange);border-color:var(--orange);background:rgba(255,122,26,.1)}
 .installHow{font-size:12px;color:var(--white);margin:10px 0 0;line-height:1.5}
@@ -287,7 +287,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
 #board .phead .back{margin:0;min-height:40px;padding:8px 12px;font-size:12px}
 #board .phead h2{text-align:center;font-size:clamp(18px,5.2vw,26px);letter-spacing:.16em}
 #board .result{margin-top:16px;padding:22px 18px 18px;text-align:center;border-radius:4px}
-#board .rtitle{font-size:clamp(14px,3.8vw,16px);letter-spacing:.24em}
+#board .rtitle{font-size:clamp(22px,6.4vw,30px);letter-spacing:.2em}
+#board .rreason{margin-top:6px;font-size:15px;color:var(--orange);letter-spacing:.04em}
 #board .rscore{display:block;margin-top:10px}
 #board .rscore b{display:block;font-size:clamp(46px,14vw,68px);line-height:1;letter-spacing:.02em}
 #board .rmeta{margin-top:10px;font-size:15px;letter-spacing:.06em;color:var(--white);opacity:.85}
@@ -352,7 +353,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   <p class="best" id="entryBest"></p>
   <div class="extras">
     <button id="installBtn" class="mini" type="button" hidden>⬇ Install app</button>
-    <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+    <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ BUY ME A COFFEE</a>
   </div>
   <p class="installHow" id="installHow" hidden>On iPhone: tap the Share button <b>⬆</b> in Safari, then <b>Add to Home Screen</b>. Gridline opens full screen like an app.</p>
 </div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
@@ -375,7 +376,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost back" type="button" aria-label="Back">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2><span aria-hidden="true"></span></header>
   <div class="result" id="result" hidden>
-    <div class="rtitle" id="rTitle">RUN OVER</div>
+    <div class="rtitle" id="rTitle">GAME OVER</div>
+    <div class="rreason" id="rReason"></div>
     <div class="rscore"><b id="rScore">0</b></div>
     <div class="rmeta" id="rMeta"></div>
     <div class="rbadge" id="rBadge" hidden>★ New personal best</div>
@@ -733,7 +735,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   function showResults(why){
     musicOff();
     lastRun = { score, level, daily, world: settings.world };
-    $('rTitle').textContent = why || 'RUN OVER';
+    $('rTitle').textContent = 'GAME OVER';
+    const reason = why || 'OUT OF LIVES'; $('rReason').textContent = 'Reason: ' + reason.charAt(0) + reason.slice(1).toLowerCase();
     $('rScore').textContent = score.toLocaleString();
     $('rNote').textContent = ''; $('shareNote').hidden = true;
     track('run-over', 'Run over at level ' + level);
