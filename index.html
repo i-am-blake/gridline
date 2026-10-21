@@ -262,6 +262,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 .over .card{max-height:calc(100% - 64px);overflow-y:auto}
 .over .chips button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(41,243,255,.4),0 0 10px rgba(41,243,255,.2) inset}
 .touch{display:none}
+@media (hover:none){ #goWatch{display:none} }
 @media (hover:hover) and (pointer:fine){.touchOnly{display:none!important}}
 body:not(.playing) .meters{display:none}
 .over{flex-direction:column;gap:10px}
@@ -271,11 +272,17 @@ body:not(.playing) .meters{display:none}
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
   justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
 .steer .g{display:flex;gap:10px}
-body.tiltMode .steer{justify-content:center}
-body.tiltMode .steer .g:empty{display:none}
-body.tiltMode .steer .flipb{width:72px;height:72px}
-.steer .flipb{font-size:22px;opacity:.55}
-.steer.air .flipb{opacity:1;border-color:var(--orange);color:var(--orange)}
+/* flip buttons: always centred at the bottom, big and labelled; they light up when you're in the air */
+.steer{justify-content:center}
+.steer .g:empty{display:none}
+.steer .flips{gap:18px}
+.steer .flipb{width:96px;height:84px;border-radius:18px;flex-direction:column;gap:2px;background:rgba(4,14,22,.72);border-width:2px}
+.steer .flipb .fi{font-size:30px;line-height:1}
+.steer .flipb .fl{font-size:10px;letter-spacing:.12em;font-family:var(--display);font-weight:800}
+.steer .flipb{opacity:.6}
+.steer.air .flipb{opacity:1;border-color:var(--orange);color:var(--orange);box-shadow:0 0 18px rgba(255,122,26,.55);animation:flipPulse .6s ease-in-out infinite alternate}
+@keyframes flipPulse{to{box-shadow:0 0 28px rgba(255,122,26,.85)}}
+@media (prefers-reduced-motion:reduce){.steer.air .flipb{animation:none}}
 @media (max-width:560px){.status{flex-basis:100%;text-align:left}}
 /* ---- leaderboard page: centred, clear hierarchy, readable on phones ---- */
 #board .pagein{max-width:560px;margin:0 auto;padding:0 0 32px}
@@ -356,7 +363,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ BUY ME A COFFEE</a>
   </div>
   <p class="installHow" id="installHow" hidden>On iPhone: tap the Share button <b>⬆</b> in Safari, then <b>Add to Home Screen</b>. Gridline opens full screen like an app.</p>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
   <h2>READY TO RIDE</h2>
@@ -367,12 +374,12 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Endless Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
-    <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="drag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V4a1.5 1.5 0 0 1 3 0v6M15 10V6a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.5-4.5a1.5 1.5 0 0 1 2.6-1.5L9 13"/></svg><span>Drag</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button></div>
+    <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="drag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V4a1.5 1.5 0 0 1 3 0v6M15 10V6a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.5-4.5a1.5 1.5 0 0 1 2.6-1.5L9 13"/></svg><span>Drag</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button><button type="button" data-v="auto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z"/></svg><span>Auto</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
-  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, drag up or down to flip · ❚❚ to pause</span></p></div>
+  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost back" type="button" aria-label="Back">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2><span aria-hidden="true"></span></header>
   <div class="result" id="result" hidden>
@@ -410,7 +417,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
 </div>
 <div class="steer" id="steer" hidden>
   <div class="g" hidden><button id="sl" type="button" aria-label="Steer left">◀</button><button id="sr" type="button" aria-label="Steer right">▶</button></div><div class="g"></div>
-  <div class="g"><button id="fb" class="flipb" type="button" aria-label="Backflip">⟲</button><button id="ff" class="flipb" type="button" aria-label="Front flip">⟳</button></div>
+  <div class="g flips"><button id="fb" class="flipb" type="button" aria-label="Backflip (hold in the air)"><span class="fi">⟲</span><span class="fl">BACKFLIP</span></button><button id="ff" class="flipb" type="button" aria-label="Front flip (hold in the air)"><span class="fi">⟳</span><span class="fl">FRONT FLIP</span></button></div>
 </div>
 
 <div class="bar hide" id="bar" hidden>
@@ -453,7 +460,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   const settings = { vehicle:'bike', world:'sunset', beat:'synth' };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
-  if (!['drag','tilt'].includes(settings.steer)) settings.steer = 'drag';
+  if (!['drag','tilt','auto'].includes(settings.steer)) settings.steer = 'drag';
   document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
   if (!['synth','lofi','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
   delete settings.sound;
@@ -1012,7 +1019,6 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     if (!flick || e.pointerId !== flick.id || e.pointerType === 'mouse') return;
     const dx = e.clientX - flick.x, dy = e.clientY - flick.y;
     if (settings.steer !== 'tilt' && Math.abs(dx) > 6){ touchX = Math.max(-2.6, Math.min(2.6, flick.cx + dx/DRAG_PX())); if (Math.abs(dx) > 24 && tut) tutEvent('steer'); }
-    if (airborne){ const vy2 = e.clientY - flick.lastY; dragFlip = dy > 28 ? 1 : dy < -28 ? -1 : 0; if (Math.abs(vy2) > 40) flick.lastY = e.clientY; }
   });
   const endTouch = e => {
     if (!flick || (e.pointerId !== undefined && e.pointerId !== flick.id)) return;
@@ -1086,7 +1092,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
   applyWorld(settings.world); syncChips(); showStats();
   async function begin(g){
     document.activeElement?.blur?.();
-    started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = false; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
+    started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = g === 'auto'; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
     await ensureMusic();
     let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
     if (g === 'tutorial' || (g === 'compete' && !seen)){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }
@@ -1097,7 +1103,8 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     setPaused(false); setGame('auto'); musicOff();
     started = false; $('start').hidden = false; $('pause').hidden = true; $('steer').hidden = true; document.body.classList.remove('playing', 'paused'); $('bar').classList.add('hide'); syncBar();
   }
-  $('goPlay').addEventListener('click', () => begin('compete'));
+  // on phones, Steer: Auto is the watch mode (the Just watch button is for desktops)
+  $('goPlay').addEventListener('click', () => begin(isTouch && settings.steer === 'auto' ? 'auto' : 'compete'));
   const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff();
     let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
     $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
@@ -1255,7 +1262,7 @@ body.tiltMode .steer .flipb{width:72px;height:72px}
     { id:'steer', desk:'Hold ← or → to steer', touch:'Drag left or right anywhere to steer' },
     { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
     { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
-    { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, drag down to backflip (up for a front flip), then let go to land upright' },
+    { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, hold the ⟲ Backflip button at the bottom, then let go to land upright' },
     { id:'gas',   desk:'Landing jumps and clearing tunnels refills gas. Reach the gate!', touch:'Landing jumps and clearing tunnels refills gas. Reach the gate!' }
   ];
   const isTouch = matchMedia('(hover: none)').matches;

@@ -12,7 +12,7 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 |---|---|---|
 | Steer | ← → | Drag anywhere, or tilt the phone |
 | Jump on flat ground | Space | Swipe up |
-| Backflip / front flip (in the air) | ↓ / ↑ | Drag down / up, or hold ⟲ / ⟳ |
+| Backflip / front flip (in the air) | ↓ / ↑ | Hold the ⟲ Backflip / ⟳ Front flip buttons |
 | Pause | P | ❚❚ |
 
 - **Ramps and tunnels** score points and refill your gas. Chain them for a combo multiplier.
