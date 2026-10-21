@@ -57,7 +57,7 @@ Scores go to a shared leaderboard.
 
 ## Credits
 
-Designed and directed by **Blake Erickson**. Built with [Claude](https://claude.ai).
+Designed and developed by **Blake Erickson**. 
 
 Music engine uses the Web Audio API and [Tone.js](https://tonejs.github.io/) (MIT License), loaded from a CDN when available.
 
