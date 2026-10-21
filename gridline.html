@@ -587,7 +587,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   const pop = (txt, col) => { popText = txt; popCol = col; popT = 1.4; };
   const showScore = () => { $('sc').textContent = score.toLocaleString();
     $('cb').textContent = 'LVL ' + (1 + Math.floor(runT/20)) + ' · ' + '◆'.repeat(Math.max(0,lives)) + '◇'.repeat(3 - Math.max(0,lives)) + ' · ' + (combo > 1 ? 'x' + combo + ' combo' : 'no combo') + (boost > .05 ? ' · speed +' + Math.round(boost/1.2*100) + '%' : ''); };
-  const FLIP_RATE = 13;   // radians per second while a flip control is held
+  const FLIP_RATE = 7.5;  // radians per second at full spin: about 0.85 s per rotation
+  const GRAV = 3.6;       // floatier jumps leave time to throw a flip
+  let flipV = 0;          // current spin speed; it eases in and out so flips look smooth
   const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
   let laneOv = 0;   // set while drawing the setup-card preview, which uses its own scale
   const laneW = () => laneOv || Math.min(Math.max(W, H*.9), W*1.2)*.14;   // phones get slightly wider lanes, but the rider stays in proportion
@@ -873,7 +875,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     invuln = Math.max(0, invuln - dt);
     for (const r of ramps){
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
-      if (cz - .8 < r.z + BL && cz + .8 > r.z && Math.abs(cycX - r.x) < BW + VHW() && alt < BH){
+      if (cz - .6 < r.z + BL && cz + .6 > r.z && Math.abs(cycX - r.x) < BW + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
         r.hit = true; lives--; invuln = 1.4; flash = 1; combo = 0; boost = 0; pop('CRASH', RD); showScore();
         if (lives <= 0) gameOver();
       }
@@ -895,7 +897,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     }
     if (jumpReq){
       jumpReq = false;
-      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = 2.7; airT = 0; flipA = 0; autoFlipDir = 0; }
+      if (!airborne && !rampOn && !inTunnel && alt > -.01){ airborne = true; ollie = true; vy = 3.0; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0; }   // peaks about twice a block's height
     }
     if (!airborne){
       if (sf.obj){
@@ -904,10 +906,10 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
-        airborne = true; ollie = false; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0; flipA = 0; autoFlipDir = 0;
+        airborne = true; ollie = false; vy = spd*(tun ? .45 : RH/RL)*1.5 + .8; airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
         // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
         if (autoDrive && Math.random() < .55){
-          const T = (vy + Math.sqrt(vy*vy + 10*Math.max(alt, 0)))/5, n = Math.min(2, Math.floor((T - .18)*FLIP_RATE/(Math.PI*2)));
+          const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*FLIP_RATE/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
         if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; pop('TUNNEL +' + tp, CY); showScore(); }
@@ -915,15 +917,16 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
     if (airborne){
-      vy -= 5*dt; alt += vy*dt; airT += dt;
+      vy -= GRAV*dt; alt += vy*dt; airT += dt;
       // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
       const fdir = flipKey || flipBtn || autoFlipDir;
-      if (fdir) flipA += fdir*FLIP_RATE*dt;
-      if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; }
+      flipV += (fdir*FLIP_RATE - flipV)*Math.min(1, dt*9);
+      flipA += flipV*dt;
+      if (autoFlipDir && Math.abs(flipA) >= Math.PI*2*autoFlipN){ flipA = Math.sign(flipA)*Math.PI*2*autoFlipN; autoFlipDir = 0; flipV = 0; }
       if (alt <= 0){
         alt = 0; vy = 0; airborne = false; jumps++; if (ripples.length < 4) ripples.push(0);
         const turns = Math.round(flipA/(Math.PI*2)), off = Math.abs(flipA - turns*Math.PI*2), n = Math.abs(turns);
-        flipA = 0; autoFlipDir = 0;
+        flipA = 0; flipV = 0; autoFlipDir = 0;
         const trick = n ? (n === 2 ? 'DOUBLE ' : n >= 3 ? 'TRIPLE ' : '') + (turns > 0 ? 'BACKFLIP' : 'FRONT FLIP') : '';
         if (off > .65){
           // landed crooked: wipeout
