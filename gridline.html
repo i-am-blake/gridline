@@ -632,6 +632,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
      Sky values rise fast on hits and fall slowly, so beats read clearly without flicker. */
   let skyT = 0, sunSpin = 0, travel = 0, cycX = 1.5, cycV = 0, laneTarget = 1.5, laneT = 5, manualT = 0, trail = [], lean = 0, ripples = [];
   let deco = [], nextDeco = 14;
+  // Neon City alternates between downtown stretches lined with buildings and open stretches of empty highway
+  const zoneAt = z => Math.floor((z + 20)/60) % 2 ? 'city' : 'open';
+  let bldgs = [], bNext = null;
   let ramps = [], nextRamp = 9, alt = 0, vy = 0, rampOn = null, airborne = false, pitch = 0, ollie = false, flipA = 0, autoFlipDir = 0, autoFlipN = 0, wasAir = false, inTunnel = null, jumps = 0, popT = 0, popText = '', popCol = OR;
   let score = 0, combo = 0, boost = 0, airT = 0;
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
@@ -890,9 +893,18 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       glowLine(CY, .95, 2 + sky.b*2); for (const e of [-TWD, TWD]){ ctx.beginPath(); edge(e).forEach(([x,y],k) => k ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); gstroke(); }
       glowLine(OR, .5, 1); for (const e of [-TWD - .35, TWD + .35]){ ctx.beginPath(); edge(e).forEach(([x,y],k) => k ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.stroke(); }
       glowLine(WH, Math.min(1, .5 + hit*.3 + snare*.5), 1.5 + hit + snare*2); ctx.beginPath(); ctx.moveTo(0,hz); ctx.lineTo(W,hz); gstroke();
-      // street lights every four units; their lamps take turns flashing on kick and hi-hat
+      // downtown: buildings rise along both sides, windows lit by the music
+      if (!bNext) bNext = { '-1': travel, '1': travel };
+      for (const sd of [-1, 1]) while (bNext[sd] < travel + 46){
+        const z = bNext[sd];
+        if (zoneAt(z) === 'city'){ const d = 2 + Math.random()*3; bldgs.push({ z0: z, z1: z + d, side: sd, w: 2 + Math.random()*3, h: 2.4 + Math.random()*5, seed: Math.random()*99 }); bNext[sd] = z + d + .4 + Math.random()*1.2; }
+        else bNext[sd] = z + 1;
+      }
+      bldgs = bldgs.filter(b => b.z1 - travel > .45);
+      bldgs.slice().sort((a,b) => b.z0 - a.z0).forEach(b => drawBldg(b, P, hit));
+      // street lights every four units downtown; their lamps take turns flashing on kick and hi-hat
       for (let n=0;n<46;n++){
-        const k = Math.floor(travel) + n; if (k % 4) continue;
+        const k = Math.floor(travel) + n; if (k % 4 || zoneAt(k) !== 'city') continue;
         const Z = n + 1 - frac; if (Z < .8) continue;
         for (const sd of [-1, 1]){
           const base = P(sd*3.9, Z, 0), top = P(sd*3.9, Z, 1.3), arm = P(sd*3.3, Z, 1.3);
@@ -906,7 +918,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       }
       // overpasses and billboards come and go
       while (nextDeco < travel + 46){
-        deco.push(Math.random() < .45 ? { kind:'over', z: nextDeco } : { kind:'sign', z: nextDeco, side: Math.random() < .5 ? -1 : 1 });
+        deco.push(Math.random() < .45 || zoneAt(nextDeco) === 'city' ? { kind:'over', z: nextDeco } : { kind:'sign', z: nextDeco, side: Math.random() < .5 ? -1 : 1 });   // billboards only out in the open
         nextDeco += 9 + Math.random()*10;
       }
       deco = deco.filter(d => d.z - travel > .3);
@@ -1220,6 +1232,24 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     }
     glowLine(OR, .95, 2 + hit*2); line([P(-xw, Z, h0), P(xw, Z, h0)]); gstroke(); line([P(-xw, Z, h1), P(xw, Z, h1)]); gstroke();
     glowLine(WH, .9, 2.5 + hit*2); line([P(-xw, Z, 0), P(xw, Z, 0)]); gstroke();
+  }
+  function drawBldg(b, P, hit){
+    const za = Math.max(.45, b.z0 - travel), zb = b.z1 - travel; if (zb <= .45) return;
+    const xi = b.side*4.8, xo = b.side*(4.8 + b.w), h = b.h;
+    // the wall facing the road, with a grid of windows that light up with the spectrum
+    poly([P(xi, za, 0), P(xi, zb, 0), P(xi, zb, h), P(xi, za, h)], '#120b20');
+    for (let zz = Math.ceil((za + travel)/.9)*.9 - travel; zz < zb - .45; zz += .9){
+      if (zz < za) continue;
+      for (let y = .45, r = 0; y < h - .35; y += .7, r++){
+        const c = Math.round((zz + travel)/.9), band = sky.bands[Math.abs((c*5 + r*3 + (b.seed|0)) % 44)];
+        if (hash3(b.seed, c, r) > .22 + band*.7) continue;
+        poly([P(xi, zz, y), P(xi, zz + .45, y), P(xi, zz + .45, y + .32), P(xi, zz, y + .32)], rgba(r % 3 ? OR : WH, .35 + band*.6));
+      }
+    }
+    // the end facing us, while the building is still ahead
+    if (b.z0 - travel > .45) poly([P(xi, za, 0), P(xo, za, 0), P(xo, za, h), P(xi, za, h)], '#0a0614');
+    glowLine(CY, .85, 1.4 + hit); line([P(xi, za, 0), P(xi, za, h), P(xi, zb, h)]); gstroke();
+    if (b.z0 - travel > .45){ line([P(xi, za, h), P(xo, za, h)]); gstroke(); }
   }
   function drawOver(o, P, hit){
     // a highway overpass: deck on two pillars, with an equaliser sign on its face
