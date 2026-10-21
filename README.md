@@ -10,9 +10,9 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 
 | Action | Desktop | Phone |
 |---|---|---|
-| Steer | ← → | Hold ◀ ▶ |
+| Steer | ← → | Drag anywhere, or tilt the phone |
 | Jump on flat ground | Space | Swipe up |
-| Backflip / front flip (in the air) | ↓ / ↑ | Hold ⟲ / ⟳ |
+| Backflip / front flip (in the air) | ↓ / ↑ | Drag down / up, or hold ⟲ / ⟳ |
 | Pause | P | ❚❚ |
 
 - **Ramps and tunnels** score points and refill your gas. Chain them for a combo multiplier.
