@@ -115,7 +115,21 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--white);font-fa
 .hb .gauge{flex:1;height:8px}
 body.playing .keys{display:none}
 @media (max-width:700px){ .hudc{top:calc(58px + env(safe-area-inset-top,0px))} body.playing .meters{display:none} }
-.meters{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.7;font-variant-numeric:tabular-nums}
+.meters{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.mtop{display:flex;align-items:center;gap:8px}
+#eq{width:128px;height:30px;display:block}
+.bpm{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.12em;color:var(--white);border:1px solid rgba(41,243,255,.4);padding:4px 7px;transition:background .12s,color .12s,box-shadow .12s}
+.bpm.beat{background:var(--cyan);color:var(--void);box-shadow:0 0 14px var(--cyan)}
+.tl{position:relative;display:flex;gap:2px;width:190px;height:6px}
+.tl .sg{display:block;height:100%;background:rgba(41,243,255,.25)}
+.tl .sg.build{background:rgba(255,122,26,.45)}
+.tl .sg.drop{background:var(--orange)}
+.tl .sg.brk{background:rgba(41,243,255,.14)}
+.tl .sg.intro{background:rgba(255,255,255,.14)}
+.tlpos{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1px;background:var(--white);box-shadow:0 0 8px var(--white);left:0}
+.tlname{font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.meters .keys{font-size:10px;letter-spacing:.12em;color:var(--dim);margin-top:2px}
+.metersOld{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.7;font-variant-numeric:tabular-nums}
 .meters b{color:var(--white);font-weight:400}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid rgba(41,243,255,.35);box-shadow:0 -1px 18px rgba(41,243,255,.18);
   display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -186,9 +200,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       <button id="pause" type="button" aria-label="Pause" title="Pause (P)" hidden>❚❚</button>
       <button id="fs" type="button" aria-label="Fullscreen" title="Fullscreen">⛶</button>
     </div>
-  <div class="meters">bass <b id="mB">0.00</b> · mid <b id="mM">0.00</b> · high <b id="mH">0.00</b><br>peak <b id="mHz">— Hz</b> · <b id="mBpm">—</b> bpm<span class="keys"><br>← → steer · space jump · ↓ backflip · ↑ front flip · P pause</span>
-    <div class="vu" aria-hidden="true"><i><em id="vB"></em></i><i><em id="vM"></em></i><i><em id="vH"></em></i></div></div>
-  <div class="status" id="status">Idle</div>
+  <div class="meters" id="meters">
+    <div class="mtop"><canvas id="eq" aria-hidden="true"></canvas><span class="bpm" id="bpmB">— BPM</span></div>
+    <div class="tl" id="tl" aria-hidden="true"><i class="sg intro" style="flex:4"></i><i class="sg groove" style="flex:8"></i><i class="sg build" style="flex:4"></i><i class="sg drop" style="flex:8"></i><i class="sg brk" style="flex:4"></i><i class="sg build" style="flex:4"></i><b class="tlpos" id="tlPos"></b></div>
+    <div class="tlname" id="tlName">MUSIC OFF</div>
+    <span class="keys">← → steer · space jump · ↓ backflip · ↑ front flip · P pause</span>
+  </div>
+  <div class="status" id="status"></div>
   </div>
 </div>
 <div class="over" id="entry"><div class="card entry">
@@ -300,6 +318,19 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   let mix, lofiIn, duck, wowG, pump, sFilt;
   let gainK = 1, agcPeak = .3, demoTimer = null, wakeLock = null;
   const setStatus = s => $('status').textContent = s;
+  // the little equalizer: sixteen glowing bars, lows on the left
+  const eqC = $('eq'), eqX = eqC.getContext('2d');
+  function drawEq(){
+    const d = Math.min(devicePixelRatio || 1, 2), w = 128, h = 30;
+    if (eqC.width !== w*d){ eqC.width = w*d; eqC.height = h*d; }
+    eqX.setTransform(d,0,0,d,0,0); eqX.clearRect(0,0,w,h);
+    const n = 16, bw = w/n;
+    for (let i=0;i<n;i++){
+      let v = 0; try { v = sky.bands[Math.min(47, Math.floor(i/n*48))] || 0; } catch(e){} const bh = Math.max(1.5, v*(h - 2));
+      eqX.fillStyle = rgba(i < 5 ? CY : i < 11 ? OR : WH, .35 + v*.65);
+      eqX.fillRect(i*bw + 1, h - bh, bw - 2, bh);
+    }
+  }
 
   function ensureAudio(){
     if (ac) return;
@@ -681,7 +712,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
       const bar = Math.floor(idx/16);
       try { B.play(idx % 16, bar, nextT); } catch(e){ console.warn(e); }
       if (idx % 16 === 0) curSec = section(bar);
-      if (idx % 16 === 0) setStatus(B.name + ' · ' + B.bpm + ' BPM · ' + { intro:'intro', groove:'groove', build:'build-up', drop:'drop', break:'breakdown', build2:'build-up' }[section(bar)] + (bar >= 32 ? ' · pass ' + (Math.floor(bar/32) + 1) : ''));
+      if (false) setStatus(B.name + ' · ' + B.bpm + ' BPM · ' + { intro:'intro', groove:'groove', build:'build-up', drop:'drop', break:'breakdown', build2:'build-up' }[section(bar)] + (bar >= 32 ? ' · pass ' + (Math.floor(bar/32) + 1) : ''));
       nextT += 60/B.bpm/4; idx++;
     }
   }
@@ -692,7 +723,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     ensureAudio(); ac.resume(); stopAll(); noise = noise || mkNoise();
     routeBus(); musicOn(); nextT = ac.currentTime + .05; idx = 0; demoTimer = setInterval(schedule, 25);
     source = 'demo'; $('demo').classList.add('on'); $('demo').textContent = '■ Demo';
-    setStatus(BEATS[settings.beat].name + ' · ' + BEATS[settings.beat].bpm + ' BPM'); keepAwake();
+    setStatus(''); keepAwake();
   }
 
   /* ---------- Controls ---------- */
@@ -854,11 +885,19 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (gate > .5 && rh > avgH*1.4 + .003 && rh > prevH && t - lastHt > .08){ hatHit = 1; lastHt = t; }
     prevM = rm; prevH = rh; snare *= .86; hatHit *= .8;
     let pk = 0, pi = 0; for (let i=2;i<600;i++) if (freq[i] > pk){ pk = freq[i]; pi = i; }
+    drawEq();
+    $('bpmB').classList.toggle('beat', pulse > .55);
     if (t - hudT > .12){ hudT = t;
-    $('vB').style.width = (sm.b*100).toFixed(0)+'%'; $('vM').style.width = (sm.m*100).toFixed(0)+'%'; $('vH').style.width = (sm.h*100).toFixed(0)+'%';
-    $('mB').textContent = sm.b.toFixed(2); $('mM').textContent = sm.m.toFixed(2); $('mH').textContent = sm.h.toFixed(2);
-    $('mHz').textContent = source === 'idle' ? '— Hz' : Math.round(pi*(ac.sampleRate/2/freq.length)) + ' Hz';
-    $('mBpm').textContent = source === 'idle' || !bpm ? '—' : bpm; }
+      $('bpmB').textContent = (source === 'idle' || !bpm ? '—' : bpm) + ' BPM';
+      // where we are in the song's 32-bar arrangement
+      const live = source === 'demo' && ac && BEATS[settings.beat];
+      $('tl').hidden = !live;
+      if (live){
+        const bars = Math.max(0, idx - (nextT - ac.currentTime)/stp())/16, b32 = bars % 32, sec = section(Math.floor(bars));
+        $('tlPos').style.left = (b32/32*100).toFixed(2) + '%';
+        $('tlName').textContent = BEATS[settings.beat].name.toUpperCase() + ' · ' + { intro:'INTRO', groove:'GROOVE', build:'BUILD-UP', drop:'DROP', break:'BREAKDOWN', build2:'BUILD-UP' }[sec] + (bars >= 32 ? ' · PASS ' + (Math.floor(bars/32) + 1) : '');
+      } else $('tlName').textContent = source === 'mic' ? 'LIVE MIC' : 'MUSIC OFF';
+    }
   }
 
   /* ---------- Canvas ---------- */
