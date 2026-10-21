@@ -134,7 +134,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   <p class="how">Land jumps and flips for points. Hit a block or land upside down and you lose a life.</p>
   <div class="pick">
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
-    <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aether</span></button></div>
+    <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Aetherial Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
@@ -640,6 +640,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
   let level = 1, nextCP = 0, fuel = 100, fuelHold = 0;
   const LEVEL_LEN = 55, REFUEL = { ramp: 30, tunnel: 34, flip: 8 };
+  const fillK = () => 1;
+  // gas is set so that hitting a share of the ramps and tunnels actually on the road gets you to the gate:
+  // 20% on level 1, rising to 50% from level 6; riding with no hits always runs dry
+  let oppZ = [];
+  const needShare = lv => [0, .2, .25, .3, .35, .4][lv] ?? .5;
+  const oppDensity = () => { if (oppZ.length < 2) return 1/10; const top = oppZ[oppZ.length - 1], n = oppZ.filter(z => z > top - 70).length; return Math.max(1/30, Math.min(1/5, n/70)); };
+  const drainPerUnit = () => .92*(100 + needShare(level)*oppDensity()*LEVEL_LEN*31)/LEVEL_LEN;
   // how far a full tank goes: generous early, settling to the standard range from level 6
   const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, beatN = 0, spawnBeats = 0, seeded = false;
@@ -653,8 +660,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function startRun(){
     game = 'compete'; over = false; $('over').hidden = true; $('scoreBox').hidden = false; $('gauges').hidden = false;
     score = 0; combo = 0; boost = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0;
-    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 14;   // no gas burned on the empty opening stretch
-    ramps = ramps.filter(r => r.z - travel < 10); nextRamp = Math.max(nextRamp, travel + 18);   // a clear stretch to start
+    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
+    // clear the road and lay out the first obstacles right away, starting a short run-up ahead
+    ramps = ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
     showScore(); pop('GO', CY);
   }
   function gameOver(why){
@@ -765,9 +773,9 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     // Aether: the road through space curves, rises and falls, and the camera banks into the turns
     const aeth = WORLD.scene === 'aether', hwy = WORLD.scene === 'city', bendOn = (aeth || hwy) && !reduce ? 1 : 0;
     // Neon City rolls over gentle hills with soft curves; Aether swings harder and banks
-    const cv1 = bendOn*(aeth ? Math.sin(travel*.045)*1.0 + Math.sin(travel*.017 + 2)*.6 : Math.sin(travel*.03)*.45 + Math.sin(travel*.011 + 1)*.25);
-    const cv2 = bendOn*(aeth ? Math.sin(travel*.031 + 1)*.55 : Math.sin(travel*.07 + .5)*.45);
-    const bX = cv1*LX*1.8, bY = cv2*K*.7, roll = -cv1*.09;
+    const cv1 = bendOn*(aeth ? Math.sin(travel*.075)*1.25 + Math.sin(travel*.031 + 2)*.75 : Math.sin(travel*.03)*.45 + Math.sin(travel*.011 + 1)*.25);
+    const cv2 = bendOn*(aeth ? Math.sin(travel*.05 + 1)*.65 : Math.sin(travel*.07 + .5)*.45);
+    const bX = cv1*LX*1.6, bY = cv2*K*.7, roll = Math.max(-.17, Math.min(.17, -cv1*.08));
     const sx = vp + bX, sy = hz + bY;   // where the road meets the sky
     ctx.save();
     if (aeth){ ctx.fillStyle = '#03040c'; ctx.fillRect(0,0,W,H); ctx.translate(W/2, H*.75); ctx.rotate(roll); ctx.translate(-W/2, -H*.75); }
@@ -847,11 +855,11 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     boost = Math.max(0, boost - dt*.04);
     // one grid line passes per beat, so the floor moves in time with the song
     const beatSpd = bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
-    const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.75)*VS().speed + boost : beatSpd;
-    travel += dt*spd;
+    const spd = reduce ? .3 : competing ? beatSpd*(1 + diff*.6)*VS().speed + boost : beatSpd;
+    travel += dt*spd; lastSpd = spd;
     if (competing){
       // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
-      if (travel > fuelHold) fuel -= 100/tankRange(level)*dt*spd;
+      if (travel > fuelHold) fuel -= drainPerUnit()*dt*spd;
       if (travel >= nextCP){
         level++; nextCP += LEVEL_LEN; fuel = 100; const bonus = 500*(level - 1); score += bonus;
         pop('CHECKPOINT · LEVEL ' + level + '  +' + bonus, CY); flash = 0; showScore();
@@ -1004,13 +1012,13 @@ input[type=range]{accent-color:var(--cyan);width:110px}
         inTunnel = sf.obj.kind === 'tunnel' ? sf.obj : null;
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
-        airborne = true; ollie = false; vy = (spd*(tun ? .45 : RH/RL)*1.5 + .8)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
+        airborne = true; ollie = false; vy = (tun ? TUN_VY : RAMP_VY)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
         // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
         if (autoDrive && Math.random() < .55){
           const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
-        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -1034,15 +1042,15 @@ input[type=range]{accent-color:var(--cyan);width:110px}
           if (scoring){ lives--; invuln = 1.4; combo = 0; boost = 0; showScore(); if (lives <= 0) gameOver(); }
         } else if (ollie){
           // a jump from the flat only scores for the flips you land, and doesn't build the combo
-          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; fuel = Math.min(100, fuel + REFUEL.flip*n); pop(trick + ' +' + pts, OR); showScore(); }
+          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; fuel = Math.min(100, fuel + REFUEL.flip*n*fillK()); pop(trick + ' +' + pts, OR); showScore(); }
           else if (trick) pop(trick, OR);
         } else {
-          boost = Math.min(2.4, boost + .3*VS().boostMul);
+          boost = Math.min(1.6, boost + .3*VS().boostMul);
           if (scoring){
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; fuel = Math.min(100, fuel + REFUEL.ramp + REFUEL.flip*n); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
+            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR); showScore();
           } else if (trick) pop(trick, OR);
         }
       }
@@ -1254,7 +1262,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
   function drawOver(o, P, hit){
     // a highway overpass: deck on two pillars, with an equaliser sign on its face
     const Z = o.z - travel; if (Z < .35) return;
-    const D = 1, h0 = 1.45, h1 = 1.78, xw = 8;
+    const D = 1, h0 = 2.5, h1 = 2.85, xw = 8;
     for (const px of [-4.4, 4.4]){
       poly([P(px - .2, Z + .5, 0), P(px + .2, Z + .5, 0), P(px + .2, Z + .5, h0), P(px - .2, Z + .5, h0)], '#0b0716');
       glowLine(CY, .5, 1); line([P(px - .2, Z + .5, 0), P(px - .2, Z + .5, h0)]); ctx.stroke();
@@ -1412,23 +1420,33 @@ input[type=range]{accent-color:var(--cyan);width:110px}
     if (!competing) travel -= (travel - Math.round(travel))*.35;
   }
 
+  let lastSpd = 1.5, prevOb = null;   // the previous obstacle: where it ends, its lane, and how long it keeps you airborne
+  const RAMP_VY = 2.5, TUN_VY = 2.3;
+  const airTime = (v, h0) => (v + Math.sqrt(v*v + 2*GRAV*h0))/GRAV;
   function spawnOne(z){
-    const x = (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
     const competing = game === 'compete' && !over, roll = Math.random();
-    const pT = .22, pB = competing ? .32 + diff*.3 : 0;
-    if (roll < pT){ ramps.push({ kind:'tunnel', z, x, len: TL }); nextRamp = z + TL + 3; }
-    else if (roll < pT + pB){
-      if (diff > .25 && Math.random() < .2 + diff*.4){
-        // a wall across the road with one gap to thread
-        const xs = [-2.2, -1.1, 0, 1.1, 2.2], gap = Math.floor(Math.random()*xs.length);
-        xs.forEach((bx, k) => { if (k !== gap) ramps.push({ kind:'block', z, x: bx, len: BL }); });
-      } else {
+    const pT = .22, pB = competing ? .3 + diff*.18 : 0;
+    const kind = roll < pT ? 'tunnel' : roll < pT + pB ? 'block' : 'ramp';
+    const xs = [-2.2, -1.1, 0, 1.1, 2.2];
+    const wall = kind === 'block' && diff > .25 && Math.random() < .2 + diff*.4, gapI = Math.floor(Math.random()*xs.length);
+    const x = wall ? xs[gapI] : (Math.random() < .5 ? -1 : 1)*(1 + Math.floor(Math.random()*3)*.5);
+    // leave room to land from the last obstacle, react, and steer across to this one, judged at a bit above the current speed
+    if (prevOb){
+      const sp = Math.max(1.4, lastSpd)*1.12, steer = Math.min(5.5, VS().steer*Math.max(1, sp/1.8));
+      z = Math.max(z, prevOb.end + sp*(prevOb.air + .5 + Math.abs(x - prevOb.x)/steer));
+    }
+    const jm = VS().jump/3;
+    if (kind !== 'block'){ oppZ.push(z); if (oppZ.length > 40) oppZ.shift(); }
+    if (kind === 'tunnel'){ ramps.push({ kind:'tunnel', z, x, len: TL }); prevOb = { x, end: z + TL, air: airTime(TUN_VY*jm, 0) }; nextRamp = z + TL + 3; }
+    else if (kind === 'block'){
+      if (wall) xs.forEach((bx, k) => { if (k !== gapI) ramps.push({ kind:'block', z, x: bx, len: BL }); });   // a wall with one gap to thread
+      else {
         ramps.push({ kind:'block', z, x, len: BL });
         if (Math.random() < .35 + diff*.35) ramps.push({ kind:'block', z, x: x > 0 ? x - 1.1 : x + 1.1, len: BL });
       }
-      nextRamp = z + 2.4;
+      prevOb = { x, end: z + BL, air: 0 }; nextRamp = z + 2.4;
     }
-    else { ramps.push({ kind:'ramp', z, x, len: RL }); nextRamp = z + RL + 3; }
+    else { ramps.push({ kind:'ramp', z, x, len: RL }); prevOb = { x, end: z + RL, air: airTime(RAMP_VY*jm, RH) }; nextRamp = z + RL + 3; }
     return nextRamp;
   }
 
