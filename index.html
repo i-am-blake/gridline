@@ -42,7 +42,7 @@ body:not(.playing) .hud h1{visibility:hidden}
 .score span{display:block;margin-top:4px;font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--white);text-shadow:none}
 .over{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;pointer-events:none;padding-bottom:var(--barH,0px)!important;
   padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
-.over .card{pointer-events:auto;text-align:center;background:var(--panel);border:1px solid rgba(255,122,26,.6);box-shadow:0 0 30px rgba(255,122,26,.25);
+.over .card{pointer-events:auto;text-align:center;background:var(--panel);border:1px solid rgba(var(--frame,255,122,26),.7);box-shadow:0 0 30px rgba(var(--frame,255,122,26),.3);
   padding:24px 24px;max-width:420px;width:100%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .over h2{margin:0 0 6px;font-family:var(--display);font-weight:800;letter-spacing:.2em;color:var(--orange);font-size:22px}
 .over p{margin:4px 0;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
@@ -477,7 +477,7 @@ body:not(.playing) .meters{display:none}
     { mid0:[1,2,8],   mid1:[6,12,34],  hor0:[4,8,22],   hor1:[34,52,96],   aur:1.4 },
     { mid0:[2,10,16], mid1:[8,52,62],  hor0:[4,20,28],  hor1:[44,160,140], aur:2.4 }];
   const WX = { clear:{ name:'CLEAR', icon:'' }, rain:{ name:'RAIN', icon:'☂' }, wind:{ name:'CROSSWIND', icon:'≈' }, fog:{ name:'FOG', icon:'▒' }, snow:{ name:'SNOW', icon:'❄' }, storm:{ name:'STORM', icon:'ϟ' } };
-  const settings = { vehicle:'bike', world:'sunset', beat:'synth' };
+  const settings = { vehicle:'bike', world:'city', beat:'synth' };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
   if (!['drag','tilt','auto'].includes(settings.steer)) settings.steer = 'drag';
@@ -498,6 +498,8 @@ body:not(.playing) .meters{display:none}
     for (let i=0;i<3;i++){ CY[i] = WORLD.grid[i]; OR[i] = WORLD.accent[i]; }
     const r = document.documentElement.style;
     r.setProperty('--cyan', `rgb(${CY.join(',')})`); r.setProperty('--orange', `rgb(${OR.join(',')})`);
+    // window outlines take each world's signature colour: orange sun, pink city, violet void
+    r.setProperty('--frame', ({ sunset:'255,122,26', city:'255,70,210', aether:'168,140,255' })[w] || '255,122,26');
   }
   const rgba = (c,a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1102,7 +1104,7 @@ body:not(.playing) .meters{display:none}
   document.querySelectorAll('[data-group="vehicle"] button').forEach(b => b.addEventListener('click', showStats));
   applyWorld(settings.world); syncChips(); showStats();
   async function begin(g){
-    document.activeElement?.blur?.();
+    document.activeElement?.blur?.(); applyWorld(settings.world);
     started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = g === 'auto'; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
     await ensureMusic();
     let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
@@ -1116,10 +1118,10 @@ body:not(.playing) .meters{display:none}
   }
   // on phones, Steer: Auto is the watch mode (the Just watch button is for desktops)
   $('goPlay').addEventListener('click', () => begin(isTouch && settings.steer === 'auto' ? 'auto' : 'compete'));
-  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff();
+  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff(); applyWorld('city');
     let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
     $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
-  $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; });
+  $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; applyWorld(settings.world); });
   $('toEntry').addEventListener('click', showEntry);
   showEntry();
   $('goTut').addEventListener('click', () => begin('tutorial'));
