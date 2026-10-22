@@ -144,6 +144,13 @@ body:not(.playing) .hud h1{visibility:hidden}
   background:var(--panel);border:1px solid var(--orange);box-shadow:0 0 20px rgba(255,122,26,.3);padding:10px 12px;max-width:calc(100% - 32px);font-size:14px;color:var(--white)}
 .tip button{min-height:32px;padding:6px 10px;font-size:10px;flex:none}
 .ghostInfo{grid-column:1/-1;font-size:10px;letter-spacing:.16em;color:var(--dim);font-family:var(--mono);text-shadow:none}
+.holdz{position:fixed;top:30%;bottom:0;width:22%;z-index:4;pointer-events:none;opacity:0;transition:opacity .25s;display:flex;align-items:center}
+.holdz span{font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.16em;color:var(--white);opacity:0;transition:opacity .25s;padding:0 12px}
+.holdz.l{left:0;background:linear-gradient(90deg,rgba(41,243,255,.42),rgba(41,243,255,0));box-shadow:inset 3px 0 0 var(--cyan);justify-content:flex-start}
+.holdz.r{right:0;background:linear-gradient(270deg,rgba(41,243,255,.42),rgba(41,243,255,0));box-shadow:inset -3px 0 0 var(--cyan);justify-content:flex-end}
+.holdz.on{opacity:1}
+.holdz.hint{opacity:.85}.holdz.hint span{opacity:1}
+@media (hover:hover) and (pointer:fine){.holdz{display:none}}
 .hudc{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:5;pointer-events:none;
   width:min(400px, calc(100% - 32px));text-align:center;padding:8px 14px 10px;
   background:linear-gradient(rgba(2,4,10,.6), rgba(2,4,10,.25));border:1px solid rgba(41,243,255,.18);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -212,7 +219,7 @@ body button:not(:disabled):active{transform:translateY(1px)}
 #start .cornerBack{position:absolute;top:12px;left:12px;margin:0;min-height:32px;padding:6px 10px;font-size:11px}
 @media (max-width:480px){ #start h2{margin-top:34px} }
 /* Ready to ride fits on one screen: tighter on short screens, two columns on phones turned sideways */
-@media (max-height:760px){
+@media (max-height:760px), (max-width:560px) and (max-height:940px){
   #start .card{padding:12px 14px}
   #start h2{margin:2px 0 0;font-size:18px;letter-spacing:.14em}
   #start .cornerBack{top:8px;left:8px;min-height:28px;padding:4px 8px;font-size:10px}
@@ -229,8 +236,8 @@ body button:not(:disabled):active{transform:translateY(1px)}
   .over .ctl{font-size:10px;line-height:1.6;padding:3px 10px}
   .over{gap:6px}
 }
-@media (max-height:760px) and (max-width:480px){ #start h2{margin-top:30px} }
-@media (max-height:760px) and (max-width:560px){ #start .chips button{flex-direction:column;gap:3px;min-height:48px;font-size:9.5px;letter-spacing:.06em;padding:5px 2px} #start .chips svg{width:17px;height:17px} }
+@media (max-height:940px) and (max-width:480px){ #start h2{margin-top:30px} }
+@media (max-height:940px) and (max-width:560px){ #start .chips button{flex-direction:column;gap:3px;min-height:48px;font-size:9.5px;letter-spacing:.06em;padding:5px 2px} #start .chips svg{width:17px;height:17px} }
 @media (max-height:620px) and (max-width:480px){ #start .cornerBack{padding:4px 7px} #start h2{margin-top:2px;padding:0 0 0 56px;text-align:left;font-size:16px} #start .pv{height:48px} #start .chips button{min-height:42px} }
 @media (max-height:520px) and (orientation:landscape){
   #start .card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);column-gap:18px;max-width:780px;align-content:start;align-items:start;max-height:calc(100% - 40px)}
@@ -354,6 +361,21 @@ body:not(.playing) .meters{display:none}
 #board .lbnote{text-align:center;font-size:12px}
 #board .nolb{text-align:center;font-size:14px;line-height:1.5}
 @media (max-width:380px){ #board .addline{flex-direction:column} #board .addline button{width:100%;justify-content:center} #board .maptabs button{font-size:11px} }
+/* phones turned sideways: a slim HUD along the top and a flip button under each thumb (upright is unchanged) */
+@media (orientation:landscape) and (max-height:520px) and (hover:none){
+  .hud h1{font-size:15px;letter-spacing:.2em}
+  .hudc{width:min(520px, calc(100% - 400px));min-width:340px;top:calc(6px + env(safe-area-inset-top,0px));padding:4px 12px 6px}
+  .htop{gap:10px}
+  .htop .lvl{font-size:12px;padding:3px 7px}
+  .hsc{font-size:20px}
+  .htop .lives,.htop .shieldB{font-size:18px}
+  .hrow{margin-top:0;font-size:10px}
+  .hbars{margin-top:4px;gap:10px}
+  .steer{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+  .steer .flips{width:100%;justify-content:space-between;padding:0 max(16px, env(safe-area-inset-left,0px)) 0 max(16px, env(safe-area-inset-right,0px))}
+  .steer .flipb{width:88px;height:72px}
+  .holdz{top:22%}
+}
 </style>
 </head>
 <body>
@@ -395,6 +417,7 @@ body:not(.playing) .meters{display:none}
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Endless Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
     <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="drag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V4a1.5 1.5 0 0 1 3 0v6M15 10V6a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.5-4.5a1.5 1.5 0 0 1 2.6-1.5L9 13"/></svg><span>Drag</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button><button type="button" data-v="auto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z"/></svg><span>Auto</span></button></div>
+    <span class="lbl touchOnly">Haptics</span><div class="chips touchOnly" data-group="haptics"><button type="button" data-v="on"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8M2 10v4M22 10v4"/></svg><span>On</span></button><button type="button" data-v="off"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M3 3l18 18"/></svg><span>Off</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
 </div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
@@ -435,6 +458,7 @@ body:not(.playing) .meters{display:none}
   <div class="hrow"><span id="hCombo" class="combo"></span></div>
   <div class="hbars"><div class="hb"><span class="gl">GAS</span><i class="gauge"><em id="gas"></em></i></div><div class="hb"><span class="gl">GATE</span><i class="gauge cp"><em id="cpBar"></em></i></div></div>
 </div>
+<div class="holdz l" id="holdL" aria-hidden="true"><span>◀ HOLD</span></div><div class="holdz r" id="holdR" aria-hidden="true"><span>HOLD ▶</span></div>
 <div class="steer" id="steer" hidden>
   <div class="g" hidden><button id="sl" type="button" aria-label="Steer left">◀</button><button id="sr" type="button" aria-label="Steer right">▶</button></div><div class="g"></div>
   <div class="g flips"><button id="fb" class="flipb" type="button" aria-label="Backflip (hold in the air)"><span class="fi">⟲</span><span class="fl">BACKFLIP</span></button><button id="ff" class="flipb" type="button" aria-label="Front flip (hold in the air)"><span class="fi">⟳</span><span class="fl">FRONT FLIP</span></button></div>
@@ -483,6 +507,7 @@ body:not(.playing) .meters{display:none}
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
   if (!['drag','tilt','auto'].includes(settings.steer)) settings.steer = 'drag';
+  if (!['on','off'].includes(settings.haptics)) settings.haptics = 'on';
   document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
   if (!['synth','lofi','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
   delete settings.sound;
@@ -619,7 +644,22 @@ body:not(.playing) .meters{display:none}
     } catch(_){}
   }
   // short buzzes on phones that support vibration (most Android browsers; iPhones ignore it)
-  const vib = p => { try { navigator.vibrate?.(p); } catch(_){} };
+  // haptics: Android phones vibrate with the full pattern; iPhones can't vibrate from a web page, but Safari gives a
+  // light haptic tick when one of its switch controls flips, so a hidden switch stands in (one tick per beat of the pattern)
+  const hapSwitch = (() => { try {
+    const lab = document.createElement('label'), inp = document.createElement('input');
+    inp.type = 'checkbox'; inp.setAttribute('switch', ''); inp.tabIndex = -1; lab.append(inp);
+    lab.setAttribute('aria-hidden', 'true'); lab.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+    document.body.append(lab); return lab; } catch(_){ return null; } })();
+  const canVibrate = typeof navigator.vibrate === 'function';
+  let lastTick = 0;
+  const tick = () => { const n = performance.now(); if (n - lastTick < 70 || !hapSwitch) return; lastTick = n; try { hapSwitch.click(); } catch(_){} };
+  const vib = p => {
+    if (settings.haptics === 'off') return;
+    if (canVibrate){ try { navigator.vibrate(p); } catch(_){} return; }
+    const parts = Array.isArray(p) ? p : [p];
+    let t = 0; for (let i = 0; i < parts.length && i < 6; i += 2){ setTimeout(tick, t); t += (parts[i] || 0) + (parts[i + 1] || 0) + 20; }
+  };
   /* ---------- the public site (GitHub Pages): settings you fill in once ---------- */
   const SITE_URL = 'https://i-am-blake.github.io/gridline/';
   const GOATCOUNTER_CODE = '';          // e.g. 'gridline' for gridline.goatcounter.com; visitor stats stay off until this is set
@@ -1033,12 +1073,12 @@ body:not(.playing) .meters{display:none}
     try { cv.setPointerCapture(e.pointerId); } catch(_){}
     clearTimeout(holdTimer);
     if (e.pointerType !== 'mouse' && settings.steer === 'drag'){ const side = e.clientX < innerWidth/2 ? -1 : 1;
-      holdTimer = setTimeout(() => { if (flick && !flick.moved){ holdDir = side; if (tut) tutEvent('steer'); } }, 120); }
+      holdTimer = setTimeout(() => { if (flick && !flick.moved){ holdDir = side; showHold(); holdUses++; if (tut) tutEvent('steer'); } }, 120); }
   });
   cv.addEventListener('pointermove', e => {
     if (!flick || e.pointerId !== flick.id || e.pointerType === 'mouse') return;
     const dx = e.clientX - flick.x, dy = e.clientY - flick.y;
-    if (!flick.moved && (Math.abs(dx) > 8 || Math.abs(dy) > 12)){ flick.moved = true; clearTimeout(holdTimer); if (holdDir){ holdDir = 0; flick.x = e.clientX; flick.cx = cycX; } }
+    if (!flick.moved && (Math.abs(dx) > 8 || Math.abs(dy) > 12)){ flick.moved = true; clearTimeout(holdTimer); if (holdDir){ holdDir = 0; showHold(); flick.x = e.clientX; flick.cx = cycX; } }
     const ddx = e.clientX - flick.x;
     if (settings.steer !== 'tilt' && flick.moved && Math.abs(dx) > 6){ touchX = Math.max(-2.6, Math.min(2.6, flick.cx + ddx/DRAG_PX())); if (Math.abs(ddx) > 24 && tut) tutEvent('steer'); }
   });
@@ -1046,8 +1086,17 @@ body:not(.playing) .meters{display:none}
     if (!flick || (e.pointerId !== undefined && e.pointerId !== flick.id)) return;
     const dy = e.clientY - flick.y, dx = Math.abs(e.clientX - flick.x), dt = performance.now() - flick.t;
     if (!airborne && dy < -30 && Math.abs(dy) > dx && dt < 400){ jumpReq = true; flickAt = performance.now(); }
-    flick = null; touchX = null; dragFlip = 0; holdDir = 0; clearTimeout(holdTimer);
+    flick = null; touchX = null; dragFlip = 0; holdDir = 0; clearTimeout(holdTimer); showHold();
   };
+  const showHold = () => { $('holdL').classList.toggle('on', holdDir < 0); $('holdR').classList.toggle('on', holdDir > 0); };
+  // for a player's first few runs, show where to hold for a moment
+  let holdUses = 0; try { holdUses = +localStorage.getItem('gridline-holds') || 0; } catch(_){}
+  function holdHint(){
+    if (!isTouch || settings.steer !== 'drag' || holdUses >= 6) return;
+    ['holdL', 'holdR'].forEach(id => $(id).classList.add('hint'));
+    setTimeout(() => ['holdL', 'holdR'].forEach(id => $(id).classList.remove('hint')), 3000);
+  }
+  addEventListener('pagehide', () => { try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} });
   cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
   // tilt: lean the phone and the rider moves to match (about 22 degrees takes you edge to edge)
   function onTilt(e){
@@ -1099,6 +1148,7 @@ body:not(.playing) .meters{display:none}
     try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){}
     if (g.dataset.group === 'world') applyWorld(settings.world);
     if (g.dataset.group === 'steer' && settings.steer === 'tilt') enableTilt();
+    if (g.dataset.group === 'haptics' && settings.haptics === 'on') vib(30);   // a sample so you can feel it
     document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
     if (g.dataset.group === 'beat'){
       bpm = 0; beats = [];
@@ -1325,6 +1375,7 @@ body:not(.playing) .meters{display:none}
     if (typeof closeBoard === 'function') closeBoard();
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
+    try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
     score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
