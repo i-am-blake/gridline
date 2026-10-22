@@ -1691,15 +1691,17 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const WHEELS = [[.3,.28],[1.2,.28]], WR = .27, HALF = .14, S = 1.35;
 
 
-  let camE = 0, camClock = 0;   // 0 = chase camera, 1 = high overhead view (Endless Void)
+  let camE = 0, camClock = 0, camYo = 0, riderBB = null, bbCamX = 0, bbCamYo = 0, trackBB = false, safeT = 0, safeB = 0, safeAt = 0, uiRects = [];   // camE: 0 = chase camera, 1 = bird's-eye view
   function drawGrid(dt){
-    // Endless Void lifts the camera into a high overhead view during each drop (or every ~25 s with the mic), then settles back
-    const voidWorld = WORLD.scene === 'aether' && !reduce;
+    // bird's-eye: in every world the camera swings up high above the rider for each drop of the song (every ~45 s on the
+    // microphone), then glides back down into the chase view when the drop ends
     camClock += dt;
-    const wantHigh = voidWorld && (source === 'demo' || source === 'track' ? curSec === 'drop' : (camClock % 25) > 16);
-    camE += ((wantHigh ? 1 : 0) - camE)*Math.min(1, dt*.7);
-    const tall = H > W*1.1 && !laneOv, camH = (tall ? 1.7 : 1) + camE*1.6, camBack = camE*1.4;   // upright phones: a higher chase camera puts the rider lower and bigger on screen
-    const hz = H*(H > W ? .48 : .58) - (voidWorld ? H*.14*camE : 0), vp = W/2;
+    const birdOk = !reduce && !tut && (game === 'compete' || game === 'auto') && !laneOv;
+    const wantHigh = birdOk && (source === 'demo' || source === 'track' ? curSec === 'drop' : (camClock % 45) > 33);
+    camE += ((wantHigh ? 1 : 0) - camE)*Math.min(1, dt*.55);
+    const ce = camE*camE*(3 - 2*camE);   // eased, so the swing starts and lands softly
+    const tall = H > W*1.1 && !laneOv, camH = (tall ? 1.7 : 1) + ce*(tall ? 2.9 : 3.1), camBack = ce*(tall ? .9 : 1.2);   // upright phones: a higher chase camera puts the rider lower and bigger on screen
+    const hz = H*(H > W ? .48 : .58) - H*(tall ? .1 : .16)*ce + camYo, vp = W/2;
     // one scale for width and height so the vehicle keeps its proportions on any screen
     const LX = laneW(), K = LX*1.45, Zmin = Math.max(.3, K*camH / Math.max(40, H - hz) - camBack);
     // Endless Void: the road through space curves, rises and falls, and the camera banks into the turns
@@ -1786,15 +1788,18 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (!aeth){ ctx.fillStyle = hwy ? '#05030a' : '#02040a'; ctx.fillRect(0,hz,W,H-hz); }
     // the camera keeps the rider on screen no matter how the road bends: follow sideways on upright phones,
     // and whenever the rider would drift outside the middle of the screen, slide the camera to bring it back
-    {
-      const Zr = 2.5 + camBack, fr = (1 - 1/2.5)*(1 - 1/2.5), sxAt = cx => vp + (cycX - cx)*LX/Zr + bX*fr;
-      let want = H > W*1.1 && !laneOv ? cycX*.45 : 0;
-      const lo = W*.24, hi = W*.76, x0 = sxAt(want);
-      if (!laneOv && x0 < lo) want -= (lo - x0)*Zr/LX; else if (!laneOv && x0 > hi) want += (x0 - hi)*Zr/LX;
-      camX += (want - camX)*Math.min(1, dt*6);
-      // hard limit: never let the rider leave the screen, even mid-ease
-      const x1 = sxAt(camX), lo2 = W*.1, hi2 = W*.9;
-      if (!laneOv && x1 < lo2) camX -= (lo2 - x1)*Zr/LX; else if (!laneOv && x1 > hi2) camX += (x1 - hi2)*Zr/LX;
+    if (!laneOv){
+      const Zm = 2.5 + .75*S, Zr = Zm + camBack, k = LX/Zr, fr = (1 - 1/Zm)*(1 - 1/Zm), centre = cycX + bX*fr/k;   // camera position that puts the rider dead centre
+      // phones keep the camera locked on the rider; wider screens let it roam the middle of the road
+      let want = tall ? centre : 0;
+      const sxAt = cx => vp + (centre - cx)*k, lo = W*(tall ? .42 : .3), hi = W*(tall ? .58 : .7), x0 = sxAt(want);
+      if (x0 < lo) want -= (lo - x0)/k; else if (x0 > hi) want += (x0 - hi)/k;
+      camX += (want - camX)*Math.min(1, dt*(tall ? 9 : 6));
+      // hard limit from where the rider was actually drawn last frame (wheels, head and flips included): never off screen
+      if (riderBB){
+        const m = W*.06, dx = (bbCamX - camX)*k, l = riderBB[0] + dx, r = riderBB[2] + dx;
+        if (r - l < W - 2*m){ if (l < m) camX -= (m - l)/k; else if (r > W - m) camX += (r - W + m)/k; }
+      }
     }
     const P = (X,Z,h=0) => { const f = Z >= 1 ? (1 - 1/Z)*(1 - 1/Z) : 0, Zc = Z + camBack; return [vp + (X - camX)*LX/Zc + bX*f, hz + K*(camH - h)/Zc + bY*f]; };
     const competing = game === 'compete' && !over;
@@ -2081,7 +2086,24 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       ctx.fillStyle = fg; ctx.fillRect(-W, hz - H*.2, W*3, (H - hz)*.65 + H*.2);
     }
     if (alt > -.01) drawCycle(P, CZ, hit, true);    // reflection in the glossy floor
-    drawCycle(P, CZ, hit, false);
+    riderBB = [1e9, 1e9, -1e9, -1e9]; trackBB = true; bbCamX = camX; bbCamYo = camYo;
+    try { drawCycle(P, CZ, hit, false); } finally { trackBB = false; }
+    if (riderBB[0] > 1e8) riderBB = null;
+    else if (!laneOv){
+      // keep the whole rider between the score bar and the flip buttons: slide the view up or down when a jump or a
+      // hill would carry it under them, and ease back when it's clear (falling off the Void is allowed to drop away)
+      if ((safeAt -= dt) <= 0){ safeAt = .5; uiRects = [$('hudc'), ...document.querySelectorAll('#steer .flipb')].map(e => e.getBoundingClientRect()).filter(r => r.height); }
+      // only the panels that sit above or below the rider count (sideways flip buttons in landscape don't)
+      safeT = 8; safeB = H - 8;
+      for (const r of uiRects) if (r.right > riderBB[0] - 10 && r.left < riderBB[2] + 10){ if (r.top < H*.4) safeT = Math.max(safeT, r.bottom + 8); else safeB = Math.min(safeB, r.top - 8); }
+      const t = riderBB[1], b = riderBB[3], room = safeB - safeT;
+      let need = 0;
+      if ((inTunnel || alt > -.3) && b - t < room){ if (t < safeT) need = safeT - t; else if (b > safeB) need = safeB - b; }
+      if (need) camYo = Math.max(-H*.3, Math.min(H*.3, camYo + need*Math.min(1, dt*14)));
+      else { let back = -camYo*Math.min(1, dt*1.5);   // drift back to the normal framing, but only as far as stays clear
+        if (back < 0) back = Math.max(back, -Math.max(0, t - safeT - 12)); else back = Math.min(back, Math.max(0, safeB - 12 - b));
+        camYo += back; }
+    }
     shieldT = Math.max(0, shieldT - dt*1.2);
     if (shield || shieldT > 0) drawShield(P, CZ);
     // light wall: its height traces the loudness of the last second or so
@@ -2566,7 +2588,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     const veh = settings.vehicle, hull = HULL, bob = veh === 'board' ? Math.sin(skyT*9)*.02 + sky.b*.03 : 0;
     const Q = (x,y,z) => { y += bob; x*=S; y*=S; z*=S;
       const dz = z - zc, dy = y - yc, z2 = zc + dz*cp - dy*sp, y2 = yc + dz*sp + dy*cp;   // pitch and flips turn about the bike's middle
-      return P(cycX + x*cl - y2*sl, CZ + z2, m*(alt + x*sl + y2*cl)); };
+      const q = P(cycX + x*cl - y2*sl, CZ + z2, m*(alt + x*sl + y2*cl)); if (trackBB){ const b = riderBB; if (q[0] < b[0]) b[0] = q[0]; if (q[1] < b[1]) b[1] = q[1]; if (q[0] > b[2]) b[2] = q[0]; if (q[1] > b[3]) b[3] = q[1]; } return q; };
     if (mirror) ctx.globalAlpha = .2;
     else if (invuln > 0 && Math.floor(invuln*12) % 2 === 0) ctx.globalAlpha = .3;
     const path = pts => { ctx.beginPath(); pts.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); };

@@ -33,11 +33,13 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 
 - **Sunset Grid**: the classic neon grid under a striped sun, with boulders tumbling off the mountains.
 - **Neon City**: a rolling highway through downtown towers, overpasses, street lights and billboards.
-- **Endless Void**: a winding, banking track floating through space, with the camera lifting overhead during the drop.
+- **Endless Void**: a winding, banking track floating through space.
+
+In every world the camera swings up into a **bird's-eye view** for each drop of the song, then glides back down into the chase view.
 
 ## Beats
 
-Pick a style and Gridline plays real tracks in it. Each song is pre-mapped, so the road speed, obstacles, lasers and the Endless Void camera land on its actual beats, build-ups and drops, and the timeline in the top right shows where you are in the song.
+Pick a style and Gridline plays real tracks in it. Each song is pre-mapped, so the road speed, obstacles, lasers and the bird's-eye camera land on its actual beats, build-ups and drops, and the timeline in the top right shows where you are in the song.
 
 - **Synthwave**, **Lo-fi**, **House** and **Phonk**: tracks in that style
 - **Mix**: everything, shuffled
