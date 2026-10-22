@@ -1,6 +1,6 @@
 # Gridline
 
-**Ride the beat. Chase the sun.**
+**Ride the beat. Chase the vibes.**
 
 Gridline is a neon, music-driven riding game that runs in the browser from a single HTML file. You ride a glowing vehicle down an endless grid toward a giant setting sun, and everything around you moves with the music: the sky breathes with the bass, the sun wears a spectrum crown that dances to every frequency, obstacles roll in on the beat, and the road's speed is locked to the tempo.
 

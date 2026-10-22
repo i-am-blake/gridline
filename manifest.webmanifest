@@ -1,7 +1,7 @@
 {
   "name": "Gridline",
   "short_name": "Gridline",
-  "description": "Ride the beat. Chase the sun. A neon, music-driven riding game.",
+  "description": "Ride the beat. Chase the vibes. A neon, music-driven riding game.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
