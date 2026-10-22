@@ -151,6 +151,12 @@ body:not(.playing) .hud h1{visibility:hidden}
 .holdz.on{opacity:1}
 .holdz.hint{opacity:.85}.holdz.hint span{opacity:1}
 @media (hover:hover) and (pointer:fine){.holdz{display:none}}
+@keyframes hudLost{0%,100%{transform:translateX(-50%)}15%{transform:translateX(calc(-50% - 8px))}30%{transform:translateX(calc(-50% + 8px))}45%{transform:translateX(calc(-50% - 5px))}60%{transform:translateX(calc(-50% + 4px))}}
+.hudc.lost{animation:hudLost .5s ease-out;border-color:#ffe000;box-shadow:0 0 24px rgba(255,224,0,.6)}
+.hudc.lost .lives{animation:livesLost .7s ease-out}
+@keyframes livesLost{0%{transform:scale(1.6);color:#ffe000;text-shadow:0 0 18px #ffe000}100%{transform:scale(1)}}
+.hudc.shield{border-color:var(--cyan);box-shadow:0 0 24px rgba(41,243,255,.7)}
+@media (prefers-reduced-motion:reduce){.hudc.lost{animation:none}.hudc.lost .lives{animation:none}}
 .hudc{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:5;pointer-events:none;
   width:min(400px, calc(100% - 32px));text-align:center;padding:8px 14px 10px;
   background:linear-gradient(rgba(2,4,10,.6), rgba(2,4,10,.25));border:1px solid rgba(41,243,255,.18);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -1485,10 +1491,13 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const inGauntletZ = z => { const l = levelAt(z); return l % 5 === 4 && (z - runStart) - (l - 1)*LEVEL_LEN > LEVEL_LEN*.4; };
   const SHIELD_COMBO = 15;
   // a hit costs a life, unless the force field is up: then it takes the hit and breaks
+  let lastCz = null;
+  // the HUD reacts so a lost life (or a saved one) is impossible to miss
+  function hudBump(kind){ const h = $('hudc'); h.classList.remove('lost', 'shield'); void h.offsetWidth; h.classList.add(kind); setTimeout(() => h.classList.remove(kind), 700); }
   function takeHit(label){
-    combo = 0; boost = 0; invuln = 1.4; gauntletClean = false;
-    if (shield){ shield = false; shieldT = 1; flash = .5; pop('FORCE FIELD BROKE', CY); sfx('lost'); vib([40, 30, 40]); showScore(); return; }
-    if (!tut) lives--; flash = 1; if (label) pop(label, RD); showScore(); sfx('crash'); vib([60, 40, 90]);
+    combo = 0; boost = 0; invuln = Math.max(.35, Math.min(.9, 3/Math.max(1, lastSpd))); gauntletClean = false;   // about 3 lengths of road: clears the row you hit, never the next one
+    if (shield){ shield = false; shieldT = 1; flash = .5; pop('FORCE FIELD SAVED YOU', CY); sfx('lost'); vib([40, 30, 40]); showScore(); hudBump('shield'); return; }
+    if (!tut) lives--; flash = 1; if (label) pop(label + (tut ? '' : '  −1 LIFE'), RD); showScore(); hudBump('lost'); sfx('crash'); vib([60, 40, 90]);
     if (lives <= 0) gameOver();
   }
   // Auto: the rider plays itself (you can still nudge it). Compete: you steer, blocks cost lives.
@@ -1548,7 +1557,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
     try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
-    score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
+    lastCz = null; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
@@ -1628,6 +1637,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       ctx.fillStyle = rgba(OR, d.life*.5); ctx.fillRect(d.x, d.y, 2, 2);
     }
   }
+  let cityHills = 0, cityMtns = 0;
   function drawScenery(hz, hit, dt, bX, bY){
     if (WORLD.scene === 'mountains'){
       ctx.fillStyle = '#02040a'; ctx.beginPath(); ctx.moveTo(0,hz);
@@ -1635,6 +1645,24 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       glowLine(CY,.75,1.5); ctx.beginPath(); ridge.forEach((h,i) => i ? ctx.lineTo(i/80*W, hz - h*H) : ctx.moveTo(0, hz - h*H)); gstroke();
       stepBoulders(hz, hit, dt);
     } else if (WORLD.scene === 'city'){
+      const lv = game === 'compete' ? level : 1;
+      cityHills += ((lv >= 10 ? 1 : 0) - cityHills)*Math.min(1, dt*.6); cityMtns += ((lv >= 20 ? 1 : 0) - cityMtns)*Math.min(1, dt*.6);
+      const side = x => Math.pow(Math.min(1, Math.abs(x - .5)*2.2), .8);   // tall at the edges, low in the middle where the road and sun are
+      if (cityMtns > .01){
+        // jagged mountains far behind
+        ctx.globalAlpha = cityMtns; ctx.fillStyle = '#12052a'; ctx.beginPath(); ctx.moveTo(0, hz);
+        ridge.forEach((h, i) => { const x = i/80; ctx.lineTo(x*W, hz - (h*2.6 + .1)*H*side(x)*cityMtns); }); ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
+        glowLine(OR, .55, 1.3); ctx.beginPath(); ridge.forEach((h, i) => { const x = i/80, y = hz - (h*2.6 + .1)*H*side(x)*cityMtns; i ? ctx.lineTo(x*W, y) : ctx.moveTo(0, y); }); gstroke();
+        ctx.globalAlpha = 1;
+      }
+      if (cityHills > .01){
+        // soft rolling hills in front of them
+        const hh = x => (.1 + .04*Math.sin(x*9 + 1.3) + .025*Math.sin(x*23 + .4))*H*side(x)*cityHills;
+        ctx.globalAlpha = cityHills; ctx.fillStyle = '#1b0833'; ctx.beginPath(); ctx.moveTo(0, hz);
+        for (let i = 0; i <= 120; i++){ const x = i/120; ctx.lineTo(x*W, hz - hh(x)); } ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
+        glowLine(CY, .5, 1.3); ctx.beginPath(); for (let i = 0; i <= 120; i++){ const x = i/120; i ? ctx.lineTo(x*W, hz - hh(x)) : ctx.moveTo(0, hz - hh(0)); } gstroke();
+        ctx.globalAlpha = 1;
+      }
       for (const b of city){
         const x0 = b.x*W, bw = b.w*W, bh = b.h*H, y0 = hz - bh;
         ctx.fillStyle = '#07030d'; ctx.fillRect(x0, y0, bw, bh);
@@ -1783,7 +1811,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     baseSpdNow = beatSpd;
     // every checkpoint is a clear step up: +15% a level to level 6, then +8% a level up to a ceiling
     const lvTarget = lvMulOf(level);
-    lvMul += (lvTarget - lvMul)*Math.min(1, dt*1.5);
+    lvMul += (lvTarget - lvMul)*Math.min(1, dt*2.5);
     const spd = reduce ? .3 : competing ? beatSpd*lvMul*VS().speed + boost : beatSpd;
     travel += dt*spd; lastSpd = spd;
     if (competing){
@@ -1933,14 +1961,14 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       if (horizonZ >= nextRamp) spawnOne(horizonZ);
       spawnBeats = 0;
     }
-    const cz = travel + CZ + 1.0, scoring = game === 'compete' && !over;
+    const cz = travel + CZ + 1.0, scoring = game === 'compete' && !over, czPrev = Math.min(cz, lastCz ?? cz); lastCz = cz;
     invuln = Math.max(0, invuln - dt);
     slideT += dt;
     for (const r of ramps) if (r.amp) r.x = Math.max(-2.4, Math.min(2.4, r.x0 + Math.sin(r.ph + slideT*r.sp*1.6)*r.amp));
     for (const r of ramps){
-      if (r.kind === 'laser' && !r.hit && scoring && invuln <= 0 && laserOn(r) && cz - .5 < r.z + r.len && cz + .5 > r.z && alt < .5 && alt > -.05){ r.hit = true; takeHit('ZAPPED'); continue; }
+      if (r.kind === 'laser' && !r.hit && scoring && invuln <= 0 && laserOn(r) && czPrev - .5 < r.z + r.len && cz + .5 > r.z && alt < .5 && alt > -.05){ r.hit = true; takeHit('ZAPPED'); continue; }
       if (r.kind !== 'block' || r.hit || !scoring || invuln > 0) continue;
-      if (cz - .6 < r.z + r.len && cz + .6 > r.z && Math.abs(cycX - r.x) < (r.div ? .12 : BW*.85) + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
+      if (czPrev - .6 < r.z + r.len && cz + .6 > r.z && Math.abs(cycX - r.x) < (r.div ? .12 : BW*.85) + VHW() && alt < BH){   // a little forgiving at the ends of the vehicle
         r.hit = true; takeHit(r.amp ? 'BOT SMASH' : 'CRASH');
       }
     }
@@ -2574,12 +2602,12 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const RAMP_VY = 2.5, TUN_VY = 2.3;
   const airTime = (v, h0) => (v + Math.sqrt(v*v + 2*GRAV*h0))/GRAV;
   // speed per level: big steps early, then steady climbs that never stop until a very high ceiling
-  //   1-6: +15% a level · 6-15: +8% · 15-30: +4% · 30+: +2.5%, capped at 4x (around level 57)
+  //   1-6: +18% a level · 6-15: +11% · 15-30: +7% · 30+: +4%, capped at 5.5x (around level 54)
   function lvMulOf(l){
-    if (l <= 6) return 1 + .15*(l - 1);
-    if (l <= 15) return 1.75 + .08*(l - 6);
-    if (l <= 30) return 2.47 + .04*(l - 15);
-    return Math.min(4, 3.07 + .025*(l - 30));
+    if (l <= 6) return 1 + .18*(l - 1);
+    if (l <= 15) return 1.9 + .11*(l - 6);
+    if (l <= 30) return 2.89 + .07*(l - 15);
+    return Math.min(5.5, 3.94 + .04*(l - 30));
   }
   function spawnOne(z){
     const competing = game === 'compete' && !over, roll = R(), dl = daily && competing;
