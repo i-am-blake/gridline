@@ -49,8 +49,8 @@ Every level is faster than the last. Every five levels opens a new chapter:
 
 - A new sky: dusk, then night, then aurora.
 - A new obstacle: patrol robots themed to each world (level 5), beat-synced lasers (level 10) and split roads (level 15).
-- A **gauntlet** before each milestone, lined with red barrier rails. Clear it without a hit for a bonus.
-- A reward at each milestone: an extra life or a free force field.
+- A **gauntlet** on levels 4, 14, 24 and so on, lined with red barrier rails. Clear it without a hit for a bonus.
+- A **jump trial** on levels 9, 19, 29 and so on: a chain of green ramps that swings across the lanes, each one gated by blocks. Land every ramp without a hit to earn the upgrade, an extra life or a force field. Miss one and there's no upgrade that time.
 - **Weather** from level 3: rain, crosswinds, fog, snow and lightning storms, each changing how the road feels.
 
 Scores go to a shared leaderboard, split by map, showing each rider's best score and the level they reached.
