@@ -374,7 +374,6 @@ body:not(.playing) .meters{display:none}
   </div>
   <p class="best" id="entryBest"></p>
   <div class="extras">
-    <button id="installBtn" class="mini" type="button" hidden>⬇ Install app</button>
     <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener">☕ BUY ME A COFFEE</a>
   </div>
 </div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
@@ -422,19 +421,6 @@ body:not(.playing) .meters{display:none}
   <ol class="lb" id="lbList"></ol>
   <p class="lbnote">Each rider's best run on this map, with the level they reached.</p>
 </div></section>
-<div class="sheet" id="installSheet" hidden role="dialog" aria-modal="true" aria-labelledby="isTitle">
-  <div class="sheetcard">
-    <h3 id="isTitle">INSTALL GRIDLINE</h3>
-    <p class="isnote">Apple only lets iPhones install web apps from Safari's menu, so it takes two taps:</p>
-    <ol class="steps">
-      <li><span class="n">1</span><span>Tap <b>Share</b> <span class="ico">⬆</span> in Safari's toolbar <small>(on newer iPhones it's inside the <b>•••</b> menu)</small></span></li>
-      <li><span class="n">2</span><span>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b></span></li>
-    </ol>
-    <p class="isnote">Gridline then opens full screen from your home screen, and works offline.</p>
-    <button id="isClose" class="big" type="button">Got it</button>
-  </div>
-  <div class="sheetarrow" aria-hidden="true">⬇</div>
-</div>
 <div class="tip" id="tip" hidden><span id="tipText"></span><button id="tipSkip" type="button">Skip tutorial</button></div>
 
 <div class="hudc" id="hudc" hidden aria-live="off">
@@ -709,17 +695,6 @@ body:not(.playing) .meters{display:none}
 
   // play offline / install like an app (only on the public site, which has the app files)
   if (onPublicSite && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  let installEvt = null;
-  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (!standalone) $('installBtn').hidden = false; });
-  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (onPublicSite && isIOS && !standalone) $('installBtn').hidden = false;
-  $('isClose').addEventListener('click', () => { $('installSheet').hidden = true; });
-  $('installSheet').addEventListener('click', e => { if (e.target === $('installSheet')) $('installSheet').hidden = true; });
-  $('installBtn').addEventListener('click', async () => {
-    if (installEvt){ installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r?.outcome === 'accepted'){ $('installBtn').hidden = true; track('install'); } installEvt = null; }
-    else { $('installSheet').hidden = false; $('isClose').focus(); track('install-help'); }
-  });
   document.querySelectorAll('.coffee, .coffeeCard').forEach(a => a.addEventListener('click', () => track('coffee-click')));
 
   // share your score: a neon score card image plus a link back to the game

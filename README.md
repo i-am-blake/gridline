@@ -58,7 +58,7 @@ Scores go to a shared leaderboard, split by map, showing each rider's best score
 ## More
 
 - **Share your score**: after a run, tap *Share score* to send a neon score card and a link to friends.
-- **Install it like an app**: on iPhone, open the game in Safari, tap Share ⬆ then *Add to Home Screen*. On Android, tap *Install app* on the home screen (or Chrome's menu → *Install app*). It then opens full screen and works offline.
+- **Add it to your home screen**: on iPhone, tap Share ⬆ in Safari then *Add to Home Screen*; on Android, use Chrome's menu → *Install app*. It then opens full screen and works offline.
 - **Readable for every kind of colour vision**: hazards are always bright yellow with a bold X, and everything you want to hit is cyan or blue, so nothing depends on telling red from green or orange.
 - **Enjoying Gridline?** [☕ Buy me a coffee](https://venmo.com/u/Send-It-Blake) (Venmo @Send-It-Blake).
 
