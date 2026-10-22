@@ -383,7 +383,7 @@ body:not(.playing) .meters{display:none}
     <a class="coffee big ghost" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy Me a Coffee</b></a>
   </div>
   <p class="best" id="entryBest"></p>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
   <h2>READY TO RIDE</h2>
@@ -397,9 +397,9 @@ body:not(.playing) .meters{display:none}
     <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="drag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V4a1.5 1.5 0 0 1 3 0v6M15 10V6a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.5-4.5a1.5 1.5 0 0 1 2.6-1.5L9 13"/></svg><span>Drag</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button><button type="button" data-v="auto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z"/></svg><span>Auto</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
-  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost back" type="button" aria-label="Back">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2><span aria-hidden="true"></span></header>
   <div class="result" id="result" hidden>
@@ -1026,20 +1026,27 @@ body:not(.playing) .meters{display:none}
      In the air, dragging up or down (and holding) spins a front flip or a backflip. */
   let touchX = null, dragFlip = 0, tiltX = null, tiltZero = null, tiltF = 0, tiltSeen = false;
   const DRAG_PX = () => Math.max(50, W*.16);   // screen pixels per lane
+  // press and hold on the left or right half of the screen to steer that way; start sliding and it becomes a drag
+  let holdDir = 0, holdTimer = 0;
   cv.addEventListener('pointerdown', e => {
-    flick = { y: e.clientY, x: e.clientX, t: performance.now(), cx: cycX, id: e.pointerId, lastY: e.clientY };
+    flick = { y: e.clientY, x: e.clientX, t: performance.now(), cx: cycX, id: e.pointerId, lastY: e.clientY, moved: false };
     try { cv.setPointerCapture(e.pointerId); } catch(_){}
+    clearTimeout(holdTimer);
+    if (e.pointerType !== 'mouse' && settings.steer === 'drag'){ const side = e.clientX < innerWidth/2 ? -1 : 1;
+      holdTimer = setTimeout(() => { if (flick && !flick.moved){ holdDir = side; if (tut) tutEvent('steer'); } }, 120); }
   });
   cv.addEventListener('pointermove', e => {
     if (!flick || e.pointerId !== flick.id || e.pointerType === 'mouse') return;
     const dx = e.clientX - flick.x, dy = e.clientY - flick.y;
-    if (settings.steer !== 'tilt' && Math.abs(dx) > 6){ touchX = Math.max(-2.6, Math.min(2.6, flick.cx + dx/DRAG_PX())); if (Math.abs(dx) > 24 && tut) tutEvent('steer'); }
+    if (!flick.moved && (Math.abs(dx) > 8 || Math.abs(dy) > 12)){ flick.moved = true; clearTimeout(holdTimer); if (holdDir){ holdDir = 0; flick.x = e.clientX; flick.cx = cycX; } }
+    const ddx = e.clientX - flick.x;
+    if (settings.steer !== 'tilt' && flick.moved && Math.abs(dx) > 6){ touchX = Math.max(-2.6, Math.min(2.6, flick.cx + ddx/DRAG_PX())); if (Math.abs(ddx) > 24 && tut) tutEvent('steer'); }
   });
   const endTouch = e => {
     if (!flick || (e.pointerId !== undefined && e.pointerId !== flick.id)) return;
     const dy = e.clientY - flick.y, dx = Math.abs(e.clientX - flick.x), dt = performance.now() - flick.t;
     if (!airborne && dy < -30 && Math.abs(dy) > dx && dt < 400){ jumpReq = true; flickAt = performance.now(); }
-    flick = null; touchX = null; dragFlip = 0;
+    flick = null; touchX = null; dragFlip = 0; holdDir = 0; clearTimeout(holdTimer);
   };
   cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
   // tilt: lean the phone and the rider moves to match (about 22 degrees takes you edge to edge)
@@ -1278,7 +1285,7 @@ body:not(.playing) .meters{display:none}
   // Tutorial: a few guided prompts the first time you play
   let tut = null;
   const TUT = [
-    { id:'steer', desk:'Hold ← or → to steer', touch:'Drag left or right anywhere to steer' },
+    { id:'steer', desk:'Hold ← or → to steer', touch:'Hold the left or right side of the screen (or drag) to steer' },
     { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
     { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
     { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, hold the ⟲ Backflip button at the bottom, then let go to land upright' },
@@ -1661,7 +1668,7 @@ body:not(.playing) .meters{display:none}
     }
 
     // the cycle holds a fixed distance ahead of the camera, so it rides toward the sun forever
-    const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn));
+    const st = Math.max(-1, Math.min(1, (keyR?1:0) - (keyL?1:0) + steerBtn + holdDir));
     if (tut && st && (tut.steerT += dt) > .5) tutEvent('steer');
     let want;
     const autoDrive = game === 'auto' || over;
