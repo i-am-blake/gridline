@@ -10,7 +10,7 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 
 | Action | Desktop | Phone |
 |---|---|---|
-| Steer | ← → | Hold the left or right side, drag, or tilt the phone |
+| Steer | ← → | Hold the left or right side of the screen, or tilt the phone |
 | Jump on flat ground | Space | Swipe up |
 | Backflip / front flip (in the air) | ↓ / ↑ | Hold the ⟲ Backflip / ⟳ Front flip buttons |
 | Pause | P | ❚❚ |

@@ -429,7 +429,7 @@ body:not(.playing) .meters{display:none}
     <a class="coffee big ghost" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy Me a Coffee</b></a>
   </div>
   <p class="best" id="entryBest"></p>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
   <h2>READY TO RIDE</h2>
@@ -440,13 +440,13 @@ body:not(.playing) .meters{display:none}
     <span class="lbl">Vehicle</span><div class="chips" data-group="vehicle"><button type="button" data-v="bike"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-7h5l3 7M10 9l-1-3H7"/></svg><span>Light bike</span></button><button type="button" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 9h8M12 12l-3 4M12 12l3 4"/><path d="M3 17h18l-2 2H5z"/><path d="M8 21v-1M16 21v-1"/></svg><span>Hoverboard</span></button><button type="button" data-v="buggy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3"/><path d="M2.5 13h18l-1.5-3H7.5L6 13"/><path d="M8 10l2-5h5l2 5"/></svg><span>Dune buggy</span></button></div>
     <span class="lbl">World</span><div class="chips" data-group="world"><button type="button" data-v="sunset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 18h20"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M8.5 15.5h7M9.5 13h5"/><path d="M12 4v2M5 7l1.5 1.5M19 7l-1.5 1.5"/></svg><span>Sunset grid</span></button><button type="button" data-v="city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h20M4 20V10h4v10M8 20V5h5v15M13 20v-8h4v8M17 20V8h3v12"/></svg><span>Neon city</span></button><button type="button" data-v="aether"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><ellipse cx="9" cy="8" rx="7" ry="2" transform="rotate(-15 9 8)"/><path d="M3 21l6-6M14 21l3-3M17 14l4-4"/></svg><span>Endless Void</span></button></div>
     <span class="lbl">Beat</span><div class="chips" data-group="beat"><button type="button" data-v="synth"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2.5-7 5-7 7.5 0s5 7 7.5 0 3-4 5-2"/></svg><span>Synthwave</span></button><button type="button" data-v="lofi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7M7 18l1.5-2.5h7L17 18"/></svg><span>Lo-fi</span></button><button type="button" data-v="house"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="14" r="3.5"/><circle cx="12" cy="7" r="1.5"/></svg><span>House</span></button><button type="button" data-v="phonk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg><span>Phonk</span></button><button type="button" data-v="mix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4c4 0 6 10 10 10h4M3 17h4c1.5 0 2.6-1.4 3.6-3.2M14.4 10.2C15.4 8.4 16.5 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span>Mix</span></button><button type="button" data-v="mic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Microphone</span></button></div>
-    <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="drag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V4a1.5 1.5 0 0 1 3 0v6M15 10V6a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.5-4.5a1.5 1.5 0 0 1 2.6-1.5L9 13"/></svg><span>Drag</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button><button type="button" data-v="auto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z"/></svg><span>Auto</span></button></div>
+    <span class="lbl touchOnly">Steer</span><div class="chips touchOnly" data-group="steer"><button type="button" data-v="hold"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M12 4v16"/><path d="M8 12H5m0 0l2-2m-2 2l2 2M16 12h3m0 0l-2-2m2 2l-2 2"/></svg><span>Hold</span></button><button type="button" data-v="tilt"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-18 12 12)"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/></svg><span>Tilt</span></button><button type="button" data-v="auto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z"/></svg><span>Auto</span></button></div>
     <span class="lbl touchOnly">Haptics</span><div class="chips touchOnly" data-group="haptics"><button type="button" data-v="on"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8M2 10v4M22 10v4"/></svg><span>On</span></button><button type="button" data-v="off"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M3 3l18 18"/></svg><span>Off</span></button></div>
   </div>
   <div class="row"><button id="goPlay" class="big" type="button">▶ Play</button><button id="goWatch" class="ghost big" type="button">Just watch</button></div>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="paused" hidden><div class="card"><h2>PAUSED</h2>
-  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side, or drag, to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+  <div class="row"><button id="resume" class="big" type="button">▶ Resume</button><button id="quit" class="ghost" type="button">Quit</button></div></div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <section class="page" id="board" hidden aria-labelledby="lbTitle"><div class="pagein">
   <header class="phead"><button id="lbClose" class="ghost back" type="button" aria-label="Back">‹ Back</button><h2 id="lbTitle">LEADERBOARD</h2><span aria-hidden="true"></span></header>
   <div class="result" id="result" hidden>
@@ -539,7 +539,7 @@ body:not(.playing) .meters{display:none}
   const settings = { vehicle:'bike', world:'city', beat:'synth' };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('gridline-setup') || '{}')); } catch(_){}
   if (!['bike','board','buggy'].includes(settings.vehicle)) settings.vehicle = 'bike';
-  if (!['drag','tilt','auto'].includes(settings.steer)) settings.steer = 'drag';
+  if (!['hold','tilt','auto'].includes(settings.steer)) settings.steer = 'hold';   // the old drag setting becomes hold
   if (!['on','off'].includes(settings.haptics)) settings.haptics = 'on';
   document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
   if (!['synth','lofi','house','phonk','mix','mic'].includes(settings.beat)) settings.beat = settings.sound === 'mic' ? 'mic' : 'synth';
@@ -1228,37 +1228,36 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const toggleBar = () => { $('bar').classList.toggle('hide'); syncBar(); };
   addEventListener('resize', syncBar); syncBar();
   let jumpReq = false, flick = null, flickAt = 0;
-  /* Touch: put a finger anywhere and drag; the rider follows sideways. A quick swipe up jumps.
-     In the air, dragging up or down (and holding) spins a front flip or a backflip. */
-  let touchX = null, dragFlip = 0, tiltX = null, tiltZero = null, tiltF = 0, tiltSeen = false;
-  const DRAG_PX = () => Math.max(50, W*.16);   // screen pixels per lane
-  // press and hold on the left or right half of the screen to steer that way; start sliding and it becomes a drag
-  let holdDir = 0, holdTimer = 0;
+  /* Touch: hold the left half of the screen to steer left, the right half to steer right. A quick swipe up jumps.
+     Flips use the ⟲ / ⟳ buttons. */
+  let touchX = null, tiltX = null, tiltZero = null, tiltF = 0, tiltSeen = false;
+    // each finger on the screen steers toward its own side; the newest finger wins, and lifting it hands back to the other
+  let holdDir = 0; const fingers = new Map();
+  const sideOf = x => x < innerWidth/2 ? -1 : 1;
+  const pickHold = () => { let d = 0; for (const f of fingers.values()) d = f.side; holdDir = settings.steer === 'tilt' ? 0 : d; showHold(); };
   cv.addEventListener('pointerdown', e => {
-    flick = { y: e.clientY, x: e.clientX, t: performance.now(), cx: cycX, id: e.pointerId, lastY: e.clientY, moved: false };
+    flick = { y: e.clientY, x: e.clientX, t: performance.now(), id: e.pointerId };
     try { cv.setPointerCapture(e.pointerId); } catch(_){}
-    clearTimeout(holdTimer);
-    if (e.pointerType !== 'mouse' && settings.steer === 'drag'){ const side = e.clientX < innerWidth/2 ? -1 : 1;
-      holdTimer = setTimeout(() => { if (flick && !flick.moved){ holdDir = side; showHold(); holdUses++; if (tut) tutEvent('steer'); } }, 120); }
+    if (e.pointerType === 'mouse') return;
+    fingers.set(e.pointerId, { side: sideOf(e.clientX) }); pickHold();
+    if (holdDir){ holdUses++; if (tut) tutEvent('steer'); }
   });
   cv.addEventListener('pointermove', e => {
-    if (!flick || e.pointerId !== flick.id || e.pointerType === 'mouse') return;
-    const dx = e.clientX - flick.x, dy = e.clientY - flick.y;
-    if (!flick.moved && (Math.abs(dx) > 8 || Math.abs(dy) > 12)){ flick.moved = true; clearTimeout(holdTimer); if (holdDir){ holdDir = 0; showHold(); flick.x = e.clientX; flick.cx = cycX; } }
-    const ddx = e.clientX - flick.x;
-    if (settings.steer !== 'tilt' && flick.moved && Math.abs(dx) > 6){ touchX = Math.max(-2.6, Math.min(2.6, flick.cx + ddx/DRAG_PX())); if (Math.abs(ddx) > 24 && tut) tutEvent('steer'); }
+    const f = fingers.get(e.pointerId); if (!f) return;
+    const sd = sideOf(e.clientX); if (sd !== f.side){ fingers.delete(e.pointerId); fingers.set(e.pointerId, { side: sd }); pickHold(); }   // slide across the middle to switch
   });
   const endTouch = e => {
+    if (fingers.delete(e.pointerId)) pickHold();
     if (!flick || (e.pointerId !== undefined && e.pointerId !== flick.id)) return;
     const dy = e.clientY - flick.y, dx = Math.abs(e.clientX - flick.x), dt = performance.now() - flick.t;
     if (!airborne && dy < -30 && Math.abs(dy) > dx && dt < 400){ jumpReq = true; flickAt = performance.now(); }
-    flick = null; touchX = null; dragFlip = 0; holdDir = 0; clearTimeout(holdTimer); showHold();
+    flick = null;
   };
   const showHold = () => { $('holdL').classList.toggle('on', holdDir < 0); $('holdR').classList.toggle('on', holdDir > 0); };
   // for a player's first few runs, show where to hold for a moment
   let holdUses = 0; try { holdUses = +localStorage.getItem('gridline-holds') || 0; } catch(_){}
   function holdHint(){
-    if (!isTouch || settings.steer !== 'drag' || holdUses >= 6) return;
+    if (!isTouch || settings.steer !== 'hold' || holdUses >= 6) return;
     ['holdL', 'holdR'].forEach(id => $(id).classList.add('hint'));
     setTimeout(() => ['holdL', 'holdR'].forEach(id => $(id).classList.remove('hint')), 3000);
   }
@@ -1279,9 +1278,9 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   let tiltOn = false;
   function enableTilt(){
     const go = () => { if (!tiltOn){ addEventListener('deviceorientation', onTilt); tiltOn = true; }
-      tiltZero = null; setTimeout(() => { if (!tiltSeen && settings.steer === 'tilt'){ settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){} pop('TILT NOT AVAILABLE HERE · DRAG TO STEER', CY); } }, 1500); };
+      tiltZero = null; setTimeout(() => { if (!tiltSeen && settings.steer === 'tilt'){ settings.steer = 'hold'; syncChips(); document.body.classList.remove('tiltMode'); try { localStorage.setItem('gridline-setup', JSON.stringify(settings)); } catch(_){} pop('TILT NOT AVAILABLE HERE · HOLD A SIDE TO STEER', CY); } }, 1500); };
     const D = window.DeviceOrientationEvent;
-    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(r => { if (r === 'granted') go(); else { settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); } }).catch(() => { settings.steer = 'drag'; syncChips(); document.body.classList.remove('tiltMode'); });
+    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(r => { if (r === 'granted') go(); else { settings.steer = 'hold'; syncChips(); document.body.classList.remove('tiltMode'); } }).catch(() => { settings.steer = 'hold'; syncChips(); document.body.classList.remove('tiltMode'); });
     else go();
   }
 
@@ -1465,7 +1464,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   let W, H, dpr;
   function resize(){ dpr = Math.min(devicePixelRatio||1, 1.5); W = innerWidth; H = innerHeight; cv.width = W*dpr; cv.height = H*dpr;
     ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle = '#02040a'; ctx.fillRect(0,0,W,H); }
-  addEventListener('resize', resize); resize();
+  const resizeSoon = () => { resize(); [120, 350, 800].forEach(t => setTimeout(() => { if (innerWidth !== W || innerHeight !== H) resize(); }, t)); };
+  addEventListener('resize', resizeSoon); addEventListener('orientationchange', resizeSoon); window.visualViewport?.addEventListener('resize', resizeSoon); resize();
 
   function glowLine(c, a, w){ ctx.strokeStyle = rgba(c,a); ctx.lineWidth = w; ctx.shadowBlur = 0; }
   function gstroke(){ const w = ctx.lineWidth, ga = ctx.globalAlpha; ctx.globalAlpha = ga*.18; ctx.lineWidth = w*4.5; ctx.stroke(); ctx.globalAlpha = ga; ctx.lineWidth = w; ctx.stroke(); }
@@ -1526,7 +1526,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   // Tutorial: a few guided prompts the first time you play
   let tut = null;
   const TUT = [
-    { id:'steer', desk:'Hold ← or → to steer', touch:'Hold the left or right side of the screen (or drag) to steer' },
+    { id:'steer', desk:'Hold ← or → to steer', touch:'Hold the left or right side of the screen to steer' },
     { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
     { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
     { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, hold the ⟲ Backflip button at the bottom, then let go to land upright' },
@@ -1604,7 +1604,9 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const RL = 1.2, RH = .45, RW = .65, BL = .5, BW = .5, BH = .6;
   let laneOv = 0;   // set while drawing the setup-card preview, which uses its own scale
   // phones held upright get a much closer camera, so the rider is as big as on a laptop; the camera follows the rider sideways
-  const laneW = () => laneOv || (H > W*1.1 ? W*.4 : Math.min(Math.max(W, H*.9), W*1.2)*.14);   // phones get slightly wider lanes, but the rider stays in proportion
+  // phones held sideways use the same lane width (and camera) as upright, so the rider and road stay the same size
+  const phoneSide = () => isTouch && W > H && H < 560;
+  const laneW = () => laneOv || (H > W*1.1 ? W*.4 : phoneSide() ? H*.4 : Math.min(Math.max(W, H*.9), W*1.2)*.14);   // phones get slightly wider lanes, but the rider stays in proportion
   const sky = { b:0, m:0, h:0, bands: new Float32Array(48) };
   const ease = (cur, v, dt) => cur + (v - cur)*Math.min(1, dt*(v > cur ? 14 : 1.8));
   let stars = [], ridge = [];
@@ -1700,8 +1702,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     const wantHigh = birdOk && (source === 'demo' || source === 'track' ? curSec === 'drop' : (camClock % 45) > 33);
     camE += ((wantHigh ? 1 : 0) - camE)*Math.min(1, dt*.55);
     const ce = camE*camE*(3 - 2*camE);   // eased, so the swing starts and lands softly
-    const tall = H > W*1.1 && !laneOv, camH = (tall ? 1.7 : 1) + ce*(tall ? 2.9 : 3.1), camBack = ce*(tall ? .9 : 1.2);   // upright phones: a higher chase camera puts the rider lower and bigger on screen
-    const hz = H*(H > W ? .48 : .58) - H*(tall ? .1 : .16)*ce + camYo, vp = W/2;
+    const side = phoneSide() && !laneOv, tall = (H > W*1.1 || side) && !laneOv, camH = (tall ? 1.7 : 1) + ce*(side ? 1.5 : tall ? 2.9 : 3.1), camBack = ce*(side ? 1.8 : tall ? .9 : 1.2);   // a short sideways screen gets a lower, further-back bird's-eye so the rider stays in view   // upright phones: a higher chase camera puts the rider lower and bigger on screen
+    const hz = H*(H > W || phoneSide() ? .48 : .58) - H*(side ? .12 : tall ? .1 : .16)*ce + camYo, vp = W/2;
     // one scale for width and height so the vehicle keeps its proportions on any screen
     const LX = laneW(), K = LX*1.45, Zmin = Math.max(.3, K*camH / Math.max(40, H - hz) - camBack);
     // Endless Void: the road through space curves, rises and falls, and the camera banks into the turns
@@ -1947,7 +1949,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       want = Math.max(-2.4, Math.min(2.4, (laneTarget - cycX)*1.6));
     }
     // rain and snow make steering slide a little; a crosswind pushes you sideways in gusts
-    cycV += (want - cycV)*Math.min(1, dt*(5 - 1.8*Math.max(wxAmt.rain, wxAmt.storm*.8) - 2.2*wxAmt.snow));
+    const grip = !autoDrive && want === 0 ? 11 : 5;   // letting go stops you quickly, so a short hold moves a short way
+    cycV += (want - cycV)*Math.min(1, dt*(grip - (grip > 5 ? 2.5 : 1)*(1.8*Math.max(wxAmt.rain, wxAmt.storm*.8) + 2.2*wxAmt.snow)));
     gust = Math.sin(wxT*.55)*.75 + Math.sin(wxT*1.7 + 1)*.25;
     if (game === 'compete' && !over && !(alt < -.02)) cycX = Math.max(-2.6, Math.min(2.6, cycX + gust*wxAmt.wind*1.7*dt));
     cycX = Math.max(-2.6, Math.min(2.6, cycX + cycV*dt));
@@ -2019,8 +2022,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       // flips: hold ↑ (or ⟲) for a backflip, ↓ (or ⟳) for a front flip
       // the dune buggy can only flip when a ramp or tunnel launched it, not from a hop on the flat
       const canFlip = !(settings.vehicle === 'buggy' && ollie);
-      if (!canFlip && (flipKey || flipBtn || dragFlip) && !flipWarned){ flipWarned = true; pop('BUGGY FLIPS OFF RAMPS', CY); }
-      const fdir = canFlip ? (flipKey || flipBtn || dragFlip || autoFlipDir) : 0;
+      if (!canFlip && (flipKey || flipBtn) && !flipWarned){ flipWarned = true; pop('BUGGY FLIPS OFF RAMPS', CY); }
+      const fdir = canFlip ? (flipKey || flipBtn || autoFlipDir) : 0;
       flipV += (fdir*VS().flip - flipV)*Math.min(1, dt*9);
       // grace: once you let go, the vehicle settles toward the nearest upright landing
       if (!fdir){ const up = Math.round(flipA/(Math.PI*2))*Math.PI*2; flipA += (up - flipA)*Math.min(1, dt*2.8); }
@@ -2744,6 +2747,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
 
   let last = 0;
   function frame(ts){
+    if (innerWidth !== W || innerHeight !== H) resize();   // never draw a stretched frame after a rotation
     const t = ts/1000, dt = Math.min(.05, t-last || .016); last = t;
     if (!paused){
       analyse(t);
