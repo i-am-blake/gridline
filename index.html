@@ -326,6 +326,10 @@ body:not(.playing) .meters{display:none}
 #board .rsub button{margin:0;justify-content:center;min-height:46px;font-size:13px}
 #board .coffeeCard{justify-content:center;align-items:center;gap:8px;margin-top:18px;padding:12px;font-size:14px;border-radius:2px}
 #board .coffeeCard b{font-size:14px}
+/* one line on every screen, same as desktop */
+#board .coffeeCard{flex-wrap:nowrap;white-space:nowrap;letter-spacing:0}
+@media (max-width:480px){ #board .coffeeCard{font-size:12.5px;gap:6px;padding:12px 8px} #board .coffeeCard b{font-size:12.5px;letter-spacing:.02em} }
+@media (max-width:350px){ #board .coffeeCard,#board .coffeeCard b{font-size:11px} }
 #board .lbsub{margin:28px 0 0;text-align:center;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
 #board .tabs{justify-content:center;margin:12px 0 14px;gap:6px}
 #board .maptabs button{margin:0;min-height:42px;font-size:12px;padding:8px 4px;letter-spacing:.06em}
