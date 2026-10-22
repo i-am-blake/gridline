@@ -464,6 +464,8 @@ body:not(.playing) .meters{display:none}
   const WORLDS = {
     sunset:  { grid:[41,243,255], accent:[255,122,26], mid0:[4,10,24],  mid1:[18,50,84],  hor0:[16,30,50],  hor1:[166,100,100], scene:'mountains' },
     city:    { grid:[255,70,210], accent:[70,175,255], mid0:[14,4,28],  mid1:[60,18,92],  hor0:[34,10,54],  hor1:[210,64,150],  scene:'city' },
+    // the home screen: Sunset Grid's mountains and sun, in Neon City's pink and blue
+    home:    { grid:[255,70,210], accent:[70,175,255], mid0:[14,4,28],  mid1:[60,18,92],  hor0:[34,10,54],  hor1:[210,64,150],  scene:'mountains' },
     aether:  { grid:[120,255,205], accent:[168,140,255], mid0:[4,6,22],  mid1:[24,30,80], hor0:[6,8,26],    hor1:[40,46,110],   scene:'aether' }
   };
   let WORLD = WORLDS.sunset;
@@ -499,7 +501,7 @@ body:not(.playing) .meters{display:none}
     const r = document.documentElement.style;
     r.setProperty('--cyan', `rgb(${CY.join(',')})`); r.setProperty('--orange', `rgb(${OR.join(',')})`);
     // window outlines take each world's signature colour: orange sun, pink city, violet void
-    r.setProperty('--frame', ({ sunset:'255,122,26', city:'255,70,210', aether:'168,140,255' })[w] || '255,122,26');
+    r.setProperty('--frame', ({ sunset:'255,122,26', city:'255,70,210', home:'255,70,210', aether:'168,140,255' })[w] || '255,122,26');
   }
   const rgba = (c,a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1118,7 +1120,7 @@ body:not(.playing) .meters{display:none}
   }
   // on phones, Steer: Auto is the watch mode (the Just watch button is for desktops)
   $('goPlay').addEventListener('click', () => begin(isTouch && settings.steer === 'auto' ? 'auto' : 'compete'));
-  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff(); applyWorld('city');
+  const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff(); applyWorld('home');
     let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
     $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
   $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; applyWorld(settings.world); });
