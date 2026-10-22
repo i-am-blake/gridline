@@ -883,7 +883,7 @@ body:not(.playing) .meters{display:none}
     stopAll();
     if (ac && mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(mix.gain.value, t); mix.gain.linearRampToValueAtTime(0, t + .03); }
   }
-  function musicOn(){ if (ac && trackGain && source === 'track'){ const t = ac.currentTime; trackGain.gain.cancelScheduledValues(t); trackGain.gain.setValueAtTime(.9, t); }
+  function musicOn(){ if (ac && trackGain && source === 'track' && !xf){ const t = ac.currentTime; trackGain.gain.cancelScheduledValues(t); trackGain.gain.setValueAtTime(.9, t); }
     if (ac && mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(0, t); mix.gain.linearRampToValueAtTime(.7, t + .05); } }
   async function ensureMusic(){
     if (settings.beat === 'mic'){ if (source !== 'mic') await startMic(); }
@@ -893,7 +893,7 @@ body:not(.playing) .meters{display:none}
   }
   function stopAll(){
     clearInterval(demoTimer); demoTimer = null;
-    if (trackEl && !trackEl.paused) trackEl.pause();
+    decks.forEach(d => { if (!d.el.paused) d.el.pause(); }); xf = null; glide = null;
     if (micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
     if (micNode){ micNode.disconnect(); micNode = null; }
     ['mic','demo'].forEach(id => $(id).classList.remove('on'));
@@ -906,7 +906,9 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   TRACKS.forEach(t => { let acc = 0; t.beatT = t.beats.map(d => (acc += d)/1000); });
   const TRACK_STYLES = ['synth', 'lofi', 'house', 'phonk', 'mix'];
   let trackUrl = t => 'music/' + t.id + '.mp3';
-  let trackEl = null, trackNode = null, trackGain = null, curTrack = null, trackBeat = -1, playQueue = [], playStyle = '';
+  // two decks, like a DJ: one plays, the next song is cued on the other and mixed in on the beat
+  let trackEl = null, trackGain = null, curTrack = null, trackBeat = -1, playQueue = [], playStyle = '';
+  const decks = []; let live = 0, xf = null, glide = null;
   const isTrackStyle = () => TRACK_STYLES.includes(settings.beat);
   function nextTrack(){
     const list = settings.beat === 'mix' ? TRACKS : TRACKS.filter(t => t.style === settings.beat);
@@ -916,43 +918,95 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     }
     return playQueue.shift();
   }
+  function mkDeck(){
+    const el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto'; el.playsInline = true; el.setAttribute('playsinline', '');
+    el.preservesPitch = true; el.webkitPreservesPitch = true;   // tempo-matching shouldn't change the key
+    const node = ac.createMediaElementSource(el), hp = ac.createBiquadFilter(), lp = ac.createBiquadFilter(), g = ac.createGain();
+    hp.type = 'highpass'; hp.frequency.value = 10; lp.type = 'lowpass'; lp.frequency.value = 20000; g.gain.value = 0;
+    node.connect(hp); hp.connect(lp); lp.connect(g); g.connect(analyser); g.connect(monitor);
+    const d = { el, hp, lp, g, track: null };
+    el.addEventListener('ended', () => { if (source === 'track' && d === decks[live] && !xf) startTrack(); });
+    return d;
+  }
+  const setG = (d, v) => { const t = ac.currentTime; d.g.gain.cancelScheduledValues(t); d.g.gain.setValueAtTime(v, t); };
+  const setHP = (d, f) => d.hp.frequency.setTargetAtTime(f, ac.currentTime, .06);
+  const setLP = (d, f) => d.lp.frequency.setTargetAtTime(f, ac.currentTime, .06);
+  function setMaster(i){
+    live = i; const d = decks[i]; trackEl = d.el; trackGain = d.g; curTrack = d.track;
+    trackBeat = Math.floor(deckBeatAt(curTrack, d.el.currentTime + .02)); buildTimeline();
+  }
   async function startTrack(t){
     ensureAudio(); stopAll();
-    if (!trackEl){
-      trackEl = new Audio(); trackEl.crossOrigin = 'anonymous'; trackEl.preload = 'auto'; trackEl.playsInline = true; trackEl.setAttribute('playsinline', '');
-      trackNode = ac.createMediaElementSource(trackEl); trackGain = ac.createGain(); trackGain.gain.value = .9;
-      trackNode.connect(trackGain); trackGain.connect(analyser); trackGain.connect(monitor);
-      trackEl.addEventListener('ended', () => { if (source === 'track') startTrack(); });
-    }
-    curTrack = t || nextTrack(); trackBeat = -1; buildTimeline();
-    trackEl.src = trackUrl(curTrack);
+    if (!decks.length) decks.push(mkDeck(), mkDeck());
+    const d = decks[live], o = decks[1 - live];
+    o.track = null; setG(o, 0); setHP(o, 10); setLP(o, 20000);
+    d.track = t || nextTrack(); d.el.playbackRate = 1; setHP(d, 10); setLP(d, 20000); d.el.src = trackUrl(d.track);
+    setMaster(live); trackBeat = -1;
     try {
       await ac.resume();
-      await trackEl.play();
-      source = 'track'; bpm = Math.round(curTrack.bpm); curSec = 'intro';
-      trackGain.gain.cancelScheduledValues(ac.currentTime); trackGain.gain.setValueAtTime(.9, ac.currentTime);
+      await d.el.play();
+      source = 'track'; curSec = 'intro'; setG(d, .9);
       setStatus(''); keepAwake();
     } catch(e){
       // no file, blocked autoplay, or offline: fall back to the generated music so the ride still has a beat
-      curTrack = null; buildTimeline(); startDemo();
+      d.track = null; curTrack = null; buildTimeline(); startDemo();
     }
   }
-  // which beat of the song we're on (with the fraction toward the next one)
-  function trackBeatAt(t){
-    const b = curTrack.beatT; let lo = 0, hi = b.length - 1;
+  // which beat of a song a playback time is on (with the fraction toward the next one)
+  function deckBeatAt(tr, t){
+    const b = tr.beatT; let lo = 0, hi = b.length - 1;
     if (t < b[0]) return -1 + t/b[0];
     while (lo < hi){ const m = (lo + hi + 1) >> 1; if (b[m] <= t) lo = m; else hi = m - 1; }
-    const nx = b[lo + 1] ?? b[lo] + 60/curTrack.bpm;
+    const nx = b[lo + 1] ?? b[lo] + 60/tr.bpm;
     return lo + (t - b[lo])/(nx - b[lo]);
   }
+  const trackBeatAt = t => deckBeatAt(curTrack, t);
   const trackSecAt = t => { let k = 'intro'; for (const [st, kind] of curTrack.sections) if (t >= st) k = kind; return k; };
-  // fires onBeat exactly on the song's beats
+  const liveBpm = () => curTrack ? curTrack.bpm*(trackEl.playbackRate || 1) : 0;
+  // where to start mixing out: on a bar line, 8 bars before the song's last beat
+  const mixOutAt = tr => { const n = tr.beatT.length; let i = Math.floor((n - 1 - 32)/4)*4; if (i < 16) i = Math.max(0, n - 17); return tr.beatT[i]; };
+  const frac = x => x - Math.floor(x);
   function trackTick(){
     if (source !== 'track' || !curTrack || trackEl.paused) return;
-    const t = trackEl.currentTime, bi = Math.floor(trackBeatAt(t + .02));
+    const t = trackEl.currentTime, A = decks[live], B = decks[1 - live];
+    if (!xf){
+      const out = mixOutAt(curTrack);
+      // cue the next song on the other deck about 20 seconds ahead
+      if (!B.track && t > out - 20){ B.track = nextTrack(); B.el.src = trackUrl(B.track); B.el.load(); setG(B, 0); setHP(B, 300); }
+      // drop it in on the bar: its first beat lands on this song's bar line, tempo-matched when the tempos are close
+      if (B.track && t >= out - .03 && B.el.readyState >= 3){
+        const r0 = liveBpm()/B.track.bpm, lock = Math.abs(r0 - 1) <= .12, r = lock ? r0 : 1;
+        B.el.playbackRate = r; B.el.currentTime = Math.max(0, B.track.beatT[0]);
+        B.el.play().catch(() => {});
+        // tempos close enough: a long 8-bar blend with matched beats. Too far apart: a quicker 4-bar filter mix,
+        // the old song thinning out from the bottom while the new one opens up from underneath, so the beats never clash
+        xf = { t0: ac.currentTime, dur: (lock ? 32 : 16)*60/liveBpm(), r, lock, swapped: false, from: live, to: 1 - live };
+        if (!lock) setLP(B, 350);
+        glide = null;
+      }
+    }
+    if (xf){
+      const F = decks[xf.from], T = decks[xf.to], p = Math.min(1, (ac.currentTime - xf.t0)/xf.dur);
+      // equal-power crossfade, with a bass swap halfway like a DJ trading the low end between decks
+      F.g.gain.setTargetAtTime(.9*Math.cos(p*Math.PI/2), ac.currentTime, .05);
+      T.g.gain.setTargetAtTime(.9*Math.sin(p*Math.PI/2), ac.currentTime, .05);
+      if (xf.lock){ setHP(F, p < .5 ? 10 : 260); setHP(T, p < .5 ? 300 : 10); }
+      else { setHP(F, 10 + 1500*p*p); setHP(T, 10); setLP(T, 350*Math.pow(20000/350, p)); }
+      // keep the incoming song's beats on top of the outgoing song's (a gentle nudge, like riding the jog wheel)
+      if (xf.lock && !T.el.paused && F.track){
+        let err = frac(deckBeatAt(T.track, T.el.currentTime)) - frac(deckBeatAt(F.track, F.el.currentTime)); if (err > .5) err -= 1; if (err < -.5) err += 1;
+        T.el.playbackRate = xf.r*(1 - Math.max(-.04, Math.min(.04, err*.12)));
+      }
+      if (p >= .5 && !xf.swapped){ xf.swapped = true; setMaster(xf.to); }
+      if (p >= 1){ F.el.pause(); setG(F, 0); setHP(F, 10); setLP(F, 20000); F.track = null; setG(T, .9); setHP(T, 10); setLP(T, 20000);
+        glide = { t0: ac.currentTime, dur: 16*60/liveBpm(), r0: T.el.playbackRate }; xf = null; }
+    }
+    // after a tempo-matched mix, ease the new song back to its own tempo over a few bars
+    if (glide && !xf){ const q = Math.min(1, (ac.currentTime - glide.t0)/glide.dur); trackEl.playbackRate = glide.r0 + (1 - glide.r0)*q; if (q >= 1) glide = null; }
+    const tt = trackEl.currentTime, bi = Math.floor(trackBeatAt(tt + .02));
     if (bi < trackBeat - 1) trackBeat = bi;
     while (trackBeat < bi){ trackBeat++; pulse = 1; onBeat(); }
-    curSec = trackSecAt(t);
+    curSec = trackSecAt(tt);
   }
   // the song's own sections drawn on the timeline
   function buildTimeline(){
@@ -1300,14 +1354,14 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (!ac) return;
     if (v){
       clearInterval(demoTimer); demoTimer = null;                      // stop scheduling new notes
-      if (trackEl && source === 'track') trackEl.pause();
+      if (source === 'track') decks.forEach(d => { d.wasOn = !d.el.paused; if (d.wasOn) d.el.pause(); });
       if (mix){ const t = ac.currentTime; mix.gain.cancelScheduledValues(t); mix.gain.setValueAtTime(mix.gain.value, t); mix.gain.linearRampToValueAtTime(0, t + .03); }   // silence every channel at once
       setTimeout(() => { if (paused) ac.suspend().catch(() => {}); }, 120);
     } else {
       ac.resume().then(() => {
         musicOn();
         if (source === 'demo' && !demoTimer){ nextT = ac.currentTime + .08; demoTimer = setInterval(schedule, 25); }
-        if (source === 'track' && trackEl) trackEl.play().catch(() => {});
+        if (source === 'track') decks.forEach(d => { if (d.wasOn) d.el.play().catch(() => {}); });
       }).catch(() => {});
     }
   }
@@ -1370,7 +1424,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       if (source !== 'track') onBeat();
     }
     trackTick();
-    if (source === 'track' && curTrack) bpm = Math.round(curTrack.bpm);
+    if (source === 'track' && curTrack) bpm = Math.round(liveBpm());
     prevB = rb; pulse *= .88;
     // snare-ish hits in the mids and hi-hats in the highs drive their own accents
     const rm = band(18,70), rh = band(150,420);
@@ -1390,7 +1444,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       if (source === 'track' && curTrack){
         const t = trackEl.currentTime;
         $('tlPos').style.left = Math.min(100, t/curTrack.dur*100).toFixed(2) + '%';
-        $('tlName').textContent = curTrack.short.toUpperCase() + ' · ' + (SECN[curSec] || '');
+        $('tlName').textContent = curTrack.short.toUpperCase() + ' · ' + (xf ? 'MIXING' : SECN[curSec] || '');
         $('tlCredit').textContent = 'by ' + curTrack.artist + ' · Pixabay';
       } else if (live){
         $('tlCredit').textContent = '';
@@ -1723,7 +1777,10 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     }
     boost = Math.max(0, boost - dt*.04);
     // one grid line passes per beat, so the floor moves in time with the song
-    const beatSpd = bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
+    // in a run the road follows the song's tempo only loosely, so switching songs nudges the speed instead of jolting it;
+    // when just watching it locks to the tempo so a grid line crosses on every beat
+    const beatSpd = competing ? 2.03*Math.pow(Math.max(70, Math.min(180, bpm || 122))/122, .3) : bpm ? Math.max(1.2, Math.min(3, bpm/60)) : 1.4;
+    baseSpdNow = beatSpd;
     // every checkpoint is a clear step up: +15% a level to level 6, then +8% a level up to a ceiling
     const lvTarget = lvMulOf(level);
     lvMul += (lvTarget - lvMul)*Math.min(1, dt*1.5);
@@ -2513,10 +2570,17 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (!competing) travel -= (travel - Math.round(travel))*.35;
   }
 
-  let lastSpd = 1.5, prevOb = null, lastOppZ = 0;   // the previous obstacle: where it ends, its lane, and how long it keeps you airborne
+  let lastSpd = 1.5, prevOb = null, lastOppZ = 0, baseSpdNow = 2.03;   // the previous obstacle: where it ends, its lane, and how long it keeps you airborne
   const RAMP_VY = 2.5, TUN_VY = 2.3;
   const airTime = (v, h0) => (v + Math.sqrt(v*v + 2*GRAV*h0))/GRAV;
-  function lvMulOf(l){ return l <= 6 ? 1 + .15*(l - 1) : Math.min(2.3, 1.75 + .08*(l - 6)); }
+  // speed per level: big steps early, then steady climbs that never stop until a very high ceiling
+  //   1-6: +15% a level · 6-15: +8% · 15-30: +4% · 30+: +2.5%, capped at 4x (around level 57)
+  function lvMulOf(l){
+    if (l <= 6) return 1 + .15*(l - 1);
+    if (l <= 15) return 1.75 + .08*(l - 6);
+    if (l <= 30) return 2.47 + .04*(l - 15);
+    return Math.min(4, 3.07 + .025*(l - 30));
+  }
   function spawnOne(z){
     const competing = game === 'compete' && !over, roll = R(), dl = daily && competing;
     const dif = dl ? Math.min(1, (levelAt(z) - 1)/5) : diff;
@@ -2535,7 +2599,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     // leave room to land from the last obstacle, react, and steer across to this one, judged at a bit above the current speed
     if (prevOb){
       // the daily road is spaced for a fixed, generous speed and the slowest steering, so every vehicle can ride it
-      const sp = dl ? (2.03*(1 + dif*.6)*1.12 + .8)*1.12 : Math.max(1.4, lastSpd)*(competing ? Math.max(1, lvMulOf(levelAt(z))/Math.max(1, lvMul)) : 1)*1.12, steer = Math.min(5.5, (dl ? 2.1 : VS().steer)*Math.max(1, sp/1.8));
+      const sp = dl ? (2.03*(1 + dif*.6)*1.12 + .8)*1.12 : (competing ? (baseSpdNow*Math.max(lvMul, lvMulOf(levelAt(z)))*VS().speed + Math.min(1.6, boost + .6))*1.08 : Math.max(1.4, lastSpd)*1.12), steer = Math.min(5.5, (dl ? 2.1 : VS().steer)*Math.max(1, sp/1.8));
       z = Math.max(z, prevOb.end + sp*(prevOb.air + .55 + Math.abs(x - prevOb.x)/steer*1.2));
     }
     const jm = dl ? 3.2/3 : VS().jump/3;
