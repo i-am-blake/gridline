@@ -1,7 +1,7 @@
 Copyright (c) 2026 Blake Erickson. All rights reserved.
 
 This software and its associated files, including source code, visual design,
-artwork, audio and music compositions, and the name "Gridline" (the "Work"),
+artwork, generated audio, and the name "Gridline" (the "Work"),
 are the exclusive property of Blake Erickson.
 
 No permission is granted to copy, modify, merge, publish, distribute,
@@ -10,9 +10,14 @@ without prior written permission from the copyright holder.
 
 Viewing the source code on GitHub does not grant any license to use it.
 
-Third-party components keep their own licenses:
+Third-party components keep their own licenses and are not part of the Work:
 - Tone.js (https://github.com/Tonejs/Tone.js) is licensed under the MIT License
-  and is loaded from a CDN; it is not part of the Work.
+  and is loaded from a CDN.
+- The music in the music/ folder is from Pixabay (https://pixabay.com/music/),
+  used under the Pixabay Content License
+  (https://pixabay.com/service/license-summary/). Each track remains the
+  property of its creator; see README.md for the full credits. These files
+  may not be extracted and redistributed on their own.
 
 THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 

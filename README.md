@@ -37,11 +37,11 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 
 ## Beats
 
-- **Synthwave**: French filter-house energy with pumping chords and a robotic lead.
-- **Lo-fi**: lazy, dusty beats with warm keys and rain in the quiet parts.
-- **Microphone**: ride to whatever is playing around you.
+Pick a style and Gridline plays real tracks in it. Each song is pre-mapped, so the road speed, obstacles, lasers and the Endless Void camera land on its actual beats, build-ups and drops, and the timeline in the top right shows where you are in the song.
 
-Each song follows a full arrangement (intro, groove, build, drop, breakdown), shown on the timeline in the top right, and shifts key as you progress.
+- **Synthwave**, **Lo-fi**, **House** and **Phonk**: tracks in that style
+- **Mix**: everything, shuffled
+- **Microphone**: ride to whatever is playing around you
 
 ## Chapters
 
@@ -63,6 +63,23 @@ Scores go to a shared leaderboard, split by map, showing each rider's best score
 - **Enjoying Gridline?** [☕ Buy me a coffee](https://venmo.com/u/Send-It-Blake) (Venmo @Send-It-Blake).
 
 ## Credits
+
+### Music
+
+All tracks are from [Pixabay](https://pixabay.com/music/) and used under the [Pixabay Content License](https://pixabay.com/service/license-summary/). Thank you to the artists:
+
+| Track | Artist | Style |
+|---|---|---|
+| [Synthwave Music Neon Drive Horizon](https://pixabay.com/music/synthwave-synthwave-music-neon-drive-horizon-578508/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
+| [Neon Synthwave Drive](https://pixabay.com/music/synthwave-neon-synthwave-drive-537447/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
+| [Lofi Hip Hop Deep Study Session](https://pixabay.com/music/beats-lofi-hip-hop-deep-study-session-560038/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Lo-fi |
+| [Night Phonk](https://pixabay.com/music/beats-night-phonk-203960/) | [ArtIssizm](https://pixabay.com/users/artissizm-29919399/) | Phonk |
+| [Slap House](https://pixabay.com/music/house-slap-house-590177/) | [AurecTheme](https://pixabay.com/users/aurectheme-54643893/) | House |
+| [Deep House Sunset](https://pixabay.com/music/house-sunset-house-grooves-deep-house-sunset-538759/) | [sunset-house-grooves](https://pixabay.com/users/sunset-house-grooves-54751244/) | House |
+
+The tracks remain the property of their creators and are not covered by Gridline's copyright below. The same credits are in the game under **♪ Music & credits** on the home screen.
+
+### Game
 
 Designed and developed by **Blake Erickson**. 
 
