@@ -70,6 +70,7 @@ body:not(.playing) .hud h1{visibility:hidden}
 .entry .duo.solo{grid-template-columns:1fr}
 .entry .duo button{margin-top:0;width:100%;justify-content:center}
 .entry .best{margin-top:14px;min-height:1em}
+.entry .best:empty{display:none}
 .entry .extras{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
 .over .extras .mini{margin:0;min-height:32px;padding:6px 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(41,243,255,.3);background:transparent;color:var(--dim);display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:inherit;border-radius:2px}
 .over .extras .mini[aria-pressed="true"]{color:#ffe000;border-color:#ffe000}
@@ -90,8 +91,12 @@ body:not(.playing) .hud h1{visibility:hidden}
 .coffeeCard{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:14px;padding:10px 12px;border:1px dashed rgba(70,175,255,.55);color:var(--white);text-decoration:none}
 .coffeeCard b{color:#46afff;font-family:var(--display);letter-spacing:.04em}
 /* the coffee link reads the same everywhere: "Enjoying Gridline? ☕ Buy Me a Coffee", with the call to action in blue */
-.over .extras a.coffee{text-transform:none;letter-spacing:.02em;font-size:12px;color:var(--white);gap:6px;padding:8px 12px;border-color:rgba(70,175,255,.45)}
-.over .extras a.coffee b{color:#46afff;font-family:var(--display);font-weight:800;letter-spacing:.04em}
+/* the coffee button: same size as Tutorial, one line */
+.entry .stack a.coffee{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;padding:0 12px;border:1px solid rgba(70,175,255,.45);color:var(--white);text-decoration:none;font-size:14px;letter-spacing:.02em;white-space:nowrap;border-radius:2px}
+.entry .stack a.coffee:hover,.entry .stack a.coffee:focus-visible{border-color:#46afff;background:rgba(70,175,255,.12)}
+.entry .stack a.coffee b{color:#46afff;font-family:var(--display);font-weight:800;letter-spacing:.04em;font-size:14px}
+@media (max-width:420px){ .entry .stack a.coffee,.entry .stack a.coffee b{font-size:12.5px} }
+@media (max-width:350px){ .entry .stack a.coffee,.entry .stack a.coffee b{font-size:11px} }
 .coffeeCard small{color:var(--dim);font-size:11px;width:100%}
 .coffeeCard:hover,.coffeeCard:focus-visible{background:rgba(70,175,255,.12);border-style:solid}
 .over .extras a.coffee:hover,.over .extras a.coffee:focus-visible{color:var(--white);border-color:#46afff;background:rgba(70,175,255,.12)}
@@ -282,7 +287,7 @@ input[type=range]{accent-color:var(--cyan);width:110px}
 @media (hover:hover) and (pointer:fine){.touchOnly{display:none!important}}
 body:not(.playing) .meters{display:none}
 .over{flex-direction:column;gap:10px}
-.over .ctl{pointer-events:none;margin:0;padding:4px 12px;background:rgba(3,6,16,.72);max-width:calc(100% - 32px);text-align:center;font-size:11px;letter-spacing:.06em;line-height:1.9;color:var(--dim)}
+.over .ctl{pointer-events:none;margin:0;padding:8px 12px;background:rgba(3,6,16,.72);width:100%;max-width:420px;border:1px solid rgba(41,243,255,.18);text-align:center;font-size:11px;letter-spacing:.06em;line-height:1.9;color:var(--dim)}
 .over .ctl kbd{font-family:var(--mono);font-size:11px;color:var(--cyan);border-radius:2px;border:1px solid rgba(41,243,255,.45);padding:1px 6px;margin:0 1px}
 @media (hover:none){.touch{display:inline}.desk{display:none}}
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
@@ -375,11 +380,9 @@ body:not(.playing) .meters{display:none}
   <div class="stack">
     <button id="goSetup" class="big" type="button">▶ Play Gridline</button>
     <div class="duo solo" id="duo"><button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="big ghost" type="button">Tutorial</button></div>
+    <a class="coffee big ghost" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy Me a Coffee</b></a>
   </div>
   <p class="best" id="entryBest"></p>
-  <div class="extras">
-    <a class="mini coffee" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy Me a Coffee</b></a>
-  </div>
 </div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Drag anywhere (or tilt) to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
