@@ -1557,7 +1557,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
     try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
-    lastCz = null; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
+    lastCz = null; land = []; landNext = null; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
@@ -1637,7 +1637,6 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       ctx.fillStyle = rgba(OR, d.life*.5); ctx.fillRect(d.x, d.y, 2, 2);
     }
   }
-  let cityHills = 0, cityMtns = 0;
   function drawScenery(hz, hit, dt, bX, bY){
     if (WORLD.scene === 'mountains'){
       ctx.fillStyle = '#02040a'; ctx.beginPath(); ctx.moveTo(0,hz);
@@ -1645,24 +1644,6 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       glowLine(CY,.75,1.5); ctx.beginPath(); ridge.forEach((h,i) => i ? ctx.lineTo(i/80*W, hz - h*H) : ctx.moveTo(0, hz - h*H)); gstroke();
       stepBoulders(hz, hit, dt);
     } else if (WORLD.scene === 'city'){
-      const lv = game === 'compete' ? level : 1;
-      cityHills += ((lv >= 10 ? 1 : 0) - cityHills)*Math.min(1, dt*.6); cityMtns += ((lv >= 20 ? 1 : 0) - cityMtns)*Math.min(1, dt*.6);
-      const side = x => Math.pow(Math.min(1, Math.abs(x - .5)*2.2), .8);   // tall at the edges, low in the middle where the road and sun are
-      if (cityMtns > .01){
-        // jagged mountains far behind
-        ctx.globalAlpha = cityMtns; ctx.fillStyle = '#12052a'; ctx.beginPath(); ctx.moveTo(0, hz);
-        ridge.forEach((h, i) => { const x = i/80; ctx.lineTo(x*W, hz - (h*2.6 + .1)*H*side(x)*cityMtns); }); ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
-        glowLine(OR, .55, 1.3); ctx.beginPath(); ridge.forEach((h, i) => { const x = i/80, y = hz - (h*2.6 + .1)*H*side(x)*cityMtns; i ? ctx.lineTo(x*W, y) : ctx.moveTo(0, y); }); gstroke();
-        ctx.globalAlpha = 1;
-      }
-      if (cityHills > .01){
-        // soft rolling hills in front of them
-        const hh = x => (.1 + .04*Math.sin(x*9 + 1.3) + .025*Math.sin(x*23 + .4))*H*side(x)*cityHills;
-        ctx.globalAlpha = cityHills; ctx.fillStyle = '#1b0833'; ctx.beginPath(); ctx.moveTo(0, hz);
-        for (let i = 0; i <= 120; i++){ const x = i/120; ctx.lineTo(x*W, hz - hh(x)); } ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
-        glowLine(CY, .5, 1.3); ctx.beginPath(); for (let i = 0; i <= 120; i++){ const x = i/120; i ? ctx.lineTo(x*W, hz - hh(x)) : ctx.moveTo(0, hz - hh(0)); } gstroke();
-        ctx.globalAlpha = 1;
-      }
       for (const b of city){
         const x0 = b.x*W, bw = b.w*W, bh = b.h*H, y0 = hz - bh;
         ctx.fillStyle = '#07030d'; ctx.fillRect(x0, y0, bw, bh);
@@ -2051,6 +2032,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (airborne !== wasAir){ wasAir = airborne; $('steer').classList.toggle('air', airborne); }
     pitch += (Math.atan2(vy, spd*2.2) - pitch)*Math.min(1, dt*8);
 
+    if (WORLD.scene === 'mountains' && game === 'compete') drawSideLand(P, hit);
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
     const under = alt < -.02;
     const cpZ = nextCP - travel, gateOn = competing && cpZ < 46;
@@ -2264,6 +2246,42 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     }
     glowLine(OR, .95, 2 + hit*2); line([P(-xw, Z, h0), P(xw, Z, h0)]); gstroke(); line([P(-xw, Z, h1), P(xw, Z, h1)]); gstroke();
     glowLine(WH, .9, 2.5 + hit*2); line([P(-xw, Z, 0), P(xw, Z, 0)]); gstroke();
+  }
+  // Sunset Grid's roadside: from level 10 rolling hills pass by on both sides, from level 20 mountains join them
+  let land = [], landNext = null;
+  function drawSideLand(P, hit){
+    if (!landNext) landNext = { '-1': travel + 46, '1': travel + 46 };
+    for (const sd of [-1, 1]) while (landNext[sd] < travel + 46){
+      const z = landNext[sd], lz = levelAt(z);
+      if (lz >= 20 && Math.random() < .55){ const d = 5 + Math.random()*5; land.push({ kind:'mtn', z0: z, z1: z + d, side: sd, x: 6.5 + Math.random()*2, w: 4 + Math.random()*4, h: 3 + Math.random()*3.5, seed: Math.random()*9 }); landNext[sd] = z + d*.7 + Math.random()*2; }
+      else if (lz >= 10){ const d = 6 + Math.random()*6; land.push({ kind:'hill', z0: z, z1: z + d, side: sd, x: 3.9 + Math.random()*.8, w: 3 + Math.random()*3, h: 1 + Math.random()*1.6, seed: Math.random()*9 }); landNext[sd] = z + d*.75 + Math.random()*2.5; }
+      else landNext[sd] = z + 2;
+    }
+    land = land.filter(o => o.z1 - travel > .45);
+    land.slice().sort((a, b) => b.z0 - a.z0).forEach(o => o.kind === 'mtn' ? drawMtn(o, P, hit) : drawHill(o, P, hit));
+  }
+  function drawHill(o, P, hit){
+    const za = Math.max(.45, o.z0 - travel), zb = o.z1 - travel; if (zb <= .45) return;
+    const N = 14, prof = (z, k) => o.h*k*Math.sin(Math.PI*Math.min(1, Math.max(0, (z + travel - o.z0)/(o.z1 - o.z0))));
+    const xs = [o.x, o.x + o.w*.5, o.x + o.w];
+    // three contour lines from the road outward give the mound its shape
+    const near = [], far = [];
+    for (let i = 0; i <= N; i++){ const z = za + (zb - za)*i/N; near.push(P(o.side*xs[0], z, prof(z, .55))); far.push(P(o.side*xs[2], z, prof(z, .8))); }
+    const top = []; for (let i = 0; i <= N; i++){ const z = za + (zb - za)*i/N; top.push(P(o.side*xs[1], z, prof(z, 1))); }
+    poly(near.concat(top.slice().reverse()), '#0d0a1e'); poly(top.concat(far.slice().reverse()), '#090716');
+    glowLine(CY, .75, 1.2 + hit); line(top); gstroke();
+    glowLine(CY, .35, 1); line(near); ctx.stroke(); line(far); ctx.stroke();
+  }
+  function drawMtn(o, P, hit){
+    const za = Math.max(.45, o.z0 - travel), zb = o.z1 - travel; if (zb <= .45) return;
+    const zm = (o.z0 + o.z1)/2 - travel, xi = o.side*o.x, xp = o.side*(o.x + o.w*.5), xo = o.side*(o.x + o.w);
+    if (zm < .5) return;
+    const peak = P(xp, zm, o.h), a = P(xi, za, 0), b = P(xi, zb, 0), c = P(xo, zb, 0), d = P(xo, za, 0);
+    poly([a, peak, b], '#120a1c'); poly([b, peak, c], '#0a0612'); if (o.z0 - travel > .45) poly([d, peak, a], '#170c22');
+    glowLine(OR, .85, 1.4 + hit); line([a, peak, b]); gstroke();
+    // snow on the peak
+    const s1 = P(xp + (xi - xp)*.28, zm + (za - zm)*.28, o.h*.72), s2 = P(xp + (xi - xp)*.28, zm + (zb - zm)*.28, o.h*.72);
+    poly([s1, peak, s2], rgba(WH, .55)); glowLine(WH, .8, 1); line([s1, peak, s2]); ctx.stroke();
   }
   function drawBldg(b, P, hit){
     const za = Math.max(.45, b.z0 - travel), zb = b.z1 - travel; if (zb <= .45) return;
