@@ -305,6 +305,7 @@ body:not(.playing) .meters{display:none}
 .over .ctl{pointer-events:none;margin:0;padding:8px 12px;background:rgba(3,6,16,.72);width:100%;max-width:420px;border:1px solid rgba(41,243,255,.18);text-align:center;font-size:11px;letter-spacing:.06em;line-height:1.9;color:var(--dim)}
 .over .ctl kbd{font-family:var(--mono);font-size:11px;color:var(--cyan);border-radius:2px;border:1px solid rgba(41,243,255,.45);padding:1px 6px;margin:0 1px}
 @media (hover:none){.touch{display:inline}.desk{display:none}}
+@media (hover:none){ #entry .ctl{display:none} }   /* phones: no controls list on the home screen (the tutorial and pause menu still show it) */
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
   justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
 .steer .g{display:flex;gap:10px}
