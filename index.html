@@ -394,7 +394,12 @@ body:not(.playing) .meters{display:none}
 .crlist li{padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px;line-height:1.5}
 .crlist b{display:block;color:var(--white);font-size:14px}
 .crlist small{color:var(--dim);letter-spacing:.06em;text-transform:uppercase;font-size:10px}
-.entry .stack .linkbtn.credits{margin:2px auto 0;min-height:30px;padding:2px 8px;border:0;background:none;box-shadow:none;color:var(--dim);font-size:11px;letter-spacing:.12em;text-transform:uppercase;width:auto}
+/* music & credits sits in the bottom-right corner of the home screen, in the Neon City pink */
+#entry .credits{position:absolute;right:max(16px, env(safe-area-inset-right,0px));bottom:max(14px, calc(env(safe-area-inset-bottom,0px) + 6px));pointer-events:auto;z-index:2;
+  min-height:36px;padding:6px 12px;border:1px solid rgba(255,70,210,.55);border-radius:8px;background:rgba(14,4,28,.6);color:#ff46d2;
+  font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;text-shadow:0 0 8px rgba(255,70,210,.6);transition:background .2s,box-shadow .2s,border-color .2s}
+#entry .credits:hover,#entry .credits:focus-visible{background:rgba(255,70,210,.14);border-color:#ff46d2;box-shadow:0 0 14px rgba(255,70,210,.45);outline:none}
+#entry .credits:focus-visible{outline:2px solid #ff46d2;outline-offset:2px}
 .entry .stack .linkbtn.credits:hover,.entry .stack .linkbtn.credits:focus-visible{color:var(--white);background:none}
 @media (max-height:700px) and (max-width:560px){ #start .vstats .perk{display:none} #start .chips button{min-height:42px;padding:4px 2px} #start .pv{height:46px} #start .pick{gap:4px 8px} }
 @media (max-height:600px) and (max-width:560px){ #start .chips button{min-height:38px;gap:1px} #start .chips svg{width:15px;height:15px} #start .vstats .st{display:none} }
@@ -425,11 +430,10 @@ body:not(.playing) .meters{display:none}
   <div class="stack">
     <button id="goSetup" class="big" type="button">▶ Play Gridline</button>
     <div class="duo solo" id="duo"><button id="lbBtn" class="big ghost" type="button" hidden>Leaderboard</button><button id="goTut" class="big ghost" type="button">Tutorial</button></div>
-    <button id="creditsBtn" class="linkbtn credits" type="button">♪ Music &amp; credits</button>
     <a class="coffee big ghost" href="https://venmo.com/u/Send-It-Blake" target="_blank" rel="noopener"><span>Enjoying Gridline?</span> <b>☕ Buy Me a Coffee</b></a>
   </div>
   <p class="best" id="entryBest"></p>
-</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p></div>
+</div><p class="ctl"><span class="desk"><kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Space</kbd> jump · <kbd>↓</kbd> backflip · <kbd>↑</kbd> front flip in the air · <kbd>P</kbd> pause</span><span class="touch">Hold the left or right side to steer · swipe up to jump · in the air, hold ⟲ Backflip or ⟳ Front flip · ❚❚ to pause</span></p><button id="creditsBtn" class="credits" type="button">♪ Music &amp; credits</button></div>
 <div class="over" id="start" hidden><div class="card">
   <button id="toEntry" class="ghost cornerBack" type="button" aria-label="Back to start">‹ Back</button>
   <h2>READY TO RIDE</h2>
