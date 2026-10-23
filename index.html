@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="preconnect" href="https://ykwqbtuhcmsbfkunynrl.supabase.co" crossorigin>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Gridline</title>
 <meta name="description" content="Ride the beat. Chase the vibes. A neon, music-driven riding game.">
@@ -731,7 +732,11 @@ body:not(.playing) .meters{display:none}
   const SUPABASE_URL = 'https://ykwqbtuhcmsbfkunynrl.supabase.co', SUPABASE_KEY = 'sb_publishable_JXpEL8qtC6NCLqRxjlGosw_yM84Vqgp';
   const onPublicSite = !window.claude?.use && /^https?:$/.test(location.protocol) && !/claude/.test(location.hostname);
   // ---------- shared leaderboard: Claude's storage on the Claude-hosted page, Supabase on the public site
-  const LB = { db: null, uid: null, user: null, mine: null, by: { sunset: [], city: [], aether: [] }, tab: settings.world, busy: false };
+  const LB = { db: null, uid: null, user: null, mine: null, by: { sunset: [], city: [], aether: [] }, tab: settings.world, busy: false, at: {}, loaded: {}, names: {} };
+  // the boards are kept on the device too, so opening the leaderboard shows the last known standings instantly
+  // while fresh ones load in the background
+  try { const c = JSON.parse(localStorage.getItem('gridline-lb') || 'null'); if (c && c.by) for (const w in LB.by) if (Array.isArray(c.by[w])){ LB.by[w] = c.by[w]; LB.loaded[w] = true; } } catch(_){}
+  const saveBoards = () => { try { localStorage.setItem('gridline-lb', JSON.stringify({ by: LB.by })); } catch(_){} };
   const WORLDS_LB = ['sunset', 'city', 'aether'];
   let handle = ''; try { handle = localStorage.getItem('gridline-handle') || ''; } catch(_){}
   (async () => {
@@ -744,7 +749,7 @@ body:not(.playing) .meters{display:none}
       Object.assign(LB, { db, uid, user });
       const snap = await db.doc('scores/' + uid).get(); LB.mine = snap.exists ? { ...snap.data() } : null;
       if (!handle && LB.mine?.name) handle = LB.mine.name;
-      WORLDS_LB.forEach(w => db.collection('scores').orderBy(w + '_best', 'desc').limit(25).onSnapshot(q => { LB.by[w] = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r[w + '_best'] > 0).map(r => ({ id: r.id, name: r.name, best: r[w + '_best'], level: r[w + '_level'] })); renderBoard(); }, () => {}));
+      WORLDS_LB.forEach(w => db.collection('scores').orderBy(w + '_best', 'desc').limit(25).onSnapshot(q => { LB.by[w] = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r[w + '_best'] > 0).map(r => ({ id: r.id, name: r.name, best: r[w + '_best'], level: r[w + '_level'] })); LB.loaded[w] = true; LB.at[w] = Date.now(); saveBoards(); renderBoard(); }, () => {}));
       $('lbBtn').hidden = false; $('duo').classList.remove('solo');
     } catch(_){}
   })();
@@ -754,11 +759,12 @@ body:not(.playing) .meters{display:none}
   const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + path, { ...opts, headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
   async function sbLoad(w){
     try { const res = await sbFetch('rpc/get_leaderboard', { method: 'POST', body: JSON.stringify({ p_world: w, p_limit: 25 }) }); if (!res.ok) return;
-      LB.by[w] = (await res.json()).map((r, i) => ({ id: 'sb' + i, ...r })); renderBoard(); } catch(_){}
+      LB.by[w] = (await res.json()).map((r, i) => ({ id: 'sb' + i, ...r })); LB.loaded[w] = true; LB.at[w] = Date.now(); saveBoards(); renderBoard(); } catch(_){}
   }
   if (onPublicSite && SUPABASE_URL && SUPABASE_KEY){
     SB.on = true; try { SB.me = JSON.parse(localStorage.getItem('gridline-sb-me') || 'null'); } catch(_){}
     $('lbBtn').hidden = false; $('duo').classList.remove('solo');
+    setTimeout(() => WORLDS_LB.forEach(sbLoad), 600);   // fetch all three boards early, so they're ready before anyone opens them
   }
   async function submitScore(sc, lv, isDaily){
     if (SB.on){
@@ -888,9 +894,10 @@ body:not(.playing) .meters{display:none}
   async function renderBoard(){
     if ($('board').hidden) return;
     const rows = (LB.by[LB.tab] || []).map(r => ({ ...r, s: r.best, lv: r.level })).filter(r => r.s > 0);
-    const ps = LB.user && rows.length && !SB.on ? await LB.user.profiles(rows.map(r => r.id)) : {};
+    const ps = LB.names, missing = LB.user && !SB.on ? rows.filter(r => !r.name && !ps[r.id]).map(r => r.id) : [];
+    if (missing.length && !LB.nameBusy){ LB.nameBusy = true; LB.user.profiles(missing).then(got => { Object.assign(LB.names, got || {}); LB.nameBusy = false; renderBoard(); }).catch(() => { LB.nameBusy = false; }); }
     const list = $('lbList'); list.replaceChildren();
-    if (!rows.length){ const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No scores on ' + MAPNAME[LB.tab] + ' yet. Be the first.'; list.append(li); return; }
+    if (!rows.length){ const li = document.createElement('li'); li.className = 'empty'; li.textContent = LB.loaded[LB.tab] ? 'No scores on ' + MAPNAME[LB.tab] + ' yet. Be the first.' : 'Loading…'; list.append(li); return; }
     rows.forEach((r, i) => {
       const li = document.createElement('li'); if (r.id === LB.uid || (SB.on && SB.me?.[LB.tab] && r.name === SB.me.name && r.best === SB.me[LB.tab])) li.className = 'me';
       const cells = [String(i + 1), r.name || ps[r.id]?.name || 'Rider', (r.s || 0).toLocaleString(), r.lv ? 'LVL ' + r.lv : '—'];
@@ -900,7 +907,7 @@ body:not(.playing) .meters{display:none}
   }
   const openBoard = tab => {
     LB.tab = tab || LB.tab; document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === LB.tab));
-    const has = !!LB.db || SB.on; if (SB.on) sbLoad(LB.tab); $('lbList').hidden = !has; $('lbHead').hidden = !has; document.querySelector('.maptabs').hidden = !has; document.querySelector('.lbnote').hidden = !has;
+    const has = !!LB.db || SB.on; if (SB.on && !(Date.now() - (LB.at[LB.tab] || 0) < 8000)) sbLoad(LB.tab); $('lbList').hidden = !has; $('lbHead').hidden = !has; document.querySelector('.maptabs').hidden = !has; document.querySelector('.lbnote').hidden = !has;
     $('noLb').hidden = has; $('localBest').textContent = best.toLocaleString();
     $('board').hidden = false; renderBoard();
   };
@@ -980,6 +987,15 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     live = i; const d = decks[i]; trackEl = d.el; trackGain = d.g; curTrack = d.track;
     trackBeat = Math.floor(deckBeatAt(curTrack, d.el.currentTime + .02)); buildTimeline();
   }
+  // phones (iPhone especially) only let an audio player start by itself later if it was first started from a tap, so on
+  // a tap we briefly start and stop the idle deck (silently, its fader is down); without this the next song in the mix
+  // can fail to start and the music goes quiet
+  function unlockDecks(skip = -1){
+    try { decks.forEach((d, i) => { if (d.unlocked || i === skip || (source === 'track' && i === live)) return;
+      if (!d.el.src) d.el.src = trackUrl(TRACKS[0]);
+      const g = d.g.gain.value; d.g.gain.value = 0;
+      d.el.play().then(() => { d.unlocked = true; if (!(source === 'track' && (decks[live] === d || (xf && decks[xf.to] === d)))){ d.el.pause(); } d.g.gain.value = g; }).catch(() => { d.g.gain.value = g; }); }); } catch(_){}
+  }
   // start buffering the first song as soon as the setup screen opens, so pressing Play starts the countdown with no wait
   let preTrack = null;
   function preloadMusic(){
@@ -990,11 +1006,13 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       if (preTrack && d.track === preTrack && MOOD_OF[preTrack.id] === settings.beat) return;
       if (preTrack) playQueue.unshift(preTrack);   // mood changed: put the old pick back
       const t = nextTrack(); d.track = t; preTrack = t; setG(d, 0); d.el.preload = 'auto'; d.el.src = trackUrl(t); d.el.load();
+      unlockDecks();
     } catch(_){}
   }
   async function startTrack(t){
     ensureAudio(); stopAll();
     if (!decks.length) decks.push(mkDeck(), mkDeck());
+    unlockDecks(live);   // the deck about to play is started for real below
     const d = decks[live], o = decks[1 - live];
     o.track = null; setG(o, 0); setHP(o, 10); setLP(o, 20000);
     const pre = !t && preTrack && d.track === preTrack && MOOD_OF[preTrack.id] === settings.beat;   // already buffering from the setup screen
@@ -1028,7 +1046,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   function trackTick(){
     if (source !== 'track' || !curTrack || trackEl.paused) return;
     const t = trackEl.currentTime, A = decks[live], B = decks[1 - live];
-    if (!xf){
+    if (!xf && A.noMix !== curTrack){
       const out = mixOutAt(curTrack);
       // cue the next song on the other deck about 20 seconds ahead
       if (!B.track && t > out - 20){ B.track = nextTrack(); B.el.src = trackUrl(B.track); B.el.load(); setG(B, 0); setHP(B, 300); }
@@ -1043,6 +1061,11 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         if (!lock) setLP(B, 350);
         glide = null;
       }
+    }
+    if (xf && decks[xf.to].el.paused && ac.currentTime - xf.t0 > 1.5){
+      const F = decks[xf.from], T = decks[xf.to]; xf = null; T.track = null; setG(T, 0); setHP(T, 10); setLP(T, 20000); F.noMix = F.track;   // let this song play out; the next starts when it ends
+      setMaster(decks.indexOf(F)); setG(F, .9); setHP(F, 10); setLP(F, 20000);
+      if (F.el.ended || F.el.paused) startTrack();   // nothing left playing: start the next song straight away
     }
     if (xf){
       const F = decks[xf.from], T = decks[xf.to], p = Math.min(1, (ac.currentTime - xf.t0)/xf.dur);
@@ -1289,6 +1312,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const sideOf = x => x < innerWidth/2 ? -1 : 1;
   const pickHold = () => { let d = 0; for (const f of fingers.values()) d = f.side; holdDir = settings.steer === 'tilt' ? 0 : d; showHold(); };
   cv.addEventListener('pointerdown', e => {
+    if (decks.some(d => !d.unlocked)) unlockDecks();
     flick = { y: e.clientY, x: e.clientX, t: performance.now(), id: e.pointerId };
     try { cv.setPointerCapture(e.pointerId); } catch(_){}
     if (e.pointerType === 'mouse') return;
@@ -1541,7 +1565,6 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     let w; do { w = pool[Math.floor(Math.random()*pool.length)]; } while (w === weather && Math.random() < .7);
     return w;
   }
-  const inGauntletZ = z => { const l = levelAt(z); return l % 10 === 4 && (z - runStart) - (l - 1)*LEVEL_LEN > LEVEL_LEN*.4; };
   const SHIELD_COMBO = 15;
   // a hit costs a life, unless the force field is up: then it takes the hit and breaks
   let lastCz = null;
@@ -1598,10 +1621,13 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   // counted on the stretch of road around the rider (not the far end of what's been laid out), so a dense jump trial
   // further up the road can't make the gas drain faster before you reach it
   const oppDensity = () => { if (oppZ.length < 2) return 1/10; const n = oppZ.filter(z => z > travel - 11 && z < travel + 44).length; return Math.max(1/40, Math.min(1/5, n/55)); };
-  // a full tank covers 92% of a level; each ramp or tunnel you're expected to hit (rounded down, so the target is always a
-  // whole number of jumps you can actually make) adds a little less than one refill's worth on top
-  const drainPerUnit = () => { const N = oppDensity()*LEVEL_LEN, need = Math.max(level >= 2 && N >= 2 ? 1 : 0, Math.floor(needShare(level)*N + .1));   // from level 2, at least one jump a level
-    return (92 + need*REFUEL.ramp*.85)/LEVEL_LEN*(1 - .15*Math.max(wxAmt.rain, wxAmt.snow, wxAmt.wind, wxAmt.fog, wxAmt.storm)); };
+  // gas is measured in distance, so it keeps pace with the speed-ups: a full tank only ever covers about 85% of a level,
+  // so every level (from level 1, at any speed, in any weather) needs at least one ramp or tunnel to reach the gate.
+  // Busier levels ask for more: each extra jump you're expected to land (a share of the ramps and tunnels on the road,
+  // rounded down so it's always a whole number you can make) adds a little less than one refill's worth.
+  const TANK_SHORT = 118;   // gas a level burns with one jump expected; a full tank is 100
+  const drainPerUnit = () => { const N = oppDensity()*LEVEL_LEN, need = Math.max(1, Math.floor(needShare(level)*N + .1));
+    return (TANK_SHORT + (need - 1)*REFUEL.ramp*.85*(1 - .15*Math.max(wxAmt.rain, wxAmt.snow, wxAmt.wind, wxAmt.fog, wxAmt.storm)))/LEVEL_LEN; };
   // how far a full tank goes: generous early, settling to the standard range from level 6
   const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
   let newBest = false, trial = null, trialLv = 0;
@@ -1626,8 +1652,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
     try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
-    lastCz = null; land = []; landNext = null; trial = null; trialLv = 0; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = lvMulOf(1);
-    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
+    lastCz = null; land = []; landNext = null; trial = null; trialLv = 0; gSpan = null; gauntLv = 0; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = lvMulOf(1);
+    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel;
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
     showScore();
@@ -1927,17 +1953,17 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         if (level % 5 === 0){
           // a milestone: the gauntlet pays out, you get a life back (or a free force field), and the music shifts key
           const ch = chapterOf(level);
-          if (gauntlet && gauntletClean){ const gb = 2500*ch; score += gb; msgs.push(['GAUNTLET CLEARED  +' + gb, OR]); }
           chapKey = CHAP_KEYS[ch % CHAP_KEYS.length];
           msgs.unshift(['CHAPTER ' + (ch + 1) + ' · LEVEL ' + level, CY]);
         } else msgs.push(['LEVEL ' + level + ' · SPEED UP  +' + bonus, CY]);
         if (weather !== prevWx) msgs.push([weather === 'clear' ? 'SKIES CLEARING' : WX[weather].name + ' AHEAD', WH]);
-        gauntlet = false;
         msgs.forEach(([m, c], i) => setTimeout(() => { if (!over) pop(m, c); }, i*1300));
         flash = 0; showScore(); sfx('gate'); vib([30, 40, 30, 40, 70]);
       }
       // the gauntlet: the end of every 4th level in a chapter packs in walls and back-to-back jumps
-      if (!gauntlet && level % 10 === 4 && nextCP - travel < LEVEL_LEN*.6){ gauntlet = true; gauntletClean = true; pop('GAUNTLET · NO HITS FOR A BONUS', RD); sfx('lost'); }
+      if (gSpan){ const cz = travel + 3.5;
+        if (!gauntlet && cz > gSpan.z0 - 10){ gauntlet = true; gauntletClean = true; pop('GAUNTLET · NO HITS FOR A BONUS', RD); sfx('lost'); }
+        if (gauntlet && cz > gSpan.z1){ gauntlet = false; if (gauntletClean){ const gb = 600*gSpan.lv; score += gb; showScore(); pop('GAUNTLET CLEARED  +' + gb, OR); sfx('gate'); vib([30, 30, 30, 30, 90]); } gSpan = null; } }
       if (fuel <= 0){ fuel = 0; gameOver('OUT OF GAS'); }
       const g = Math.max(0, fuel)/100;
       $('gas').style.width = (g*100).toFixed(1) + '%'; $('gas').parentElement.classList.toggle('low', g < .25);
@@ -2139,7 +2165,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         } else if (scoring){ sfx(n ? 'trick' : 'land'); vib(n ? [20, 30, 20] : 12); if (n) tutEvent('flip'); }
         if (off <= VS().tol && ollie){
           // a jump from the flat only scores for the flips you land, and doesn't build the combo
-          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; fuel = Math.min(100, fuel + REFUEL.flip*n*fillK()); pop(trick + ' +' + pts, OR); showScore(); }
+          if (scoring && n){ const pts = n*400*Math.max(1, combo); score += pts; pop(trick + ' +' + pts, OR); showScore(); }   // points only: gas comes from ramps and tunnels
           else if (trick) pop(trick, OR);
         } else if (off <= VS().tol){
           boost = Math.min(1.6, boost + .3*VS().boostMul);
@@ -2161,8 +2187,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     const sorted = ramps.slice().sort((a,b) => b.z - a.z);
     const under = alt < -.02;
     const cpZ = nextCP - travel, gateOn = competing && cpZ < 46;
-    if (competing && level % 10 === 4){
-      const gs = runStart + (level - 1)*LEVEL_LEN + LEVEL_LEN*.4 - travel, ge = cpZ;
+    if (competing && gSpan){
+      const gs = gSpan.z0 - travel, ge = gSpan.z1 - travel;
       if (gs < 46 && ge > .5){
         const a = Math.max(.6, gs), bz = Math.min(46, ge), RC = HZ();
         for (const sx of [-2.95, 2.95]){
@@ -2770,6 +2796,32 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (l <= 30) return 2.89 + .07*(l - 15);
     return Math.min(5.5, 3.94 + .04*(l - 30));
   }
+  // the gauntlet (levels 4, 14, 24 ...): a chain of at least 4 jumps threaded through boxes. Every ramp has boxes in the
+  // lanes beside its approach, and once you're in the air a box sits in the lane you took off from, so you have to swing
+  // across to the next ramp. The chain gets longer, the lane swings wider and the gaps tighter as the levels go up,
+  // but every gap still leaves time to steer across at that level's speed.
+  let gSpan = null, gauntLv = 0;
+  function spawnGauntlet(z, lz){
+    const xs = [-2.2, -1.1, 0, 1.1, 2.2], tight = Math.max(0, Math.min(1, (lz - 4)/60)), n = Math.min(8, 4 + Math.floor((lz - 4)/20)), jm = VS().jump/3;
+    const slack = .75 - .4*tight;   // seconds to spare beyond the steering itself: 0.75 s at level 4, 0.35 s by level 64
+    gauntLv = lz; const air = airTime(RAMP_VY*jm, RH);
+    let li = prevOb ? xs.reduce((b, v, i) => Math.abs(v - prevOb.x) < Math.abs(xs[b] - prevOb.x) ? i : b, 0) : 2, z0 = null;
+    for (let k = 0; k < n; k++){
+      const wide = R() < .3 + .45*tight, step = (wide ? 2 : 1)*(R() < .5 ? -1 : 1); let ni = li + step; if (ni < 0 || ni > 4) ni = li - step; ni = Math.max(0, Math.min(4, ni));
+      const x = xs[ni], sp = (baseSpdNow*Math.max(lvMul, lvMulOf(lz))*VS().speed + Math.min(1.6, boost + .6))*1.08, steer = Math.min(5.5, VS().steer*Math.max(1, sp/1.8));
+      // (+1 unit so you're lined up before the boxes beside the approach, not just by the ramp itself)
+      if (prevOb) z = Math.max(z, prevOb.end + 1 + sp*(prevOb.air + slack + Math.abs(x - prevOb.x)/steer*1.25));
+      if (z0 === null) z0 = z;
+      ramps.push({ kind:'ramp', z, x, len: RL, gaunt: true });
+      [ni - 1, ni + 1].forEach(g => { if (g >= 0 && g <= 4) ramps.push({ kind:'block', z: z - .4, x: xs[g], len: BL }); });   // a box either side of the approach
+      // the lane you take off from is blocked just past where you'd land, so you can't sit still in it
+      if (k < n - 1) ramps.push({ kind:'block', z: z + RL + sp*air + sp*(.3 - .12*tight), x, len: BL });
+      oppZ.push(z); lastOppZ = z; if (oppZ.length > 40) oppZ.shift();
+      prevOb = { x, end: z + RL, air }; li = ni;
+    }
+    gSpan = { z0: z0 - 3, z1: prevOb.end + prevOb.air*baseSpdNow*lvMulOf(lz) + 2, lv: lz };
+    nextRamp = prevOb.end + 3; return nextRamp;
+  }
   function spawnTrial(z, lz){
     // a chain of green ramps that swings across the lanes; each one is gated by blocks, so you have to land, line up and launch again
     const xs = [-2.2, -1.1, 0, 1.1, 2.2], n = Math.min(10, 6 + Math.floor((lz - 9)/20)), jm = VS().jump/3;
@@ -2792,9 +2844,10 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   function spawnOne(z){
     const competing = game === 'compete' && !over, roll = R(), dl = daily && competing;
     if (competing && !dl && !tut){ const lz = levelAt(z);
-      if (lz % 10 === 9 && trialLv !== lz && (z - runStart) - (lz - 1)*LEVEL_LEN > LEVEL_LEN*.25) return spawnTrial(z, lz); }
+      if (lz % 10 === 9 && trialLv !== lz && (z - runStart) - (lz - 1)*LEVEL_LEN > LEVEL_LEN*.25) return spawnTrial(z, lz);
+      if (lz % 10 === 4 && gauntLv !== lz && (z - runStart) - (lz - 1)*LEVEL_LEN > LEVEL_LEN*.3) return spawnGauntlet(z, lz); }
     const dif = dl ? Math.min(1, (levelAt(z) - 1)/5) : diff;
-    const gz = competing && !dl && inGauntletZ(z), ch = competing && !dl ? chapterOf(levelAt(z)) : 0;
+    const gz = false, ch = competing && !dl ? chapterOf(levelAt(z)) : 0;
     const pT = gz ? .18 : .22, pB = competing ? (gz ? .5 : .3 + dif*.18) : 0;
     let kind = tut && tut.step < 4 ? 'ramp' : roll < pT ? 'tunnel' : roll < pT + pB ? 'block' : 'ramp';
     if (gz){ gzN = (gzN + 1) % 3; kind = gzN < 2 ? 'block' : R() < .3 ? 'tunnel' : 'ramp'; }
@@ -2847,11 +2900,19 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   }
 
   let last = 0;
+  let musicCheck = 0;
+  function keepMusicGoing(dt){
+    if ((musicCheck += dt) < 1) return; musicCheck = 0;
+    if (!started || paused || source !== 'track' || !trackEl || document.hidden) return;
+    if (trackEl.ended && !(xf && !decks[xf.to].el.paused)){ startTrack(); return; }
+    if (xf) return;                       // the queue reshuffles itself, so the songs just keep looping
+    if (trackEl.paused && trackEl.readyState >= 2) trackEl.play().catch(() => {});
+  }
   function frame(ts){
     if (innerWidth !== W || innerHeight !== H) resize();   // never draw a stretched frame after a rotation
     const t = ts/1000, dt = Math.min(.05, t-last || .016); last = t;
     if (!paused){
-      analyse(t);
+      analyse(t); keepMusicGoing(dt);
       ctx.globalCompositeOperation = 'source-over';
       drawGrid(dt);
     }

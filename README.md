@@ -18,7 +18,7 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 - **Ramps and tunnels** score points and refill your gas. Chain them for a combo multiplier.
 - **Flips** pay big, but land crooked and you wipe out.
 - **Blocks, robots and lasers** cost a life.
-- **Gas** burns as you ride. Hit enough jumps and tunnels to reach each checkpoint gate before you run dry.
+- **Gas** burns as you ride. A full tank never reaches the next checkpoint gate on its own, so every level needs at least one jump or tunnel (busier levels need a few more), at any speed.
 - **A 15× combo** earns a force field that takes one hit for you.
 
 ## Vehicles
@@ -51,7 +51,7 @@ Every level is faster than the last. Every five levels opens a new chapter:
 
 - A new sky: dusk, then night, then aurora.
 - A new obstacle: patrol robots themed to each world (level 5), beat-synced lasers (level 10) and split roads (level 15).
-- A **gauntlet** on levels 4, 14, 24 and so on, lined with red barrier rails. Clear it without a hit for a bonus.
+- A **gauntlet** on levels 4, 14, 24 and so on, lined with barrier rails: a chain of at least four jumps threaded through boxes, with boxes beside every approach and in the lane you took off from. It gets longer and tighter every ten levels. Clear it without a hit for a bonus.
 - A **jump trial** on levels 9, 19, 29 and so on: a chain of green ramps that swings across the lanes, each one gated by blocks. Land every ramp without a hit to earn the upgrade, an extra life or a force field. Miss one and there's no upgrade that time.
 - **Weather** from level 3: rain, crosswinds, fog, snow and lightning storms, each changing how the road feels.
 
