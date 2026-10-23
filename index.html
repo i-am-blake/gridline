@@ -1259,7 +1259,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
 
   /* ---------- Controls ---------- */
   document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => started ? setGame(b.dataset.game) : begin(b.dataset.game)));
-  $('again').addEventListener('click', async () => { closeBoard(); await ensureMusic(); startRun(daily); });
+  $('again').addEventListener('click', async () => { closeBoard(); freezeForStart(); await ensureMusic(); startRun(daily); });
   $('fs').addEventListener('click', () => { const d = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.(); else (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d)?.catch?.(()=>{}); });
   let barPx = 0;
@@ -1368,6 +1368,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   applyWorld(settings.world); syncChips(); showStats();
   async function begin(g){
     document.activeElement?.blur?.(); applyWorld(settings.world);
+    if (g === 'compete' || g === 'daily') freezeForStart();
     started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = g === 'auto'; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
     await ensureMusic();
     if (g === 'tutorial'){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }   // the tutorial only runs when chosen from the home screen
@@ -1434,7 +1435,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (paused) return;
     if (e.key === '1') setGame('auto');
     if (e.key === '2') setGame('compete');
-    if (e.key === 'Enter' && over && document.activeElement !== $('handle')){ closeBoard(); ensureMusic(); startRun(daily); }
+    if (e.key === 'Enter' && over && document.activeElement !== $('handle')){ closeBoard(); freezeForStart(); ensureMusic(); startRun(daily); }
   });
 
   /* ---------- Analysis ---------- */
@@ -1611,7 +1612,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
     showScore();
-    if (tut){ pop('GO', CY); return; }
+    if (tut){ countdown = null; pop('GO', CY); return; }
     startCountdown();
   }
   // Mario Kart-style start: READY, three lights on the beat while the music eases in, then RIDE and the road starts moving
@@ -1628,15 +1629,23 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     easeMusicIn(countdown.ride);
     const c = $('count'); c.classList.remove('go'); c.querySelectorAll('i').forEach(i => i.classList.remove('on'));
     $('cdWord').textContent = 'READY'; $('cdSub').textContent = daily ? 'DAILY CHALLENGE' : ''; c.hidden = false;
+    holdStill();
+  }
+  // park the rider dead centre and stop everything; called the moment Play is pressed, before the music has loaded
+  function holdStill(){
     jumpReq = false; cycX = 0; cycV = 0; laneTarget = 0; lean = 0; pitch = 0; flipA = 0; alt = 0; vy = 0; airborne = false; rampOn = null; inTunnel = null; invuln = 0; camYo = 0; camE = 0; bendK = 0; trail.length = 0;
   }
   function tickCountdown(dt){
-    const c = countdown; c.t += dt;
+    const c = countdown; if (c.wait) return; c.t += dt;
     while (c.lit < 3 && c.t >= c.lights[c.lit]){ $('count').querySelectorAll('i')[c.lit].classList.add('on'); c.lit++; sfx('light'); vib(20); }
     if (c.t >= c.ride){
       countdown = null; invuln = 1; $('cdWord').textContent = 'RIDE'; $('count').classList.add('go'); sfx('ride'); vib([30, 30, 60]);
       setTimeout(() => { if (!countdown) $('count').hidden = true; }, 950);
     }
+  }
+  function freezeForStart(){
+    countdown = { t: 0, wait: true, lights: [], ride: 1e9, lit: 3 }; holdStill(); ramps = []; prevOb = null; $('count').hidden = true;
+    if (ac){ const t = ac.currentTime; for (const gn of [musicBus().gain, mix && mix.gain]) if (gn){ gn.cancelScheduledValues(t); gn.setValueAtTime(.0001, t); } }   // silent until the countdown eases it in
   }
   function endCountdown(){ if (countdown){ countdown = null; easeMusicIn(.3); } $('count').hidden = true; }
   function gameOver(why){
@@ -1775,7 +1784,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     // Endless Void: the road through space curves, rises and falls, and the camera banks into the turns
     const aeth = WORLD.scene === 'aether', hwy = WORLD.scene === 'city', bendOn = (aeth || hwy) && !reduce ? 1 : 0;
     // Neon City rolls over gentle hills with soft curves; Endless Void swings harder and banks
-    bendK = countdown && game === 'compete' ? 0 : Math.min(1, bendK + dt*.5);   // the road is straight for the countdown, then the curves ease in
+    bendK = countdown ? 0 : Math.min(1, bendK + dt*.5);   // the road is straight for the countdown, then the curves ease in
     const cv1 = bendK*bendOn*(aeth ? Math.sin(travel*.075)*1.25 + Math.sin(travel*.031 + 2)*.75 : Math.sin(travel*.03)*.45 + Math.sin(travel*.011 + 1)*.25);
     const cv2 = bendK*bendOn*(aeth ? Math.sin(travel*.05 + 1)*.65 : Math.sin(travel*.07 + .5)*.45);
     const bX = cv1*Math.min(LX*1.6, W*.34), bY = cv2*Math.min(K*.7, H*.12), roll = Math.max(-.17, Math.min(.17, -cv1*.08));
@@ -1884,8 +1893,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     // every checkpoint is a clear step up: +15% a level to level 6, then +8% a level up to a ceiling
     const lvTarget = lvMulOf(level);
     lvMul += (lvTarget - lvMul)*Math.min(1, dt*2.5);
-    if (countdown && competing) tickCountdown(dt);
-    const spd = countdown && competing ? 0 : reduce ? .3 : competing ? beatSpd*lvMul*VS().speed + boost : beatSpd;
+    if (countdown) tickCountdown(dt);
+    const spd = countdown ? 0 : reduce ? .3 : competing ? beatSpd*lvMul*VS().speed + boost : beatSpd;
     travel += dt*spd; lastSpd = spd;
     if (competing){
       // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
@@ -2000,7 +2009,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     let want;
     const autoDrive = game === 'auto' || over;
     const posT = countdown ? null : !autoDrive && settings.steer === 'tilt' && tiltX !== null ? tiltX : touchX;
-    if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5.5, VS().steer*Math.max(1, spd/1.8)); }
+    if (countdown){ want = 0; laneTarget = cycX; }   // perfectly still until RIDE
+    else if (st){ manualT = 6; laneTarget = cycX; want = st*Math.min(5.5, VS().steer*Math.max(1, spd/1.8)); }
     else if (posT !== null && !autoDrive){
       // follow the finger (or the tilt) quickly, but no faster than this vehicle can steer
       const cap = Math.min(6.5, VS().steer*Math.max(1, spd/1.8)*1.25);
@@ -2726,7 +2736,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     // storms throw lightning on some beats
     if (wxAmt.storm > .5 && Math.random() < .14){ bolt = 1; boltX = .15 + Math.random()*.7; }
     // outside a run, pull the floor into phase so a grid line crosses on each beat
-    if (!competing) travel -= (travel - Math.round(travel))*.35;
+    if (!competing && !countdown) travel -= (travel - Math.round(travel))*.35;
   }
 
   let lastSpd = 1.5, prevOb = null, lastOppZ = 0, baseSpdNow = 2.03;   // the previous obstacle: where it ends, its lane, and how long it keeps you airborne
