@@ -37,13 +37,13 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 
 In every world the camera swings up into a **bird's-eye view** for each drop of the song, then glides back down into the chase view.
 
-## Beats
+## Music
 
-Pick a style and Gridline plays real tracks in it. Each song is pre-mapped, so the road speed, obstacles, lasers and the bird's-eye camera land on its actual beats, build-ups and drops, and the timeline in the top right shows where you are in the song.
+Pick a mood and Gridline plays real tracks in it, mixed into each other like a DJ set. Each song is pre-mapped, so the road speed, obstacles, lasers and the bird's-eye camera land on its actual beats, build-ups and drops, and the timeline in the top right shows where you are in the song.
 
-- **Synthwave**, **Lo-fi**, **House** and **Phonk**: tracks in that style
-- **Mix**: everything, shuffled
-- **Microphone**: ride to whatever is playing around you
+- **Chill**: lo-fi and deep house
+- **Drive**: synthwave
+- **Energy**: phonk and slap house
 
 ## Chapters
 
