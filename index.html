@@ -1338,8 +1338,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     document.activeElement?.blur?.(); applyWorld(settings.world);
     started = true; $('start').hidden = true; $('entry').hidden = true; $('pause').hidden = false; $('steer').hidden = g === 'auto'; document.body.classList.add('playing'); $('bar').classList.remove('hide'); syncBar();
     await ensureMusic();
-    let seen = false; try { seen = !!localStorage.getItem('gridline-tut'); } catch(_){}
-    if (g === 'tutorial' || (g === 'compete' && !seen)){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }
+    if (g === 'tutorial'){ tut = { step: 0, t: 0, steerT: 0 }; g = 'compete'; }   // the tutorial only runs when chosen from the home screen
     if (g === 'daily') setGame('compete', true); else setGame(g);
     if (tut) tutShow();
   }
@@ -1529,7 +1528,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   // Ghost: your best run replays as a faint rider so you can race yourself
   let ghostRec = [], ghost = null, ghostScore = 0, ghostDz = null;
   const ghostKey = () => daily ? 'gridline-ghost-daily-' + dayKey() : 'gridline-ghost-run';
-  // Tutorial: a few guided prompts the first time you play
+  // Tutorial: a few guided prompts, run from the Tutorial button on the home screen
   let tut = null;
   const TUT = [
     { id:'steer', desk:'Hold ← or → to steer', touch:'Hold the left or right side of the screen to steer' },
