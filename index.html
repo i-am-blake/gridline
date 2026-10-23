@@ -1621,7 +1621,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
     try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
-    lastCz = null; land = []; landNext = null; trial = null; trialLv = 0; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = 1;
+    lastCz = null; land = []; landNext = null; trial = null; trialLv = 0; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = lvMulOf(1);
     level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel + 10;   // no gas burned on the short run-up
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
     ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
@@ -2758,9 +2758,9 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const RAMP_VY = 2.5, TUN_VY = 2.3;
   const airTime = (v, h0) => (v + Math.sqrt(v*v + 2*GRAV*h0))/GRAV;
   // speed per level: big steps early, then steady climbs that never stop until a very high ceiling
-  //   1-6: +18% a level · 6-15: +11% · 15-30: +7% · 30+: +4%, capped at 5.5x (around level 54)
+  //   1.15x at level 1, then +15% a level to 6 · 6-15: +11% · 15-30: +7% · 30+: +4%, capped at 5.5x (around level 54)
   function lvMulOf(l){
-    if (l <= 6) return 1 + .18*(l - 1);
+    if (l <= 6) return 1.15 + .15*(l - 1);   // level 1 starts 15% quicker; still reaches 1.9x by level 6
     if (l <= 15) return 1.9 + .11*(l - 6);
     if (l <= 30) return 2.89 + .07*(l - 15);
     return Math.min(5.5, 3.94 + .04*(l - 30));
