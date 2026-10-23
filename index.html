@@ -306,21 +306,25 @@ body:not(.playing) .meters{display:none}
 .over .ctl kbd{font-family:var(--mono);font-size:11px;color:var(--cyan);border-radius:2px;border:1px solid rgba(41,243,255,.45);padding:1px 6px;margin:0 1px}
 @media (hover:none){.touch{display:inline}.desk{display:none}}
 @media (hover:none){ #entry .ctl{display:none} }
-/* start of a run: READY, three lights, RIDE */
-.count{position:fixed;left:0;right:0;top:34%;z-index:6;display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none;text-align:center}
+/* start of a run: READY, three lights, RIDE — on a dark band across the middle so it reads over any world */
+.count{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + max(130px, 17vh));z-index:6;display:flex;flex-direction:column;align-items:center;gap:16px;pointer-events:none;text-align:center;
+  padding:22px 16px 26px;background:linear-gradient(180deg,rgba(2,4,10,0),rgba(2,4,10,.78) 22%,rgba(2,4,10,.78) 78%,rgba(2,4,10,0));
+  border-top:1px solid rgba(var(--frame,255,122,26),.35);border-bottom:1px solid rgba(var(--frame,255,122,26),.35)}
 .count p{margin:0}
-.cdsub{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.3em;color:var(--white);opacity:.8}
-.cdword{font-family:var(--display);font-weight:900;font-size:clamp(34px, 9vw, 64px);letter-spacing:.22em;padding-left:.22em;color:rgb(var(--frame,255,122,26));
-  text-shadow:0 0 18px rgba(var(--frame,255,122,26),.8),0 0 42px rgba(var(--frame,255,122,26),.45);animation:cdIn .35s ease-out}
-.count.go .cdword{color:var(--cyan);text-shadow:0 0 18px rgba(41,243,255,.9),0 0 48px rgba(41,243,255,.5);animation:cdGo .8s ease-out forwards}
-.cddots{display:flex;gap:18px}
-.cddots i{width:22px;height:22px;border-radius:50%;border:2px solid rgba(var(--frame,255,122,26),.6);background:rgba(4,8,16,.7);transition:background .12s,box-shadow .12s,transform .12s}
-.cddots i.on{background:rgb(var(--frame,255,122,26));box-shadow:0 0 16px rgba(var(--frame,255,122,26),.95),0 0 34px rgba(var(--frame,255,122,26),.5);transform:scale(1.12)}
-.count.go .cddots i{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 16px rgba(41,243,255,.95)}
-.count.go{animation:cdFade .8s ease-in forwards}
-@keyframes cdIn{from{transform:scale(1.35);opacity:0}to{transform:none;opacity:1}}
-@keyframes cdGo{0%{transform:scale(.8)}35%{transform:scale(1.18)}100%{transform:scale(1.3)}}
-@keyframes cdFade{0%,55%{opacity:1}100%{opacity:0}}
+.cdsub{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.3em;color:var(--white)}
+.cdsub:empty{display:none}
+.cdword{font-family:var(--display);font-weight:900;font-size:max(34px, min(15vw, 14vh, 110px));line-height:1;letter-spacing:.2em;padding-left:.2em;color:#fff;
+  -webkit-text-stroke:2px rgb(var(--frame,255,122,26));text-shadow:0 0 14px rgba(var(--frame,255,122,26),1),0 0 40px rgba(var(--frame,255,122,26),.8),0 0 80px rgba(var(--frame,255,122,26),.5);animation:cdIn .35s ease-out}
+.count.go .cdword{-webkit-text-stroke-color:var(--cyan);text-shadow:0 0 14px rgba(41,243,255,1),0 0 44px rgba(41,243,255,.85),0 0 90px rgba(41,243,255,.55);animation:cdGo .9s ease-out forwards}
+.cddots{display:flex;gap:22px}
+.cddots i{width:max(24px, min(9vw, 8vh, 46px));height:max(24px, min(9vw, 8vh, 46px));border-radius:50%;border:3px solid rgba(var(--frame,255,122,26),.75);background:rgba(4,8,16,.85);transition:background .1s,box-shadow .1s,transform .1s}
+.cddots i.on{background:rgb(var(--frame,255,122,26));box-shadow:0 0 20px rgba(var(--frame,255,122,26),1),0 0 46px rgba(var(--frame,255,122,26),.6);transform:scale(1.15)}
+.count.go .cddots i{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 20px rgba(41,243,255,1),0 0 46px rgba(41,243,255,.6)}
+.count.go{animation:cdFade .9s ease-in forwards}
+@keyframes cdIn{from{transform:scale(1.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes cdGo{0%{transform:scale(.85)}30%{transform:scale(1.2)}100%{transform:scale(1.32)}}
+@keyframes cdFade{0%,60%{opacity:1}100%{opacity:0}}
+@media (max-height:500px){ .count{top:calc(env(safe-area-inset-top,0px) + 62px);gap:8px;padding:10px 16px 12px} }   /* sideways phones: sit just under the score bar */
 @media (prefers-reduced-motion:reduce){.cdword,.count.go .cdword,.count.go{animation:none}}   /* phones: no controls list on the home screen (the tutorial and pause menu still show it) */
 .pz{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;
   justify-content:center;background:rgba(4,14,22,.6);pointer-events:auto;padding:0}
@@ -694,8 +698,8 @@ body:not(.playing) .meters{display:none}
         crash:  () => { tone('sawtooth', 420, 70, .45, .26); hiss(2000, 200, .4, .32, 'lowpass'); },
         gate:   () => { [0, 4, 7, 12].forEach(iv => tone('sawtooth', 392*Math.pow(2, iv/12), 392*Math.pow(2, iv/12), .6, .055)); hiss(400, 6000, .5, .1); },
         lost:   () => tone('triangle', 600, 300, .2, .14),
-        light:  () => tone('square', 440, 440, .16, .07),
-        ride:   () => { tone('square', 880, 880, .45, .08); tone('sawtooth', 440, 440, .45, .04); hiss(500, 5000, .4, .08); },
+        light:  () => { tone('square', 440, 440, .38, .2); tone('triangle', 220, 220, .38, .32); },
+        ride:   () => { tone('square', 880, 880, 1.1, .22); tone('sawtooth', 440, 440, 1.1, .12); tone('triangle', 220, 220, 1.1, .34); hiss(500, 5000, .5, .14); },
         whoosh: () => hiss(300, 2400, .35, .16),
         tick:   () => tone('sine', 1046, 1046, .1, .12),
         over:   () => { tone('sawtooth', 330, 110, .8, .16); tone('sawtooth', 247, 82, .8, .12); }
@@ -1625,14 +1629,14 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     easeMusicIn(countdown.ride);
     const c = $('count'); c.classList.remove('go'); c.querySelectorAll('i').forEach(i => i.classList.remove('on'));
     $('cdWord').textContent = 'READY'; $('cdSub').textContent = daily ? 'DAILY CHALLENGE' : ''; c.hidden = false;
-    jumpReq = false;
+    jumpReq = false; cycX = 0; cycV = 0; laneTarget = 0; lean = 0;
   }
   function tickCountdown(dt){
     const c = countdown; c.t += dt;
     while (c.lit < 3 && c.t >= c.lights[c.lit]){ $('count').querySelectorAll('i')[c.lit].classList.add('on'); c.lit++; sfx('light'); vib(20); }
     if (c.t >= c.ride){
       countdown = null; $('cdWord').textContent = 'RIDE'; $('count').classList.add('go'); sfx('ride'); vib([30, 30, 60]);
-      setTimeout(() => { if (!countdown) $('count').hidden = true; }, 850);
+      setTimeout(() => { if (!countdown) $('count').hidden = true; }, 950);
     }
   }
   function endCountdown(){ if (countdown){ countdown = null; easeMusicIn(.3); } $('count').hidden = true; }
@@ -1856,10 +1860,10 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (!laneOv){
       const Zm = 2.5 + .75*S, Zr = Zm + camBack, k = LX/Zr, fr = (1 - 1/Zm)*(1 - 1/Zm), centre = cycX + bX*fr/k;   // camera position that puts the rider dead centre
       // phones keep the camera locked on the rider; wider screens let it roam the middle of the road
-      let want = tall ? centre : 0;
+      let want = tall || countdown ? centre : 0;
       const sxAt = cx => vp + (centre - cx)*k, lo = W*(tall ? .42 : .3), hi = W*(tall ? .58 : .7), x0 = sxAt(want);
       if (x0 < lo) want -= (lo - x0)/k; else if (x0 > hi) want += (x0 - hi)/k;
-      camX += (want - camX)*Math.min(1, dt*(tall ? 9 : 6));
+      if (countdown) camX = want; else camX += (want - camX)*Math.min(1, dt*(tall ? 9 : 6));   // locked on the rider during the countdown
       // hard limit from where the rider was actually drawn last frame (wheels, head and flips included): never off screen
       if (riderBB){
         const m = W*.06, dx = (bbCamX - camX)*k, l = riderBB[0] + dx, r = riderBB[2] + dx;
