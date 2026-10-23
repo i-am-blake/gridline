@@ -1626,6 +1626,9 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   // Busier levels ask for more: each extra jump you're expected to land (a share of the ramps and tunnels on the road,
   // rounded down so it's always a whole number you can make) adds a little less than one refill's worth.
   const TANK_SHORT = 118;   // gas a level burns with one jump expected; a full tank is 100
+  // refills during a level are never wasted on a full tank (it can hold extra until the gate), but every gate resets it
+  // to exactly 100, so gas can't be banked from one level to skip the jumps on the next
+  const FUEL_MAX = 170;
   const drainPerUnit = () => { const N = oppDensity()*LEVEL_LEN, need = Math.max(1, Math.floor(needShare(level)*N + .1));
     return (TANK_SHORT + (need - 1)*REFUEL.ramp*.85*(1 - .15*Math.max(wxAmt.rain, wxAmt.snow, wxAmt.wind, wxAmt.fog, wxAmt.storm)))/LEVEL_LEN; };
   // how far a full tank goes: generous early, settling to the standard range from level 6
@@ -1965,7 +1968,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         if (!gauntlet && cz > gSpan.z0 - 10){ gauntlet = true; gauntletClean = true; pop('GAUNTLET · NO HITS FOR A BONUS', RD); sfx('lost'); }
         if (gauntlet && cz > gSpan.z1){ gauntlet = false; if (gauntletClean){ const gb = 600*gSpan.lv; score += gb; showScore(); pop('GAUNTLET CLEARED  +' + gb, OR); sfx('gate'); vib([30, 30, 30, 30, 90]); } gSpan = null; } }
       if (fuel <= 0){ fuel = 0; gameOver('OUT OF GAS'); }
-      const g = Math.max(0, fuel)/100;
+      const g = Math.min(1, Math.max(0, fuel)/100);
       $('gas').style.width = (g*100).toFixed(1) + '%'; $('gas').parentElement.classList.toggle('low', g < .25);
       $('cpBar').style.width = (Math.min(1, 1 - (nextCP - travel)/LEVEL_LEN)*100).toFixed(1) + '%';
     }
@@ -2138,7 +2141,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
           const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
-        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(100, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); sfx('gas'); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(FUEL_MAX, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); sfx('gas'); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -2173,7 +2176,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; fuel = Math.min(100, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR);
+            score += pts; fuel = Math.min(FUEL_MAX, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR);
             if (combo % SHIELD_COMBO === 0 && !shield){ shield = true; shieldT = 1; setTimeout(() => { pop('FORCE FIELD ON · x' + combo, CY); sfx('gate'); vib([20, 20, 20, 20, 40]); }, 700); }
             showScore();
           } else if (trick) pop(trick, OR);
