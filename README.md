@@ -43,7 +43,7 @@ Pick a mood and Gridline plays real tracks in it, mixed into each other like a D
 
 - **Chill**: lo-fi and deep house
 - **Drive**: synthwave
-- **Energy**: phonk and slap house
+- **Energy**: phonk, slap house, trance and cinematic
 
 ## Chapters
 
@@ -75,9 +75,14 @@ All tracks are from [Pixabay](https://pixabay.com/music/) and used under the [Pi
 | [Synthwave Music Neon Drive Horizon](https://pixabay.com/music/synthwave-synthwave-music-neon-drive-horizon-578508/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
 | [Neon Synthwave Drive](https://pixabay.com/music/synthwave-neon-synthwave-drive-537447/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
 | [Lofi Hip Hop Deep Study Session](https://pixabay.com/music/beats-lofi-hip-hop-deep-study-session-560038/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Lo-fi |
+| [Lo-Fi Hip-Hop](https://pixabay.com/music/beats-lo-fi-hip-hop-583396/) | [ZephiraMusic](https://pixabay.com/users/zephiramusic-54643547/) | Lo-fi |
 | [Night Phonk](https://pixabay.com/music/beats-night-phonk-203960/) | [ArtIssizm](https://pixabay.com/users/artissizm-29919399/) | Phonk |
 | [Slap House](https://pixabay.com/music/house-slap-house-590177/) | [AurecTheme](https://pixabay.com/users/aurectheme-54643893/) | House |
 | [Deep House Sunset](https://pixabay.com/music/house-sunset-house-grooves-deep-house-sunset-538759/) | [sunset-house-grooves](https://pixabay.com/users/sunset-house-grooves-54751244/) | House |
+| [Retrowave Midnight Synthwave Tokyo Drive](https://pixabay.com/music/synthwave-retrowave-midnight-synthwave-tokyo-drive-587394/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
+| [Gaming Stream Arcade Session](https://pixabay.com/music/synthwave-gaming-stream-arcade-session-578484/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Synthwave |
+| [Energetic Drive Power Boost](https://pixabay.com/music/techno-trance-energetic-drive-power-boost-573940/) | [alex-morgan](https://pixabay.com/users/alex-morgan-54692529/) | Trance |
+| [Cinematic Drive](https://pixabay.com/music/orchestral-cinematic-drive-608140/) | [Caldena](https://pixabay.com/users/caldena-57526850/) | Cinematic |
 
 The tracks remain the property of their creators and are not covered by Gridline's copyright below. The same credits are in the game under **♪ Music & credits** on the home screen.
 
