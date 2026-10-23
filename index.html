@@ -980,12 +980,26 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     live = i; const d = decks[i]; trackEl = d.el; trackGain = d.g; curTrack = d.track;
     trackBeat = Math.floor(deckBeatAt(curTrack, d.el.currentTime + .02)); buildTimeline();
   }
+  // start buffering the first song as soon as the setup screen opens, so pressing Play starts the countdown with no wait
+  let preTrack = null;
+  function preloadMusic(){
+    try {
+      if (!isTrackStyle() || source === 'track') return;
+      ensureAudio(); if (!decks.length) decks.push(mkDeck(), mkDeck());
+      const d = decks[live];
+      if (preTrack && d.track === preTrack && MOOD_OF[preTrack.id] === settings.beat) return;
+      if (preTrack) playQueue.unshift(preTrack);   // mood changed: put the old pick back
+      const t = nextTrack(); d.track = t; preTrack = t; setG(d, 0); d.el.preload = 'auto'; d.el.src = trackUrl(t); d.el.load();
+    } catch(_){}
+  }
   async function startTrack(t){
     ensureAudio(); stopAll();
     if (!decks.length) decks.push(mkDeck(), mkDeck());
     const d = decks[live], o = decks[1 - live];
     o.track = null; setG(o, 0); setHP(o, 10); setLP(o, 20000);
-    d.track = t || nextTrack(); d.el.playbackRate = 1; setHP(d, 10); setLP(d, 20000); d.el.src = trackUrl(d.track);
+    const pre = !t && preTrack && d.track === preTrack && MOOD_OF[preTrack.id] === settings.beat;   // already buffering from the setup screen
+    d.track = t || (pre ? preTrack : nextTrack()); preTrack = null; d.el.playbackRate = 1; setHP(d, 10); setLP(d, 20000);
+    if (!pre || !d.el.src.endsWith(trackUrl(d.track))) d.el.src = trackUrl(d.track); else d.el.currentTime = 0;
     setMaster(live); trackBeat = -1;
     try {
       await ac.resume();
@@ -1356,7 +1370,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     document.body.classList.toggle('tiltMode', settings.steer === 'tilt');
     if (g.dataset.group === 'beat'){
       bpm = 0; beats = [];
-      if (isTrackStyle()){ if (started || source !== 'idle') startTrack(); }
+      if (isTrackStyle()){ if (started || source !== 'idle') startTrack(); else preloadMusic(); }
       else if (source === 'demo'){ routeBus(); idx = 0; nextT = ac.currentTime + .05; bpm = GB().bpm; }
       else if (started) startDemo();
     }
@@ -1385,7 +1399,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   const showEntry = () => { $('start').hidden = true; $('entry').hidden = false; musicOff(); applyWorld('home');
     let b = 0; try { b = +localStorage.getItem('gridline-best') || 0; } catch(_){}
     $('entryBest').textContent = b ? 'Your best: ' + b.toLocaleString() : ''; };
-  $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; applyWorld(settings.world); });
+  $('goSetup').addEventListener('click', () => { $('entry').hidden = true; $('start').hidden = false; applyWorld(settings.world); preloadMusic(); });
   $('toEntry').addEventListener('click', showEntry);
   showEntry();
   $('goTut').addEventListener('click', () => begin('tutorial'));
@@ -1627,8 +1641,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     if (reduce) per = .7, first = .8;
     countdown = { t: 0, lights: [first, first + per, first + 2*per], ride: first + 3*per, lit: 0 };
     easeMusicIn(countdown.ride);
-    const c = $('count'); c.classList.remove('go'); c.querySelectorAll('i').forEach(i => i.classList.remove('on'));
-    $('cdWord').textContent = 'READY'; $('cdSub').textContent = daily ? 'DAILY CHALLENGE' : ''; c.hidden = false;
+    const c = $('count'), shown = !c.hidden && !c.classList.contains('go'); c.classList.remove('go'); c.querySelectorAll('i').forEach(i => i.classList.remove('on'));
+    if (!shown) $('cdWord').textContent = 'READY'; $('cdSub').textContent = daily ? 'DAILY CHALLENGE' : ''; c.hidden = false;
     holdStill();
   }
   // park the rider dead centre and stop everything; called the moment Play is pressed, before the music has loaded
@@ -1644,7 +1658,8 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     }
   }
   function freezeForStart(){
-    countdown = { t: 0, wait: true, lights: [], ride: 1e9, lit: 3 }; holdStill(); ramps = []; prevOb = null; $('count').hidden = true;
+    countdown = { t: 0, wait: true, lights: [], ride: 1e9, lit: 3 }; holdStill(); ramps = []; prevOb = null;
+    const c = $('count'); c.classList.remove('go'); c.querySelectorAll('i').forEach(i => i.classList.remove('on')); $('cdWord').textContent = 'READY'; $('cdSub').textContent = ''; c.hidden = false;
     if (ac){ const t = ac.currentTime; for (const gn of [musicBus().gain, mix && mix.gain]) if (gn){ gn.cancelScheduledValues(t); gn.setValueAtTime(.0001, t); } }   // silent until the countdown eases it in
   }
   function endCountdown(){ if (countdown){ countdown = null; easeMusicIn(.3); } $('count').hidden = true; }
