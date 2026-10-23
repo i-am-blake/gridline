@@ -15,10 +15,10 @@ Play it at **https://i-am-blake.github.io/gridline/**, or open `index.html` in a
 | Backflip / front flip (in the air) | ↓ / ↑ | Hold the ⟲ Backflip / ⟳ Front flip buttons |
 | Pause | P | ❚❚ |
 
-- **Ramps and tunnels** score points and refill your gas. Chain them for a combo multiplier.
+- **Ramps and tunnels** score points and refill your gas. Chain them for a combo multiplier. Flips score big but don't refill gas.
 - **Flips** pay big, but land crooked and you wipe out.
 - **Blocks, robots and lasers** cost a life.
-- **Gas** burns as you ride. A full tank never reaches the next checkpoint gate on its own, so every level needs at least one jump or tunnel (busier levels need a few more), at any speed.
+- **Gas** burns as you ride. To reach each checkpoint gate you have to land at least half of that level's ramps and tunnels (rounded up), whichever half you pick; one fewer and you run dry. The HUD shows how many you've landed and how many you need (for example **GAS 1/2**). Every level has at least one, at any speed.
 - **A 15× combo** earns a force field that takes one hit for you.
 
 ## Vehicles

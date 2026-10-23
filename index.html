@@ -176,6 +176,7 @@ body:not(.playing) .hud h1{visibility:hidden}
 .hbars{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
 .hb{display:flex;align-items:center;gap:6px;min-width:0}
 .hb .gl{font-size:10px;letter-spacing:.16em;color:var(--dim)}
+.hb .gl b{font-weight:700;color:var(--white);letter-spacing:.06em;margin-left:4px}.hb .gl b.ok{color:var(--cyan)}
 .hb .gauge{flex:1;height:8px}
 body.playing .keys{display:none}
 @media (max-width:700px){ .hudc{top:calc(58px + env(safe-area-inset-top,0px))} body.playing .meters{display:none} }
@@ -516,7 +517,7 @@ body:not(.playing) .meters{display:none}
 <div class="hudc" id="hudc" hidden aria-live="off">
   <div class="htop"><span class="lvl" id="hLvl">LVL 1</span><div class="hsc" id="sc">0</div><span class="lvwrap"><span id="hLives" class="lives">◆◆◆</span><span id="hShield" class="shieldB" title="Force field: takes the next hit" hidden>⬡</span><span id="hShieldNext" class="shieldN"></span></span></div>
   <div class="hrow"><span id="hCombo" class="combo"></span></div>
-  <div class="hbars"><div class="hb"><span class="gl">GAS</span><i class="gauge"><em id="gas"></em></i></div><div class="hb"><span class="gl">GATE</span><i class="gauge cp"><em id="cpBar"></em></i></div></div>
+  <div class="hbars"><div class="hb"><span class="gl">GAS <b id="gasNeed"></b></span><i class="gauge"><em id="gas"></em></i></div><div class="hb"><span class="gl">GATE</span><i class="gauge cp"><em id="cpBar"></em></i></div></div>
 </div>
 <div class="holdz l" id="holdL" aria-hidden="true"><span>◀ HOLD</span></div><div class="holdz r" id="holdR" aria-hidden="true"><span>HOLD ▶</span></div>
 <div class="steer" id="steer" hidden>
@@ -1606,33 +1607,49 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     { id:'jump',  desk:'Press Space to jump', touch:'Swipe up on the road to jump' },
     { id:'ramp',  desk:'Steer onto a ramp to launch', touch:'Steer onto a ramp to launch' },
     { id:'flip',  desk:'In the air, hold ↓ to backflip (↑ for a front flip), then let go to land upright', touch:'In the air, hold the ⟲ Backflip button at the bottom, then let go to land upright' },
-    { id:'gas',   desk:'Landing jumps and clearing tunnels refills gas. Reach the gate!', touch:'Landing jumps and clearing tunnels refills gas. Reach the gate!' }
+    { id:'gas',   desk:'Land at least half the jumps and tunnels on each level to make it to the gate', touch:'Land at least half the jumps and tunnels on each level to make it to the gate' }
   ];
   const isTouch = matchMedia('(hover: none)').matches;
   function tutShow(){ const st = TUT[tut.step]; $('tipText').textContent = (tut.step + 1) + '/' + TUT.length + ' · ' + (isTouch ? st.touch : st.desk); $('tip').hidden = false; }
   function tutEnd(){ tut = null; $('tip').hidden = true; try { localStorage.setItem('gridline-tut', '1'); } catch(_){} }
   function tutEvent(id){ if (!tut || TUT[tut.step].id !== id) return; sfx('tick'); tut.step++; tut.t = 0; if (tut.step >= TUT.length) tutEnd(); else tutShow(); }
-  const LEVEL_LEN = 55, REFUEL = { ramp: 30, tunnel: 34, flip: 8 };
-  const fillK = () => 1;
-  // gas is set so that hitting a share of the ramps and tunnels actually on the road gets you to the gate:
-  // 20% on level 1, rising to 50% from level 6; riding with no hits always runs dry
-  let oppZ = [];
-  const needShare = lv => [0, .2, .25, .3, .35, .4][lv] ?? .5;
-  // counted on the stretch of road around the rider (not the far end of what's been laid out), so a dense jump trial
-  // further up the road can't make the gas drain faster before you reach it
-  const oppDensity = () => { if (oppZ.length < 2) return 1/10; const n = oppZ.filter(z => z > travel - 11 && z < travel + 44).length; return Math.max(1/40, Math.min(1/5, n/55)); };
-  // gas is measured in distance, so it keeps pace with the speed-ups: a full tank only ever covers about 85% of a level,
-  // so every level (from level 1, at any speed, in any weather) needs at least one ramp or tunnel to reach the gate.
-  // Busier levels ask for more: each extra jump you're expected to land (a share of the ramps and tunnels on the road,
-  // rounded down so it's always a whole number you can make) adds a little less than one refill's worth.
-  const TANK_SHORT = 118;   // gas a level burns with one jump expected; a full tank is 100
-  // refills during a level are never wasted on a full tank (it can hold extra until the gate), but every gate resets it
-  // to exactly 100, so gas can't be banked from one level to skip the jumps on the next
-  const FUEL_MAX = 170;
-  const drainPerUnit = () => { const N = oppDensity()*LEVEL_LEN, need = Math.max(1, Math.floor(needShare(level)*N + .1));
-    return (TANK_SHORT + (need - 1)*REFUEL.ramp*.85*(1 - .15*Math.max(wxAmt.rain, wxAmt.snow, wxAmt.wind, wxAmt.fog, wxAmt.storm)))/LEVEL_LEN; };
-  // how far a full tank goes: generous early, settling to the standard range from level 6
-  const tankRange = lv => lv <= 5 ? 48 - (lv - 1)*3 : 34;
+  const LEVEL_LEN = 55, REFUEL = { ramp: 30, tunnel: 30 };
+  let oppZ = [], oppF = [];   // where the ramps and tunnels start, and the same with whether each is a tunnel
+  function addOpp(z, tun){ oppZ.push(z); oppF.push({ z, tun }); if (oppZ.length > 80) oppZ.shift(); if (oppF.length > 80) oppF.shift(); }
+  // where a feature's gas actually arrives: at a tunnel's exit, or where you land off a ramp (judged at top speed with
+  // full boost, the furthest you could land)
+  const refillAt = f => f.tun ? f.z + TL : f.z + RL + (baseSpdNow*lvMulOf(levelAt(f.z))*VS().speed + 1.6)*airTime(RAMP_VY*VS().jump/3, RH);
+  // GAS RULE: to reach a checkpoint you must land at least half of the ramps and tunnels on that level (rounded up).
+  // The level's burn is set so that landing exactly that many leaves a little spare, and landing one fewer runs dry
+  // before the gate, at any speed, in any weather and with any vehicle. Gas burns with distance, so speed-ups don't
+  // change the rule. Only ramps and tunnels refill (flips earn points, not gas), and every gate resets the tank to 100,
+  // so gas can't be carried over to skip the next level's jumps.
+  // The burn isn't spread evenly: it's shaped around where the ramps and tunnels sit, so that ANY half of them is enough,
+  // even if you only make the last half. With N features and need = ceil(N/2), by the time you reach feature number
+  // N-need+1 (measured where its gas arrives: the landing, or the tunnel exit) you've burned 90; each feature after that
+  // adds 30 (one refill); a feature whose gas arrives after the gate counts for the next level; and by the gate the level has burned
+  // 100 + 30*need - 12. So landing `need` of them always leaves at least ~10 spare, and landing one fewer always runs
+  // dry before the gate.
+  const RZ = 3.5;   // the rider sits this far up the road from the camera
+  let planKey = '', plan = null;
+  function levelPlan(){
+    const a = nextCP - LEVEL_LEN + RZ, b = nextCP + RZ, fz = oppF.map(refillAt).filter(z => z >= a && z < b).sort((x, y) => x - y), key = a + ':' + fz.map(z => z.toFixed(2)).join(',');
+    if (key === planKey) return plan;
+    const N = fz.length, need = Math.ceil(N/2), pts = [[a, 0]];
+    if (N){ for (let k = N - need; k < N; k++) pts.push([fz[k], 90 + REFUEL.ramp*(k - (N - need))]); pts.push([b, 100 + REFUEL.ramp*need - 12]); }
+    else pts.push([b, 90]);
+    planKey = key; plan = { a, b, N, need, pts }; return plan;
+  }
+  const levelFeatures = () => levelPlan().N;
+  const levelNeed = () => levelPlan().need;
+  const burnAt = r => { const pts = levelPlan().pts; if (r <= pts[0][0]) return 0;
+    for (let i = 1; i < pts.length; i++) if (r <= pts[i][0]){ const [z0, b0] = pts[i - 1], [z1, b1] = pts[i]; return b0 + (b1 - b0)*(z1 > z0 ? (r - z0)/(z1 - z0) : 1); }
+    return pts[pts.length - 1][1]; };
+  let levelRefill = 0, nextRefill = 0, launchObj = null;   // gas landed for this level, and early landings that belong to the next
+  // each feature's gas counts toward the level its plan put it in, whenever it actually arrives
+  function creditGas(f){ const amt = REFUEL.ramp; if (f && refillAt({ z: f.z, tun: f.kind === 'tunnel' }) >= nextCP + RZ) nextRefill += amt; else { levelRefill += amt; fuel += amt; } }
+  let needShown = '';
+  let gasTop = 100;   // top of the gas gauge for this level
   let newBest = false, trial = null, trialLv = 0;
   let game = 'auto', lives = 3, invuln = 0, over = false, flash = 0, best = 0, runT = 0, diff = 0, lvMul = 1, beatN = 0, spawnBeats = 0, seeded = false;
   try { best = +localStorage.getItem('gridline-best') || 0; } catch(_){}
@@ -1649,16 +1666,16 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
   }
   function startRun(isDaily = daily){
     if (typeof track === 'function') track('run-start', 'Run: ' + settings.vehicle + ' / ' + settings.world + ' / ' + settings.beat);
-    daily = isDaily; runStart = travel; oppZ = []; lastOppZ = travel; ghostRec = []; ghostDz = null;
+    daily = isDaily; runStart = travel; oppZ = []; oppF = []; nextRefill = 0; launchObj = null; lastOppZ = travel; ghostRec = []; ghostDz = null;
     if (daily) drng = mulberry(seedOf('gridline-' + dayKey()));
     if (typeof closeBoard === 'function') closeBoard();
     game = 'compete'; over = false; $('hudc').hidden = false;
     tiltZero = null; if (settings.steer === 'tilt' && isTouch) enableTilt();
     try { localStorage.setItem('gridline-holds', holdUses); } catch(_){} setTimeout(holdHint, 400);
     lastCz = null; land = []; landNext = null; trial = null; trialLv = 0; gSpan = null; gauntLv = 0; score = 0; combo = 0; boost = 0; shield = false; shieldT = 0; weather = 'clear'; gauntlet = false; gauntletClean = true; chapKey = 0; lives = VS().lives; invuln = 1; flash = 0; runT = 0; diff = 0; lvMul = lvMulOf(1);
-    level = 1; fuel = 100; nextCP = travel + LEVEL_LEN; fuelHold = travel;
+    level = 1; fuel = 100; gasTop = 100; levelRefill = 0; nextRefill = 0; nextCP = travel + LEVEL_LEN; fuelHold = travel;
     // clear the road and lay out the first obstacles right away, starting a short run-up ahead
-    ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < travel + 44) z = spawnOne(z); }
+    ramps = daily ? [] : ramps.filter(r => r.z - travel < 6); prevOb = null; { let z = travel + 14; while (z < Math.max(travel + 44, nextCP + RZ)) z = spawnOne(z); }
     showScore();
     if (tut){ countdown = null; pop('GO', CY); return; }
     startCountdown();
@@ -1946,11 +1963,13 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     const spd = countdown ? 0 : reduce ? .3 : competing ? beatSpd*lvMul*VS().speed + boost : beatSpd;
     travel += dt*spd; lastSpd = spd;
     if (competing){
-      // gas burns with distance; landing jumps, clearing tunnels and landing flips top it up
-      if (travel > fuelHold && !tut) fuel -= drainPerUnit()*dt*spd;
+      // gas burns with distance; landing ramps and clearing tunnels top it up (see GAS RULE)
+      if (!tut) fuel = 100 + levelRefill - burnAt(travel + RZ);
       if (tut && TUT[tut.step].id === 'gas' && (tut.t += dt) > 5) tutEvent('gas');
       if (travel >= nextCP){
-        level++; nextCP += LEVEL_LEN; fuel = 100; const bonus = 500*(level - 1); score += bonus;
+        level++; nextCP += LEVEL_LEN; levelRefill = nextRefill; nextRefill = 0; fuel = 100 + levelRefill; gasTop = 100;
+        { let guard = 0; while (nextRamp < nextCP + RZ && guard++ < 30) spawnOne(nextRamp); }   // lay out the whole level now
+        const bonus = 500*(level - 1); score += bonus;
         const msgs = [], prevWx = weather; weather = weatherFor(level);
         if (level % 10 === 9) msgs.push(['JUMP TRIAL AHEAD · LAND EVERY GREEN RAMP', GN]);
         if (level % 5 === 0){
@@ -1968,8 +1987,13 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         if (!gauntlet && cz > gSpan.z0 - 10){ gauntlet = true; gauntletClean = true; pop('GAUNTLET · NO HITS FOR A BONUS', RD); sfx('lost'); }
         if (gauntlet && cz > gSpan.z1){ gauntlet = false; if (gauntletClean){ const gb = 600*gSpan.lv; score += gb; showScore(); pop('GAUNTLET CLEARED  +' + gb, OR); sfx('gate'); vib([30, 30, 30, 30, 90]); } gSpan = null; } }
       if (fuel <= 0){ fuel = 0; gameOver('OUT OF GAS'); }
-      const g = Math.min(1, Math.max(0, fuel)/100);
-      $('gas').style.width = (g*100).toFixed(1) + '%'; $('gas').parentElement.classList.toggle('low', g < .25);
+      // the gauge is scaled to the fullest the tank has been since the last gate, so after a refill tops it past 100 the
+      // bar reads full and then visibly drains straight away (it never sits pinned at full while extra gas burns off)
+      gasTop = Math.max(100, gasTop, fuel);
+      { const nd = levelNeed(), got = Math.round(levelRefill/REFUEL.ramp), txt = nd ? Math.min(got, nd) + '/' + nd : '';   // jumps landed / needed this level
+        if (txt !== needShown){ needShown = txt; $('gasNeed').textContent = txt; $('gasNeed').classList.toggle('ok', nd > 0 && got >= nd); } }
+      const g = Math.max(0, fuel)/gasTop;
+      $('gas').style.width = (g*100).toFixed(1) + '%'; $('gas').parentElement.classList.toggle('low', fuel < 25);
       $('cpBar').style.width = (Math.min(1, 1 - (nextCP - travel)/LEVEL_LEN)*100).toFixed(1) + '%';
     }
     const CZ = 2.5;
@@ -2134,14 +2158,14 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
         if (inTunnel && !wasIn) sfx('whoosh');
       } else if (rampOn){
         const tun = rampOn.kind === 'tunnel';
-        airborne = true; ollie = false; vy = (tun ? TUN_VY : RAMP_VY)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
+        airborne = true; ollie = false; launchObj = rampOn; vy = (tun ? TUN_VY : RAMP_VY)*(VS().jump/3); airT = 0; flipA = 0; flipV = 0; autoFlipDir = 0;
         if (scoring){ sfx(tun ? 'whoosh' : 'jump'); vib(15); } if (!tun) tutEvent('ramp');
         // in Auto the rider throws a flip on about half the jumps, sized to the airtime it has
         if (autoDrive && Math.random() < .55){
           const T = (vy + Math.sqrt(vy*vy + 2*GRAV*Math.max(alt, 0)))/GRAV, n = Math.min(2, Math.floor((T - .35)*VS().flip/(Math.PI*2)));
           if (n >= 1){ autoFlipN = n; autoFlipDir = Math.random() < .5 ? 1 : -1; }
         }
-        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; fuel = Math.min(FUEL_MAX, fuel + REFUEL.tunnel*fillK()); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); sfx('gas'); }
+        if (tun && scoring){ const tp = 150*Math.max(1, combo); score += tp; creditGas(rampOn); pop('TUNNEL +' + tp + ' · GAS', CY); showScore(); sfx('gas'); }
         rampOn = null; inTunnel = null;
       } else { alt = 0; vy = 0; inTunnel = null; }
     }
@@ -2176,7 +2200,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
             // score: base + airtime, plus 400 per full flip, all multiplied by the combo
             combo++;
             const pts = Math.round((100 + airT*200 + n*400) * combo / 10) * 10;
-            score += pts; fuel = Math.min(FUEL_MAX, fuel + (REFUEL.ramp + REFUEL.flip*n)*fillK()); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR);
+            score += pts; creditGas(launchObj); setTimeout(() => sfx('gas'), 120); pop((trick ? trick + ' ' : '') + '+' + pts + (combo > 1 ? '  x' + combo : ''), OR);
             if (combo % SHIELD_COMBO === 0 && !shield){ shield = true; shieldT = 1; setTimeout(() => { pop('FORCE FIELD ON · x' + combo, CY); sfx('gate'); vib([20, 20, 20, 20, 40]); }, 700); }
             showScore();
           } else if (trick) pop(trick, OR);
@@ -2819,7 +2843,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       [ni - 1, ni + 1].forEach(g => { if (g >= 0 && g <= 4) ramps.push({ kind:'block', z: z - .4, x: xs[g], len: BL }); });   // a box either side of the approach
       // the lane you take off from is blocked just past where you'd land, so you can't sit still in it
       if (k < n - 1) ramps.push({ kind:'block', z: z + RL + sp*air + sp*(.3 - .12*tight), x, len: BL });
-      oppZ.push(z); lastOppZ = z; if (oppZ.length > 40) oppZ.shift();
+      addOpp(z, false); lastOppZ = z;
       prevOb = { x, end: z + RL, air }; li = ni;
     }
     gSpan = { z0: z0 - 3, z1: prevOb.end + prevOb.air*baseSpdNow*lvMulOf(lz) + 2, lv: lz };
@@ -2839,7 +2863,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       // gate blocks just in front of the ramp in the neighbouring lanes (both sides on every other ramp)
       const gates = k % 2 ? [ni - 1, ni + 1] : [ni + (x >= prevOb?.x ? 1 : -1)];
       gates.forEach(g => { if (g >= 0 && g <= 4) ramps.push({ kind:'block', z: z - .4, x: xs[g], len: BL }); });
-      oppZ.push(z); lastOppZ = z; if (oppZ.length > 40) oppZ.shift();
+      addOpp(z, false); lastOppZ = z;
       prevOb = { x, end: z + RL, air: airTime(RAMP_VY*jm, RH) }; li = ni;
     }
     nextRamp = prevOb.end + 3; return nextRamp;
@@ -2855,7 +2879,11 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
     let kind = tut && tut.step < 4 ? 'ramp' : roll < pT ? 'tunnel' : roll < pT + pB ? 'block' : 'ramp';
     if (gz){ gzN = (gzN + 1) % 3; kind = gzN < 2 ? 'block' : R() < .3 ? 'tunnel' : 'ramp'; }
     // never let walls run on so long that there's nothing to refuel from
-    else if (competing && kind === 'block' && z - lastOppZ > 15) kind = R() < .3 ? 'tunnel' : 'ramp';   // the tutorial serves ramps until you've flipped
+    else if (competing && kind === 'block' && z - lastOppZ > 15) kind = R() < .3 ? 'tunnel' : 'ramp';
+    // ...and never leave a long stretch without one: judged where this obstacle will really land once it's spaced out
+    // at this level's speed, so even at top speed every level has ramps or tunnels to get gas from
+    if (competing && kind === 'block' && prevOb){ const spE = (dl ? 2.6 : baseSpdNow*Math.max(lvMul, lvMulOf(levelAt(z)))*VS().speed) + 1.2;
+      if (Math.max(z, prevOb.end + spE*(prevOb.air + .55)) - lastOppZ > 24) kind = R() < .3 ? 'tunnel' : 'ramp'; }   // the tutorial serves ramps until you've flipped
     const xs = [-2.2, -1.1, 0, 1.1, 2.2];
     const wall = kind === 'block' && (gz ? R() < .7 : dif > .25 && R() < .2 + dif*.4), gapI = Math.floor(R()*xs.length);
     // chapter obstacles stand in for some single blocks: a split in the road from chapter 4, beat lasers from 3, sliding blocks from 2
@@ -2874,7 +2902,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       ramps.push({ kind:'block', z, x:0, len:7, div:true });
       ramps.push({ kind:'ramp', z: z + 2.2, x: side*1.6, len: RL });
       ramps.push({ kind:'block', z: z + 3.6, x: -side*1.6, len: BL });
-      oppZ.push(z + 2.2); lastOppZ = z + 2.2; if (oppZ.length > 40) oppZ.shift();
+      addOpp(z + 2.2, false); lastOppZ = z + 2.2;
       // you leave the split off its ramp, so leave room for the whole jump before the next obstacle
       prevOb = { x: side*1.6, end: z + 2.2 + RL, air: airTime(RAMP_VY*jm, RH) }; nextRamp = z + 9.5; return nextRamp;
     }
@@ -2888,7 +2916,7 @@ const TRACKS = [{"id":"neon-drive-horizon","title":"Synthwave Music Neon Drive H
       ramps.push({ kind:'block', z, x, x0: Math.max(-1.6, Math.min(1.6, x)), len: BL, amp: .7 + R()*.6, sp: .5 + R()*.5, ph: R()*6.28 });
       prevOb = { x, end: z + BL, air: 0 }; nextRamp = z + 2.8; return nextRamp;
     }
-    if (kind !== 'block'){ oppZ.push(z); lastOppZ = z; if (oppZ.length > 40) oppZ.shift(); }
+    if (kind !== 'block'){ addOpp(z, kind === 'tunnel'); lastOppZ = z; }
     if (kind === 'tunnel'){ ramps.push({ kind:'tunnel', z, x, len: TL }); prevOb = { x, end: z + TL, air: airTime(TUN_VY*jm, 0) }; nextRamp = z + TL + 3; }
     else if (kind === 'block'){
       if (wall) xs.forEach((bx, k) => { if (k !== gapI) ramps.push({ kind:'block', z, x: bx, len: BL }); });   // a wall with one gap to thread
